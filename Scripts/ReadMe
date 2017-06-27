@@ -1,0 +1,21 @@
+The following scripts and data files are associated with collecting and collating the original phenotype datasets for the CNJ populations:
+- collate_all_accessions.sh
+- collate_separate_excel_datasets.py
+- collate_datasets.txt
+
+The following script fills in the appropriate NJ accession designator in the collated dataset using an appropriate source file that maps these accessions.
+- fill_accessions.py
+
+The following script fills in the population numbers in an excel spreadsheet of the NJ data, but this role has been taken over by the collate_separate_excel_datasets.pycollate_separate_excel_datasets.py
+script:
+- change_population_numbers.py
+
+The following script takes a random subset of collated workbook for analysis (I was using it to cross-check against entries in notebooks):
+- random_subset.py
+
+Makefile: Builds the collated dataset and automates some of the other script running.
+- Targets:
+    - compile: Builds the collated dataset and fills in the appropriate NJ accessions.
+    - fill_accession: Fills in the appropriate NJ accession using a map file.
+    - collate: Builds the collated dataset from the original spreadsheet files.
+    - subset: Takes a random subset from the large collated dataset file.
