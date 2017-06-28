@@ -1,6 +1,6 @@
 #Makefile for running workflows/scripts to do a particular function
 
-.PHONY: compile collate fill_accession subset 
+.PHONY: compile collate fill_accession subset find_differences
 
 DATA_DIR=../Data/phenotypic\ data/NJ\ Data
 
@@ -14,3 +14,7 @@ collate: collate_datasets.txt $(DATA_DIR)/Compiled/AccessionMap.xlsx
 
 subset: $(DATA_DIR)/Compiled/Data-combined-collated.xlsx 
 		./random_subset.py -o $(DATA_DIR)/Compiled/Data-compiled-collated-subset.xlsx --output_ws "Combined CNJ Upgright Data" -i $(DATA_DIR)/Compiled/Data-combined-collated.xlsx --input_ws "Combined CNJ Upright Data" -p 1	
+
+find_differences:
+		./compare_raw_collate_to_precurate.sh $(DATA_DIR) Data-combined-collated.xlsx Data-combined.xlsx Data-combined-template.xlsx Data-diffs.xlsx
+
