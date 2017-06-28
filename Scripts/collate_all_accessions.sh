@@ -3,9 +3,9 @@
 #Fixes all accessions in a single bash script
 echo "This script is supposed to be run from the Script folder in order to function correctly with paths."
 
-output_template="Data-combined-template.xlsx"
-output_file="$1"
-DATA_FOLDER_PREFIX="../Data/phenotypic data/NJ Data"
+DATA_FOLDER_PREFIX=$1
+output_template=$2
+output_file=$3
 
 #First copy the template the specified output file.
 output_template="${DATA_FOLDER_PREFIX}/Compiled/${output_template}"
