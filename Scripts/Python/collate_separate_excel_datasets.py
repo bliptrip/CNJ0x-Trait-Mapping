@@ -8,11 +8,11 @@ from openpyxl import compat
 
 RE_ROWCOL_HEADER = r'Row/Col:(.*)' 
 RE_ROWCOL_ACCESSION = r'\s*R(\d+)\s*C(\d+)\s*' 
+RE_UPRIGHT = r'\s*(\d+)\s*' 
 #The following was introduced to cross-check the validity of the Row designator in the input files, as there were cases of incorrect rows."
 RE_INPUT_FILE_ROW = r'Bog(Upper)|(Lower)5-R(\d+).xlsx'
 STATE_INIT = 0
 STATE_COPY = 1
-state_index = 1
 state = STATE_INIT
 
 def parse_args():
@@ -49,8 +49,9 @@ if __name__ == '__main__':
     if(re_expected_row_match):
         expected_row = re_expected_row_match.group(3)
 
-    re_header_compile = re.compile(RE_ROWCOL_HEADER, re.I)
-    re_accession_compile = re.compile(RE_ROWCOL_ACCESSION, re.I)
+    re_header_compile      = re.compile(RE_ROWCOL_HEADER, re.I)
+    re_accession_compile   = re.compile(RE_ROWCOL_ACCESSION, re.I)
+    re_upright             = re.compile(RE_UPRIGHT, re.I)
     for row in range(1, ws_input.max_row + 1):
         header = ws_input['A'+str(row)].value
         re_header_match = re_header_compile.match(str(header))
@@ -64,18 +65,23 @@ if __name__ == '__main__':
                 if(expected_row and (re_accession_match.group(1) != expected_row)):
                     sys.stderr.write("WARN: Expected row identifier: %s, Actual row identifier: %s\n" % (expected_row, re_accession_match.group(1)))
                 accession = 'R'+str(re_accession_match.group(1))+'C'+str(re_accession_match.group(2))
-                state_index = 1
                 state = STATE_COPY
+                current_upright_id = 1
         elif state == STATE_COPY:
-            if( state_index <= 10 ):
-                ws_output.cell(row=ws_output_curr_row,column=1, value=parsed.population)
-                ws_output.cell(row=ws_output_curr_row,column=2, value=parsed.year)
-                ws_output.cell(row=ws_output_curr_row,column=3, value=accession)
-                ws_output.cell(row=ws_output_curr_row,column=5, value=state_index)
-                upright_entries = ws_input['B'+str(row)+":"+'Z'+str(row)][0]
-                collate_copy_row(ws_dest=ws_output, dest_row=ws_output_curr_row, dest_column=6, source_cells=upright_entries)
-                ws_output_curr_row += 1
-                state_index += 1
+            re_upright_match = re_upright.match(str(header))
+            if(re_upright_match):
+                upright_id = int(re_upright_match.group(1))
+                if( upright_id == current_upright_id ):
+                    ws_output.cell(row=ws_output_curr_row,column=1, value=parsed.population)
+                    ws_output.cell(row=ws_output_curr_row,column=2, value=parsed.year)
+                    ws_output.cell(row=ws_output_curr_row,column=3, value=accession)
+                    ws_output.cell(row=ws_output_curr_row,column=5, value=upright_id)
+                    upright_entries = ws_input['B'+str(row)+":"+'Z'+str(row)][0]
+                    collate_copy_row(ws_dest=ws_output, dest_row=ws_output_curr_row, dest_column=6, source_cells=upright_entries)
+                    ws_output_curr_row += 1
+                else:
+                    syst.stderr.write("WARN: Potentially invalid upright id: %d, in file %s, row %d\n" % (upright_id,output_filename,row))
+                current_upright_id = upright_id + 1
             else:
                 state = STATE_INIT
     wb_output.save(filename=parsed.output)
