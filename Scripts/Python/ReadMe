@@ -13,9 +13,21 @@ script:
 The following script takes a random subset of collated workbook for analysis (I was using it to cross-check against entries in notebooks):
 - random_subset.py
 
+The following script finds and highlights in red the differences between the combined curated dataset from Jenny Bolivar and our raw collated datafile:
+- compare_raw_collate_to_precurate.sh
+
+The following script backcopies edted/curated entries in the downstream collated file back to the original raw datasets.
+- compare_raw_collate_to_precurate.sh
+
+The following script simply generates a raw difference output between two input excel spreadsheets.
+- diff_spreadsheets.py
+
 Makefile: Builds the collated dataset and automates some of the other script running.
 - Targets:
     - compile: Builds the collated dataset and fills in the appropriate NJ accessions.
     - fill_accession: Fills in the appropriate NJ accession using a map file.
     - collate: Builds the collated dataset from the original spreadsheet files.
     - subset: Takes a random subset from the large collated dataset file.
+	- find_differences: Finds the differences between the compiled curated dataset constructed by Jenny Bolivar and the raw collated set derived from the original datafiles, and outputs to a file with color formatting indicating the differences.
+	- copy_fixes_201[12]: Backcopies a curated collated file back into the original dataset (this was only done because we started by curating the Data-combined-collated-201[1234].xlsx rather than curating the original datafiles.
+	- diff_spreadsheets_201[12]: Generates a raw spreadsheet differentials. 
