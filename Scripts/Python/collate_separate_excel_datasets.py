@@ -80,7 +80,7 @@ if __name__ == '__main__':
                     collate_copy_row(ws_dest=ws_output, dest_row=ws_output_curr_row, dest_column=6, source_cells=upright_entries)
                     ws_output_curr_row += 1
                 else:
-                    syst.stderr.write("WARN: Potentially invalid upright id: %d, in file %s, row %d\n" % (upright_id,output_filename,row))
+                    sys.stderr.write("WARN: Potentially invalid upright id: %d, in file %s, row %d\n" % (upright_id,parsed.input,row))
                 current_upright_id = upright_id + 1
             else:
                 state = STATE_INIT
