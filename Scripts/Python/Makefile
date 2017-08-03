@@ -1,6 +1,6 @@
 #Makefile for running workflows/scripts to do a particular function
 
-.PHONY: compile collate fill_accession subset find_differences find_differences_2011 find_differences_2012 copy_fixes_2011 copy_fixes_2012 diff_spreadsheets_2011 diff_spreadsheets_2012
+.PHONY: compile collate fill_accession subset find_raw_differences find_differences find_differences_2011 find_differences_2012 copy_fixes_2011 copy_fixes_2012 diff_spreadsheets_2011 diff_spreadsheets_2012
 
 DATA_DIR=../../Data/phenotypic\ data
 RAW_DIR=RawData
@@ -39,3 +39,6 @@ diff_spreadsheets_2011:
 diff_spreadsheets_2012:
 		./diff_spreadsheets.py -1 $(DATA_DIR)/$(RAW_DIR)/2012\ Data/BogLower5-R3-1.xlsx --file_1_ws "Sheet1" -2 $(DATA_DIR)/$(RAW_DIR)/2012\ Data/BogLower5-R3-1-curated.xlsx --file_2_ws "Sheet1" -o $(DATA_DIR)/$(RAW_DIR)/2012\ Data/BogLower5-R3-1-diffs.xlsx --output_ws "Sheet1" 2> errors
 		./diff_spreadsheets.py -1 $(DATA_DIR)/$(RAW_DIR)/2012\ Data/BogLower5-R4.xlsx --file_1_ws "Sheet1" -2 $(DATA_DIR)/$(RAW_DIR)/2012\ Data/BogLower5-R4-curated.xlsx --file_2_ws "Sheet1" -o $(DATA_DIR)/$(RAW_DIR)/2012\ Data/BogLower5-R4-diffs.xlsx --output_ws "Sheet1" 2> errors
+
+find_raw_differences:
+		./diff_all_spreadsheets.sh ../../Data/phenotypic\ data RawData orig
