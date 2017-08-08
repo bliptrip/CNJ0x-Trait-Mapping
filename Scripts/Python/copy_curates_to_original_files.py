@@ -39,7 +39,7 @@ YEAR_ACCESSION_UPRIGHT_TO_WORKSHEET_ROW_MAP = {}
 
 RE_ROWCOL_HEADER = r'Row/Col:(.*)' 
 RE_ROWCOL_ACCESSION = r'\s*R(\d+)\s*C(\d+)\s*' 
-RE_ACCESSION_NAME = r'CNJ0[24]-\d+-\d+'
+RE_ACCESSION_NAME = r'CNJ0[24]_\d+_\d+'
 RE_UPRIGHT = r'\s*(\d+)\s*' 
 #The following was introduced to cross-check the validity of the Row designator in the input files, as there were cases of incorrect rows."
 RE_OUTPUT_FILE_ROW = r'Bog(Upper)|(Lower)5-R(\d+).xlsx'
