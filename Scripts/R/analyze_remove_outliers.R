@@ -1,27 +1,17 @@
+# This file contains code to analyze and remove statistical outliers in the Vorsa upright datasets
+
 #Only install the following packages when running for the first time
 install.packages(c("openxlsx","RColorBrewer"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+install.packages(c("lm"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+
+source('./usefulFunctions.R')
 
 #File for calculating basic statistics from the NJ0[24] population datasets.
 
 require(openxlsx)
-
-#Specify the directory prefix for storing data files.
-DATA_FOLDER_PREFIX <- "../../Data/phenotypic data/DerivedData/cleanup_data.R.output"
-DATA_ROBJS_FOLDER_PREFIX <- paste0(DATA_FOLDER_PREFIX,"/Robjs")
-DATA_PLOTS_FOLDER_PREFIX <- paste0(DATA_FOLDER_PREFIX,"/plots")
-
-#Wrapper functions for readRDS() and writeRDS()
-saveRDSw <- function(object, file, compress=FALSE) {
-    saveRDS(object, paste0(DATA_ROBJS_FOLDER_PREFIX,"/",file), compress=compress)
-}
-
-readRDSw <- function(file) {
-    return(readRDS(paste0(DATA_ROBJS_FOLDER_PREFIX,"/",file)))
-}
-
-quartzw <- function(file, title) {
-    quartz(title=title, file=paste0(DATA_PLOTS_FOLDER_PREFIX,"/",file), type="pdf")
-}
+#Companion to applied regression - contains outlierTest() for regressions.
+library(car)
+library(lme4)
 
 #If using RScript command-line, can pass filenames as arguments on command-line
 
@@ -115,7 +105,6 @@ cnjpop.df <- readRDSw("cnjpop.df.rds")
 
 #View the dataset as a scatterplot before doing a 'formal' outlier removal
 quartzw(file="p1_phenotype_scatterplots_outliers.pdf", title="Phenotype Scatterplots with Outliers")
-par(mfrow=c(3,2), las=1, cex=0.8)
 pairs(formula=~year+berry_length+berry_width+berry_weight+num_seeds, data=cnjpop.df, na.action=na.omit, main="Phenotype Scatterplots with Outliers")
 dev.off()
 
@@ -126,7 +115,13 @@ dev.off()
 #    eval(year_expression)
 #}
 
-#cnjpop.berry_weight.year.boxplot = boxplot(formula=berry_weight~population+year, data=cnjpop.df, xlab="Year",ylab="Largest Berry Weight (g)",main="Boxplot of Largest Berry Weight per Year")
+quartzw(file="p2_phenotype_boxplots_outliers.pdf", title="Phenotype Boxplots with Outliers")
+par(mfrow=c(2,2), las=1, cex=0.8)
+cnjpop.berry_weight.year.boxplot       = boxplot(formula=berry_weight~population, data=cnjpop.df, xlab="Population",ylab="Largest Berry Weight (g)",main="Largest Berry Weight")
+cnjpop.berry_length.year.boxplot       = boxplot(formula=berry_length~population, data=cnjpop.df, xlab="Population",ylab="Largest Berry Length (mm)",main="Largest Berry Length")
+cnjpop.berry_width.year.boxplot        = boxplot(formula=berry_width~population, data=cnjpop.df, xlab="Population",ylab="Largest Berry Width (mm)",main="Largest Berry Width")
+cnjpop.berry_num_seeds.year.boxplot    = boxplot(formula=num_seeds~population, data=cnjpop.df, xlab="Population",ylab="Largest Berry Number of Seeds",main="Largest Berry Number of Seeds")
+dev.off()
 #cnjpop.berry_weight.year.boxplot = boxplot(formula=berry_weight~population+year+accession_name, data=cnjpop.df, xlab="Year",ylab="Largest Berry Weight (g)",main="Boxplot of Largest Berry Weight per Year")
 #str(cnjpop.berry_weight.year.boxplot)
 #cnjpop.berry_weight.year.boxplot
@@ -262,6 +257,116 @@ panel.cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...)
 par(mfrow=c(3,2), las=1, cex=0.8)
 pairs(formula=~year+berry_length+berry_width+berry_weight+num_seeds, data=cnjpop.df.cleaned, na.action=na.omit, upper.panel=panel.cor)
 
+
+#Linear regression-based outlier modeling
+#Consider doing regressions to find outliers
+berry_weight.lm <- lm(formula=berry_weight~population+year+accession,data=cnjpop.df)
+quartzw(file="p3_berry_weight_simple_regression.pdf", "Simple regression plot for berry weight.")
+oldpar <- par(oma=c(0,0,3,0), mfrow=c(2,2))
+plot(berry_weight.lm)
+par(oldpar)
+dev.off()
+berry_weight.lm.outliers <- outlierTest(berry_weight.lm)
+berry_weight.lm.outliers.idx <- as.numeric(names(berry_weight.lm.outliers$rstudent))
+#Show which entries are outliers for cross-referencing in excel file.
+cnjpop.df[berry_weight.lm.outliers.idx,]
+
+berry_length.lm <- lm(formula=berry_length~population+year+accession,data=cnjpop.df)
+quartzw(file="p4_berry_length_simple_regression.pdf", "Simple regression plot for berry length.")
+oldpar <- par(oma=c(0,0,3,0), mfrow=c(2,2))
+plot(berry_length.lm)
+par(oldpar)
+dev.off()
+berry_length.lm.outliers <- outlierTest(berry_length.lm)
+berry_length.lm.outliers.idx <- as.numeric(names(berry_length.lm.outliers$rstudent))
+#Show which entries are outliers for cross-referencing in excel file.
+cnjpop.df[berry_length.lm.outliers.idx,]
+
+berry_width.lm <- lm(formula=berry_width~population+year+accession,data=cnjpop.df)
+quartzw(file="p5_berry_width_simple_regression.pdf", "Simple regression plot for berry width.")
+oldpar <- par(oma=c(0,0,3,0), mfrow=c(2,2))
+plot(berry_width.lm)
+par(oldpar)
+dev.off()
+berry_width.lm.outliers <- outlierTest(berry_width.lm)
+berry_width.lm.outliers.idx <- as.numeric(names(berry_width.lm.outliers$rstudent))
+#Show which entries are outliers for cross-referencing in excel file.
+cnjpop.df[berry_width.lm.outliers.idx,]
+
+num_seeds.lm <- lm(formula=num_seeds~population+year+accession,data=cnjpop.df)
+quartzw(file="p6_num_seeds_simple_regression.pdf", "Simple regression plot for number of seeds.")
+oldpar <- par(oma=c(0,0,3,0), mfrow=c(2,2))
+plot(num_seeds.lm)
+par(oldpar)
+dev.off()
+num_seeds.lm.outliers <- outlierTest(num_seeds.lm)
+num_seeds.lm.outliers.idx <- as.numeric(names(num_seeds.lm.outliers$rstudent))
+#Show which entries are outliers for cross-referencing in excel file.
+cnjpop.df[num_seeds.lm.outliers.idx,]
+
+#Now consider throwing out weight outliers (they seem to be wildly off) and num_seeds outliers.
+cnjpop.df.noout <- cnjpop.df[-c(berry_weight.lm.outliers.idx, num_seeds.lm.outliers.idx),]
+
+
+#Now remove outliers based on regressing the variables on each other, given that they seem to be correlated
+#<<<<<berry_width v. berry_length>>>>>
+berry_width_v_length.lm <- lm(formula=berry_width~berry_length+population+year,data=cnjpop.df.noout)
+quartzw(file="p7_berry_width_v_length_simple_regression.pdf", "Simple regression plot for berry width versus berry length.")
+oldpar <- par(oma=c(0,0,3,0), mfrow=c(2,2))
+plot(berry_width_v_length.lm)
+par(oldpar)
+dev.off()
+berry_width_v_length.lm.outliers <- outlierTest(berry_width_v_length.lm)
+berry_width_v_length.lm.outliers.idx <- as.numeric(names(berry_width_v_length.lm.outliers$rstudent))
+#Throw out outliers
+cnjpop.df.noout <- cnjpop.df.noout[-berry_width_v_length.lm.outliers.idx,]
+
+#<<<<<berry_weight v. berry_length>>>>>
+berry_weight_v_length.lm <- lm(formula=berry_weight~berry_length+population+year,data=cnjpop.df.noout)
+quartzw(file="p8_berry_weight_v_length_simple_regression.pdf", "Simple regression plot for berry weight versus berry length.")
+oldpar <- par(oma=c(0,0,3,0), mfrow=c(2,2))
+plot(berry_weight_v_length.lm)
+par(oldpar)
+dev.off()
+berry_weight_v_length.lm.outliers <- outlierTest(berry_weight_v_length.lm)
+berry_weight_v_length.lm.outliers.idx <- as.numeric(names(berry_weight_v_length.lm.outliers$rstudent))
+#Throw out outliers
+cnjpop.df.noout <- cnjpop.df.noout[-berry_weight_v_length.lm.outliers.idx,]
+
+#<<<<<num_seeds v. berry_weight>>>>>
+num_seeds_v_weight.lm <- lm(formula=num_seeds~berry_weight+population+year,data=cnjpop.df.noout)
+quartzw(file="p9_num_seeds_v_weight_simple_regression.pdf", "Simple regression plot for num seeds versus berry weight.")
+oldpar <- par(oma=c(0,0,3,0), mfrow=c(2,2))
+plot(num_seeds_v_weight.lm)
+par(oldpar)
+dev.off()
+num_seeds_v_weight.lm.outliers <- outlierTest(num_seeds_v_weight.lm)
+num_seeds_v_weight.lm.outliers.idx <- as.numeric(names(num_seeds_v_weight.lm.outliers$rstudent))
+#Throw out outliers
+cnjpop.df.noout <- cnjpop.df.noout[-num_seeds_v_weight.lm.outliers.idx,]
+
+#Save the dataset with outliers removed for future access in QTL analysis.
+saveRDSw(cnjpop.df.noout, "cnjpop.df.noout.rds", compress=T)
+
+#View the dataset as a scatterplot before doing a 'formal' outlier removal
+quartzw(file="p10_phenotype_scatterplots_NO_outliers.pdf", title="Phenotype Scatterplots with_out_ Outliers")
+pairs(formula=~year+berry_length+berry_width+berry_weight+num_seeds, data=cnjpop.df.noout, na.action=na.omit, main="Phenotype Scatterplots with_out_ Outliers")
+dev.off()
+
+
+
+#Just quickly assess remaining simple plots
+quartzw(file="p11_simple_plot_of_phenotyeps.pdf", title="Phenotype Plot Matrix")
+par(mfrow=c(4,2))
+plot(cnjpop.df.noout[which(cnjpop.df.noout$population==1),"berry_weight"],ylab="Population 1 Berry Weight")
+plot(cnjpop.df.noout[which(cnjpop.df.noout$population==2),"berry_weight"],ylab="Population 2 Berry Weight")
+plot(cnjpop.df.noout[which(cnjpop.df.noout$population==1),"berry_width"],ylab="Population 1 Berry Width")
+plot(cnjpop.df.noout[which(cnjpop.df.noout$population==2),"berry_width"],ylab="Population 2 Berry Width")
+plot(cnjpop.df.noout[which(cnjpop.df.noout$population==1),"berry_length"],ylab="Population 1 Berry Length")
+plot(cnjpop.df.noout[which(cnjpop.df.noout$population==2),"berry_length"],ylab="Population 2 Berry Length")
+plot(cnjpop.df.noout[which(cnjpop.df.noout$population==1),"num_seeds"],ylab="Population 1 Num Seeds")
+plot(cnjpop.df.noout[which(cnjpop.df.noout$population==2),"num_seeds"],ylab="Population 2 Num Seeds")
+dev.off()
 
 #Now write to workbook, and add style to elements that are outliers
 wb <- createWorkbook()
