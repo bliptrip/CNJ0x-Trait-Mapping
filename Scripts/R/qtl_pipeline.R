@@ -1,7 +1,10 @@
+#This is a QTL pipeline script given to me by Luis, but I've adapted to work with the Vorsa upright datasets from 2011-2014
+#
 #Only install the following packages when running for the first time
 install.packages(c("lme4"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("qtl"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("sommer"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+install.packages(c("lattice"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 #IRanges is a part of bioconductor package: 
 ## try http:// if https:// URLs are not supported
 source("https://bioconductor.org/biocLite.R")
@@ -26,187 +29,302 @@ library(GenomicRanges)
 library(intervals)
 library(snow)
 library(doSNOW)
+library(lattice)
+library(RColorBrewer)
 
-# creating a list to save phenotypes, r2 and other important data
+require(openxlsx)
 
-#AM - Unecessary.  Quoting out.
-#phenoData<-list()
+#convert_to_factors <- function(pheno.df) {
+#    if( "population" %in% colnames(pheno.df) ) {
+#        pheno.df$population <- as.factor(pheno.df$population)
+#    }
+#    pheno.df$year <- as.factor(pheno.df$year)
+#
+#    return(pheno.df)
+#}
 
+#Luis recommends running scan one on the dataset first
 
-# reading CNJ02 and getting BLUPS
+#Read the phenotypic data in that was output by analyze_remove_outliers.R
+cnjpop.pheno.df <- readRDSw('cnjpop.df.noout.rds')
+head(cnjpop.pheno.df)
+str(cnjpop.pheno.df)
 
-jagCN02<-read.csv('chemicalData/CNJ02_data.csv',header=T,sep=',')
-#jagCN02<-read.csv("/crdata4/luis4/QTLcolorServer_copy/QTLcolorPaper/chemicalData/CNJ02_data.csv",header=T,sep=',')
+#First thing first, only consider progeny
+cnjpop.pheno.progeny.idx <- which(grepl("CNJ0.*", cnjpop.pheno.df$accession_name))
+cnjpop.pheno.df <- cnjpop.pheno.df[cnjpop.pheno.progeny.idx,]
 
+#Setup which phenotypes are invalid
+cnjpop.pheno.df.length_width_weight.zeros.idx <- which(cnjpop.pheno.df$berry_length == 0 | cnjpop.pheno.df$berry_width == 0 | cnjpop.pheno.df$berry_weight == 0)
+cnjpop.pheno.df$berry_length[cnjpop.pheno.df.length_width_weight.zeros.idx] <- NA
+cnjpop.pheno.df$berry_width[cnjpop.pheno.df.length_width_weight.zeros.idx] <- NA
+cnjpop.pheno.df$berry_weight[cnjpop.pheno.df.length_width_weight.zeros.idx] <- NA
+cnjpop.pheno.df[cnjpop.pheno.df.length_width_weight.zeros.idx,]
+cnjpop.pheno.df.num_seeds.zeros.idx <- which(cnjpop.pheno.df$num_seeds == 0)
+cnjpop.pheno.df$num_seeds[cnjpop.pheno.df.num_seeds.zeros.idx] <- NA
 
-# removing outliers
-#plot(jagCN02$mfw)
-f<-which(jagCN02$mfw<.5)
-jagCN02<-jagCN02[-f,]
-#plot(jagCN02$brix)
-f<-which(jagCN02$brix>20)
-jagCN02<-jagCN02[-f,]
-#plot(jagCN02$ta)
-f<-which(jagCN02$ta>5)
-jagCN02<-jagCN02[-f,]
-#plot(jagCN02$pac)
-#plot(jagCN02$tacy)
+#Compute means for each genotype x year across uprights
+cnjpop.pheno.berry_length.means.df <- aggregate(formula=berry_length~population+year+accession_name,data=cnjpop.pheno.df,FUN=mean,na.omit=T)
+cnjpop.pheno.berry_width.means.df <- aggregate(formula=berry_width~population+year+accession_name,data=cnjpop.pheno.df,FUN=mean,na.omit=T)
+cnjpop.pheno.berry_weight.means.df <- aggregate(formula=berry_weight~population+year+accession_name,data=cnjpop.pheno.df,FUN=mean,na.omit=T)
+cnjpop.pheno.num_seeds.means.df <- aggregate(formula=num_seeds~population+year+accession_name,data=cnjpop.pheno.df,FUN=mean,na.omit=T)
 
+#Combine means into one dataframe
+cnjpop.pheno.means.df <- cbind(cnjpop.pheno.berry_length.means.df, berry_width=cnjpop.pheno.berry_width.means.df[,4], berry_weight=cnjpop.pheno.berry_weight.means.df[,4], num_seeds=cnjpop.pheno.num_seeds.means.df[,4])
+colnames(cnjpop.pheno.means.df) <- c("population", "year", "accession_name", "berry_length", "berry_width", "berry_weight", "num_seeds")
 
+#Separate two populations for analysis
+#Means
+cnjpop.pheno.p1.means.df.idx <- which(cnjpop.pheno.means.df$population=="1")
+cnjpop.pheno.p1.means.df <- cnjpop.pheno.means.df[cnjpop.pheno.p1.means.df.idx,-1] #remove the population field as no longer needed
+cnjpop.pheno.p2.means.df.idx <- which(cnjpop.pheno.means.df$population=="2")
+cnjpop.pheno.p2.means.df <- cnjpop.pheno.means.df[cnjpop.pheno.p2.means.df.idx,-1] #Remove the population field as no longer needed
+#All values
+cnjpop.pheno.p1.df.idx <- which(cnjpop.pheno.df$population=="1")
+cnjpop.pheno.p1.df <- cnjpop.pheno.df[cnjpop.pheno.p1.df.idx,-1] #Remove the population field as no longer needed
+cnjpop.pheno.p2.df.idx <- which(cnjpop.pheno.df$population=="2")
+cnjpop.pheno.p2.df <- cnjpop.pheno.df[cnjpop.pheno.p2.df.idx,-1] #Remove the population field as no longer needed
 
+#Determine which genotypes are represented across all three years
+#p1
+cnjpop.pheno.p1.means.table <- table(cnjpop.pheno.p1.means.df$accession_name) 
+#Complete genotypes should apply for both full and means data
+cnjpop.pheno.p1.CompleteGenoTypes <- names(which(cnjpop.pheno.p1.means.table == 3))
+cnjpop.pheno.p1.df <- cnjpop.pheno.p1.df[cnjpop.pheno.p1.df$accession_name %in% cnjpop.pheno.p1.CompleteGenoTypes,]
+cnjpop.pheno.p1.means.df <- cnjpop.pheno.p1.means.df[cnjpop.pheno.p1.means.df$accession_name %in% cnjpop.pheno.p1.CompleteGenoTypes,]
+#p2
+cnjpop.pheno.p2.means.table <- table(cnjpop.pheno.p2.means.df$accession_name) 
+#Complete genotypes should apply for both full and means data
+cnjpop.pheno.p2.CompleteGenoTypes <- names(which(cnjpop.pheno.p2.means.table == 3))
+cnjpop.pheno.p2.df <- cnjpop.pheno.p2.df[cnjpop.pheno.p2.df$accession_name %in% cnjpop.pheno.p2.CompleteGenoTypes,]
+cnjpop.pheno.p2.means.df <- cnjpop.pheno.p2.means.df[cnjpop.pheno.p2.means.df$accession_name %in% cnjpop.pheno.p2.CompleteGenoTypes,]
 
-# getting everything by separate
-## separating data by month
+#Convert population, year, and accession_name to factors
+#cnjpop.pheno.df <- convert_to_factors(cnjpop.pheno.df)
+#cnjpop.pheno.means.df <- convert_to_factors(cnjpop.pheno.means.df)
+#cnjpop.pheno.p1.df <- convert_to_factors(cnjpop.pheno.p1.df)
+#cnjpop.pheno.p1.means.df <- convert_to_factors(cnjpop.pheno.p1.means.df)
+#cnjpop.pheno.p2.df <- convert_to_factors(cnjpop.pheno.p2.df)
+#cnjpop.pheno.p2.means.df <- convert_to_factors(cnjpop.pheno.p2.means.df)
 
-jag<-list()
-mymonths<-unique(jagCN02$Month)
-myyears<-unique(jagCN02$Year)
-mytraits<-c('mfw','tacy','brix','ta','pac')
-#6 different sampling times: 3 years, 2 months/year = 6 times
-completeGenotypes<-names(which(table(jagCN02$Genotype)==6))
+#Now generate all pairwise comparisons for population 1
+#Rather than build up a weird list and generate all pairwise combinations, use the dataframe merge
+#function to build up a dataframe organized by genotypes (accession names) and each column has a year.variable
+#name
 
-cont<-1
-for (i in 1:2){
-  for (j in 1:3){
-    f<-which(jagCN02$Year==myyears[[j]] & jagCN02$Month==mymonths[[i]] & (jagCN02$Genotype %in% completeGenotypes))
-    jag[[cont]]<-jagCN02[f,c(1,4,5,6,7,8)]
-    cont<-cont+1
-  }
-}
-
-
-
-
-
-phenoData<-list()
-
-
-
-geno<-read.table('genetic_data/RawData/CNJ02_AllASMapData.csv',header=T,sep=',')  
-rownames(geno)<-geno$X
-geno<-geno[,-c(1:6)]
-geno2<-atcg1234(t(geno))
-
-
-
-# there are problems in 
-# AM - Note: Trait 3 is brix, trait 5 is PAC
-# trait 3, sep, 2013
-# trait 5, sep, 2011
-# trait 3, oct, 2011 and 2013
-# trait 5, oct, 2011
-
-
-
-for (i in 1:5){
-    #September
-    phenoA<-cbind(jag[[1]][,i+1],jag[[2]][,i+1],jag[[3]][,i+1])
-    #October
-    phenoB<-cbind(jag[[4]][,i+1],jag[[5]][,i+1],jag[[6]][,i+1])
-
-    #Brix - Remove 2013 data for September, 2011 and 2013 for October
-    if (i == 3){
-        phenoA<-phenoA[,-3]
-        phenoB<-phenoB[,-c(1,3)]
-    }
-
-    #AM - PAC - Remove 2011 data for both months
-    if (i == 5){
-        phenoA<-phenoA[,-1]
-        phenoB<-phenoB[,-1]
-    }
-
-
-    if (i==3){
-        rownames(phenoA)<-jag[[1]]$Genotype
-        #AM - Why not rownames?
-        names(phenoB)<-jag[[1]]$Genotype
-    } else{
-        rownames(phenoA)<-jag[[1]]$Genotype
-        rownames(phenoB)<-jag[[1]]$Genotype
-    }
-
-    f<-intersect(rownames(phenoA),rownames(geno2))
-    phenoA2<-phenoA[f,]
-    geno3<-geno2[f,]
-    A<-A.mat(geno3)
-
-
-    Za <- diag(nrow(A)) 
-    ETA.A <- list(add=list(Z=Za,K=A)) 
-    repo1<-mmer(Y=phenoA2,Z=ETA.A,silent=FALSE,MVM=TRUE,EIGEND = FALSE,draw=TRUE)
-    blups1<-repo1$u.hat$add
-    var1<-repo1$var.comp
-
-    if (i==3) {
-        f<-intersect(names(phenoB),rownames(geno2))
-        phenoA2<-phenoB[f]
-    } else {
-        f<-intersect(rownames(phenoB),rownames(geno2))
-        phenoA2<-phenoB[f,]
-    }
-    geno3<-geno2[f,]
-    A<-A.mat(geno3)
-
-
-    Za <- diag(nrow(A)) 
-    ETA.A <- list(add=list(Z=Za,K=A)) 
-    repo1<-mmer(Y=phenoA2,Z=ETA.A,silent=FALSE,MVM=TRUE,EIGEND = FALSE,draw=TRUE)
-    blups2<-repo1$u.hat$add
-    var2<-repo1$var.comp
-
-    phenoData[[i]]<-list(sep=list(blups=as.matrix(blups1),vcov=var1,trait=mytraits[i]),oct=list(blups=as.matrix(blups2),vcov=var2,trait=mytraits[i]))
-
-}
-
-# calculating h2 and correlations
-for (i in 1:5){
-    for (j in 1:2){
-        #For brix and october, there is no correlation matrix calculated.
-        if (i==3 & j==2) {
-            #AM edit: Had to add 'component' reference as was getting error in sum function.
-            phenoData[[i]][[j]]$h2=phenoData[[i]][[j]]$vcov[1,'component']/sum(phenoData[[i]][[j]]$vcov[,'component'])
-            names(phenoData[[i]][[j]]$h2)<-myyears[i]
-            phenoData[[i]][[j]]$gcor=NA
-            names(phenoData[[i]][[j]]$gcor)<-myyears[i]
-            names(phenoData[[i]][[j]]$blups)<-rownames(phenoA2)
-        } else {
-            gv<-diag(phenoData[[i]][[j]]$vcov$add)
-            rv<-diag(phenoData[[i]][[j]]$vcov$Residual)
-            phenoData[[i]][[j]]$h2<-gv/(gv+rv)
-
-            x<-cor(phenoData[[i]][[j]]$blups,use='complete.obs')
-            goodY<-as.numeric(unlist(regmatches(colnames(x),gregexpr('[0-9]+',colnames(x)))))
-            phenoData[[i]][[j]]$gcor<-x
-            colnames(phenoData[[i]][[j]]$gcor)<-myyears[goodY]
-            rownames(phenoData[[i]][[j]]$gcor)<-myyears[goodY]
-            names(phenoData[[i]][[j]]$h2)<-myyears[goodY]
-            rownames(phenoData[[i]][[j]]$blups)<-rownames(phenoA2)
+#Function: split_by_year()
+#
+# Purpose: To split the phenotypic dataframe into separate years for generating a phenotypic correlation matrix.
+#
+# Args: 
+#     - pheno.df: The input dataframe.
+#     - year.col: The name for the column specifying the year.
+#     - vars.col: A vector containing the list of columns we care to split into separate years.
+#     - by: The name of the column we want to merge on.  NOTE: This will usually be the genotype, cultivar, or accession name.
+#
+# Returns: A new dataframe containing columns named var.year for each variable by year combination, along organized by
+#           the 'by' column (typically genotype, cultivar, or accession name).
+#
+# NOTE: The column specified by year.col should be a factor.
+#
+split_by_year <- function(pheno.df, year.col, vars.col, by) {
+genos <- unique(pheno.df[,by])
+split.pheno.df   <- data.frame(genos)
+colnames(split.pheno.df) <- c(by)
+for( var in vars.col ) {
+    for( year in unique((pheno.df[,year.col])) ) {
+        single_year.idx <- which(pheno.df[,year.col] == year) 
+        newvar <- paste0(var,".",year)
+        single_year.df <- pheno.df[single_year.idx,c(by,var)]
+            colnames(single_year.df) <- c(by,newvar)
+            split.pheno.df <- merge(split.pheno.df,single_year.df,by=by)
         }
     }
+    return(split.pheno.df)
 }
 
-superMap<-read.table('genetic_data/RawData/consensusMapAll2.csv',header=T,sep=',')
-superMap<-superMap[,c('marker','LG','consensus')]
-superMap<-superMap[order(superMap[,2],superMap[,3]),]
-superMap$binID<-NA
-superMap2<-numeric()
-for (i in 1:12){
-  f<-which(superMap$LG==i)
-  mybins<-unique(superMap$consensus[f])
-  mybinsID<-paste0('bin_',i,'@',mybins,'cM')
+focal.cols <- c("berry_length", "berry_width", "berry_weight", "num_seeds")
+
+#Do a combined population assessment
+cnjpop.pheno.combined.means.df <- rbind(cnjpop.pheno.p1.means.df,cnjpop.pheno.p2.means.df) #With incomplete genotypes removed
+cnjpop.pheno.combined.means.cor.mat <- cor(cnjpop.pheno.combined.means.df[,focal.cols])
+write.csvw(cnjpop.pheno.combined.means.cor.mat, "combinedpopulations_phenotype_correlations_global.csv")
+
+#Generate the overall correlation matrix between variables across all years
+cnjpop.pheno.p1.means.cor.mat <- cor(cnjpop.pheno.p1.means.df[,focal.cols])
+write.csvw(cnjpop.pheno.p1.means.cor.mat, "CNJ04_phenotype_correlations_global.csv")
+cnjpop.pheno.p2.means.cor.mat <- cor(cnjpop.pheno.p2.means.df[,focal.cols])
+write.csvw(cnjpop.pheno.p2.means.cor.mat, "CNJ02_phenotype_correlations_global.csv")
+
+#Generate the correlation matrix by with variables split year
+cnjpop.pheno.p1.means.split.df <- split_by_year(cnjpop.pheno.p1.means.df, year.col="year", vars.col=focal.cols, by="accession_name")
+cnjpop.pheno.p1.means.cor.split.mat <- cor(cnjpop.pheno.p1.means.split.df[,-1])
+write.csvw(cnjpop.pheno.p1.means.cor.split.mat, "CNJ04_phenotype_correlations_by_year.csv")
+
+cnjpop.pheno.p2.means.split.df <- split_by_year(cnjpop.pheno.p2.means.df, year.col="year", vars.col=focal.cols, by="accession_name")
+cnjpop.pheno.p2.means.cor.split.mat <- cor(cnjpop.pheno.p2.means.split.df[,-1])
+write.csvw(cnjpop.pheno.p2.means.cor.split.mat, "CNJ02_phenotype_correlations_by_year.csv")
+
+postscriptw(file="p12_phenotypes.wholeCor.eps", title="Phenotypic Correlations")
+levelplot(cnjpop.pheno.combined.means.cor.mat,scales=list(x=list(rot=90)),main='Combined Populations', xlab='',ylab='',col.regions=colorRampPalette(c('white','black'))(100))
+levelplot(cnjpop.pheno.p1.means.cor.mat,scales=list(x=list(rot=90)),main='CNJ04', xlab='',ylab='',col.regions=colorRampPalette(c('white','black'))(100))
+levelplot(cnjpop.pheno.p1.means.cor.split.mat,scales=list(x=list(rot=90)),main='CNJ04: Year Split', xlab='',ylab='',col.regions=colorRampPalette(c('white','black'))(100))
+levelplot(cnjpop.pheno.p2.means.cor.mat,scales=list(x=list(rot=90)),main='CNJ02', xlab='',ylab='',col.regions=colorRampPalette(c('white','black'))(100))
+levelplot(cnjpop.pheno.p2.means.cor.split.mat,scales=list(x=list(rot=90)),main='CNJ02: Year Split', xlab='',ylab='',col.regions=colorRampPalette(c('white','black'))(100))
+dev.off()
+
+#From these correlation plots, the following is obvious:
+# - Berry width, length, and weight are all highly correlated, while the number of seeds seems less correlated.
+#     - Interestingly, width is more highly correlated to weight and so is length to weight, but width and length aren't necessarily as highly correlated as these
+#     - The number of seeds seems to be most correlated to width for both populations, although it is still low overall.
+# - The year to year correlation within some phenotypes is not as high as expected, indicating that year does not necessarily provide information on the value of a given phenotype.
+#     - Exceptions: The berry length seems to have the highest year to year correlation (predicted more by the environment?)
+#
+# Luis pointed out that CNJ04 (smaller pop) has very low year-year correlation w/in traits, so it is not a good population to do assessment on as heritability is low.  He thus said
+# that it is probably better to work on CNJ02 (higher within-trait correlations across years), and to first do multivariate analysis on highly correlated phenotypic variables
+# (berry weight, length, and width) within years (years are independent) to allow them to correct for each other, then to see how year-year correlation stacks up after BLUPs calculated.
+# 
+
+#Luis mentioned that the only reason we really want to look at correlations at the phenotypic level is if we want to model them
+#in multivariate analysis together such that they will correct for each other.
+#
+#The one catch to multivariate analysis is that if you want to get separate QTL peaks for the two separate variables that are being modeled as a response together,
+#they will show the same peaks instead of being separate.
+#
+#However, if you want to find separate QTLs for the different traits, you need to model one trait in the covariates and treat the other trait as a response.
+
+
+#
+#He also talked about why we care to model as random effects: We need the variance components for heritability, and we need to be able to test that variance > 0.
+
+#Luis says that it is best to use 'lattice' package and levelplot() function.
+#cnjpop.pheno.df$population <- as.numeric(cnjpop.pheno.df$population)
+#cnjpop.pheno.df.cormat <- round(cor(cnjpop.pheno.df[,c("year","population","berry_length","berry_width","berry_weight","num_seeds")],use='complete.obs'),3)
+
+## separating data by population and year
+#cnjpop.pheno.mat <- matrix(data=cnjpop.pheno.df,nrow=length(levels(cnjpop.pheno.df$population)),ncol=length(levels(cnjpop.pheno.df$year)))
+
+#Begin assessing the data - Only assess population 2 first (CNJ02*)
+
+#Read in the marker maps
+p1.geno<-read.table(geno_rpath2fpath("CNJ04_AllASMapData.csv"),header=T,sep=',')  
+p2.geno<-read.table(geno_rpath2fpath("CNJ02_AllASMapData.csv"),header=T,sep=',')  
+rownames(p1.geno)<-p1.geno$X
+rownames(p2.geno)<-p2.geno$X
+p1.geno<-p1.geno[,-c(1:6)] #Remove the marker name, segregation pattern, phase, classification, position, and lg fields -- only keep the genotype calls
+p2.geno<-p2.geno[,-c(1:6)] #Remove the marker name, segregation pattern, phase, classification, position, and lg fields -- only keep the genotype calls
+p1.geno.num <-atcg1234(t(p1.geno))
+p2.geno.num <-atcg1234(t(p2.geno))
+
+#A note here: Luis calculated his additive genetic effects using the means of his phenotypic values.  I'd like to both try the means and the actual values (will need to duplicate rows for each duplicated genotype in realized additive matrix)
+#and see what differences I can find in heritability of one versus the other.
+#NOTE: Only doing means first, as I noticed that trying to do all data will take a tremendous amount of memory and computing resources on my computer.
+#
+
+mixed_model_analyze <- function(pheno, geno, header.cols, tag=NA, additional.model=NA) {
+    analyses.l <- vector("list", 2)
+    #Random genotype effects incidence matrix (per sommer documentation)
+    Zg      <- model.matrix(~accession_name-1,pheno); colnames(Zg) <- gsub("accession_name","",colnames(Zg))
+    A       <- A.mat(geno)
+    if( !is.na(additional.model) ) {
+        ETA.A <- additional.model
+        ETA.A$accession_name <- list(Z=Zg,K=A)
+    } else {
+        ETA.A   <- list(accession_name=list(Z=Zg,K=A)) 
+    }
+
+    header              <- header.cols
+    multivariate.traits <- c("berry_length","berry_width","berry_weight")
+    repo    <- mmer(Y=pheno[,multivariate.traits],Z=ETA.A,silent=FALSE,MVM=TRUE,EIGEND = FALSE,draw=FALSE)
+    vcov    <- repo$var.comp
+    h2      <- (diag(length(multivariate.traits))*(vcov$accession_name/Reduce('+',vcov))) %*% c(1,1,1)
+    analyses.l[[1]] <- list(pheno=pheno[,c(header,multivariate.traits)], geno=geno, A=A, blups=repo$u.hat$accession_name, vcov=vcov, h2=h2, traits=multivariate.traits, repo=repo)
+    univariate.trait <- "num_seeds"
+    repo    <- mmer(Y=pheno[,univariate.trait],Z=ETA.A,silent=FALSE,MVM=TRUE,EIGEND = FALSE,draw=FALSE)
+    blups   <- repo$u.hat$accession_name
+    colnames(blups) <- univariate.trait #Necessary for subsequent indexing to work on single-column datasets -- consider emailing Eduardo about this.
+    vcov    <- repo$var.comp
+    h2      <- vcov['Var(accession_name)','component']/sum(vcov[,'component'])
+    #gcor     <- cor(as.matrix(blups),use='complete.obs')
+    #rownames(gcor) <- rownames(geno)
+    #colnames(gcor) <- colnames(geno)
+    #l$univariate <- list(pheno=pheno[,c(header,univariate.trait)], geno=geno, A=A, blups=blups, vcov=vcov, h2=h2, gcor=gcor)
+    analyses.l[[2]] <- list(pheno=pheno[,c(header,univariate.trait)], geno=geno, A=A, blups=blups, vcov=vcov, h2=h2, traits=univariate.trait)
+
+    if( !is.na(tag) ) {
+        l <- list(description=tag, analyses=analyses.l)
+    } else {
+        l <- list(analyses=analyses.l)
+    }
+
+    return(l)
+}
+
+#Separate the phenotypes by year
+#Overwriting cnjpop.pheno.p2.df (was filled in with means)
+intersect.geno.pheno <- intersect(unique(cnjpop.pheno.p2.means.df[,"accession_name"]), rownames(p2.geno.num))
+
+cnjpop.mmer.p2 <- vector("list",length(unique((cnjpop.pheno.p2.means.df$year)))+1) #Add one for all years
+idx <- 1
+for (year in unique(cnjpop.pheno.p2.means.df$year)) {
+    #Technically, since I'm analyzing the years separately here, I don't need to use 'complete genotypes' across all three years.  This is more important when
+    #modeling the year as a covariate.  Think about changing this.
+    include.idx                   <- which( (year == cnjpop.pheno.p2.means.df$year) & (cnjpop.pheno.p2.means.df$accession_name %in% cnjpop.pheno.p2.CompleteGenoTypes) & (cnjpop.pheno.p2.means.df$accession_name %in% intersect.geno.pheno) )
+
+    #First do multivariate analysis on length, width, and weight, since they have a high level of correlation between them.
+    pheno   <- cnjpop.pheno.p2.means.df[include.idx,]
+    geno    <- p2.geno.num[as.character(pheno$accession_name),]
+    pheno$accession_name <- as.character(pheno$accession_name)
+
+    header <- c("year", "accession_name")
+    cnjpop.mmer.p2[[idx]] <- mixed_model_analyze(pheno, geno, header, tag=year)
+
+    idx <- idx + 1
+}
+
+#Now do a all-years analysis of traits
+include.idx                   <- which( (cnjpop.pheno.p2.means.df$accession_name %in% cnjpop.pheno.p2.CompleteGenoTypes) & (cnjpop.pheno.p2.means.df$accession_name %in% intersect.geno.pheno) )
+pheno   <- cnjpop.pheno.p2.means.df[include.idx,]
+geno    <- p2.geno.num[unique(pheno$accession_name),]
+header <- c("year", "accession_name")
+#The following only generates the correct matrix if years are converted to factors first.
+pheno$year <- as.factor(pheno$year)
+Zy <- model.matrix(~year-1,pheno); colnames(Zy) <- gsub("year","",colnames(Zy))
+years <- levels(pheno$year)
+Ky <- diag(length(years))
+colnames(Ky) <- years
+rownames(Ky) <- years
+cnjpop.mmer.p2[[idx]] <- mixed_model_analyze(pheno, geno, header, tag="all-years", additional.model=list(year=list(Z=Zy,K=Ky)))
+
+#Save the mixed model analysis results to an R-data file for later analysis
+saveRDSw(cnjpop.mmer.p2,'cnjpop.mmer2.p2.rds', compress=T)
+
+#Read the mixed model analysis results from the R-data file for later analysis -- Start from here if we want to save time
+cnjpop.mmer.p2 <- readRDSw('cnjpop.mmer2.p2.rds')
+
+
+#Convert consensus map to bins
+superMap.df<-read.table(geno_rpath2fpath('consensusMapAll2.csv'),header=T,sep=',')
+superMap.df<-superMap.df[,c('marker','LG','consensus')]
+superMap.df<-superMap.df[order(superMap.df[,2],superMap.df[,3]),]
+superMap.df$binID<-NA
+superMap.bin.df<-numeric()
+for (LG in unique(superMap.df$LG)){
+  f<-which(superMap.df$LG==LG)
+  mybins<-unique(superMap.df$consensus[f])
+  mybinsID<-paste0('bin_',LG,'@',mybins,'cM')
   
   for (j in 1:length(mybins)){
-    f2<-which(superMap$consensus[f]==mybins[j])
-    superMap$binID[f[f2]]<-mybinsID[j]      
-    superMap2<-rbind(superMap2,superMap[f[f2[1]],])
+    f2<-which(superMap.df$consensus[f]==mybins[j])
+    superMap.df$binID[f[f2]]<-mybinsID[j]      
+    superMap.bin.df<-rbind(superMap.bin.df,superMap.df[f[f2[1]],])
   }
 }
+rownames(superMap.bin.df)<-superMap.bin.df$marker
 
-rownames(superMap2)<-superMap2$marker
 
 ## genetic analysis
-geno<-read.table('genetic_data/RawData/CNJ02_AllASMapData.csv',header=T,sep=',')  
+geno<-read.table(geno_rpath2fpath('CNJ02_AllASMapData.csv'),header=T,sep=',')  
 
 
 matrixK<-matrix(NA,nrow=nrow(geno),ncol=ncol(geno)-6)
@@ -240,50 +358,114 @@ colnames(gData)<-geno$X
 gData[1:10,1:10]
 
 
+#Generate the QTL cross files for reading into R/qtl
+for (mmer in cnjpop.mmer.p2) {
+    print(paste0("Population Analysis Set: ",mmer$description))
+    for(analysis in mmer$analyses) {
+        traits <- analysis$traits
+        geno.intersect<-intersect(rownames(analysis$blups),rownames(gData))
+        y<-as.data.frame(analysis$blups[geno.intersect,traits]) #Convert to data.frame to deal with issues in setting colnames in univariate analysis (blups aren't a data.frame in this case)
+        colnames(y)<-traits
 
-for (ii in 1:5){
-    for (i in 1:2){
-        if (ii==3 & i==2) {
-            f<-intersect(names(phenoData[[ii]][[i]]$blups),rownames(gData))
-            y2<-phenoData[[ii]][[i]]$blups[f]
-            names(y2)<-myyears[ii]
-        } else {
-            goodY<-as.numeric(unlist(regmatches(colnames(phenoData[[ii]][[i]]$blups),gregexpr('[0-9]+',colnames(phenoData[[ii]][[i]]$blups)))))
-            f<-intersect(rownames(phenoData[[ii]][[i]]$blups),rownames(gData))
-            y2<-phenoData[[ii]][[i]]$blups[f,]
-            colnames(y2)<-myyears[goodY]
-        }
-        gData2<-gData[f,]
-        gData2[1:10,1:10]
+        gData.sub <- gData[geno.intersect,]
+        geno.intersect.sub<-intersect(colnames(gData.sub),superMap.bin.df$marker)
+        gData.sub<-gData.sub[,geno.intersect.sub]
+        superMap.sub<-superMap.bin.df[geno.intersect.sub,]
 
-        f<-intersect(colnames(gData2),superMap2$marker)
+        gData.sub<-rbind(superMap.sub$LG,superMap.sub$consensus,gData.sub)
 
-        gData3<-gData2[,f]
-        superMap3<-superMap2[f,]
+        colnames(gData.sub)<-superMap.sub$binID
 
-        gData4<-rbind(superMap3$LG,superMap3$consensus,gData3)
-        gData4[1:10,1:10]
+        gData.sub<-data.frame(rbind('','',y),gData.sub)
+        rownames(gData.sub)[1:2]<-c('chr','pos')
 
-        colnames(gData4)<-superMap3$binID
-
-        if (ii==3 & i==2){
-            gData5<-data.frame(c('','',y2),gData4)
-        }else{
-            gData5<-data.frame(rbind('','',y2),gData4)
-        }
-        rownames(gData5)[1:2]<-c('chr','pos')
-        gData5[1:10,1:20]
-
-        write.csv(file='temp/testQTL.csv',gData5,row.names = FALSE)
-
-        superF <- (read.cross(format = "csv", file='temp/testQTL.csv',genotypes = NULL))
-
-        phenoData[[ii]][[i]]$cross<-numeric()
-        phenoData[[ii]][[i]]$cross <- calc.genoprob(superF,step=0,map.function="kosambi") 
-
+        qtlfile=paste0('qtl/',mmer$description,"__",paste(traits,collapse="__"),"__QTL.csv")
+        write.csv(file=geno_dpath2fpath(qtlfile),gData.sub,row.names = FALSE)
     }
 }
 
+#Read in the cross files for R/qtl and then calculate the genotype probabilities
+for (i in 1:length(cnjpop.mmer.p2)) {
+    mmer <- cnjpop.mmer.p2[[i]]
+    for(j in 1:length(mmer)) {
+        analysis <- mmer$analyses[[j]]
+        #Have to index in main structure as R doesn't keep lists as references but instead makes copies!
+        traits <- analysis$traits
+        cnjpop.mmer.p2[[i]]$analyses[[j]]$trait_qtls <- vector("list",length(traits))
+        qtlfile=paste0('qtl/',mmer$description,"__",paste(analysis$traits,collapse="__"),"__QTL.csv")
+        cnjpop.cross <- (read.cross(format = "csv", file=geno_dpath2fpath(qtlfile),genotypes = NULL))
+        cnjpop.mmer.p2[[i]]$analyses[[j]]$cross <- calc.genoprob(cnjpop.cross,step=0,map.function="kosambi") 
+        cnjpop.mmer.p2[[i]]$analyses[[j]]$scanone.out.ehk <- scanone(cnjpop.mmer.p2[[i]]$analyses[[j]]$cross,method='ehk',pheno.col=1:length(traits))
+        #To get statistical thresholds
+        #operms <- scanone(cnjpop.mmer.p2[[i]]$analyses[[j]]$cross, n.perm=1000, verbose=FALSE)
+        #cnjpop.mmer.p2[[i]]$analyses[[j]]$trait_qtls[[k]]$scanone.out.hk.sum <- summary(cnjpop.mmer.p2[[i]]$analyses[[j]]$trait_qtls[[k]]$scanone.out.hk, perms=operms, alpha=0.1, pvalues=TRUE)
+        #cnjpop.mmer.p2[[i]]$analyses[[j]]$trait_qtls[[k]]$scanone.out.ehk.sum <- summary(cnjpop.mmer.p2[[i]]$analyses[[j]]$trait_qtls[[k]]$scanone.out.ehk, perms=operms, alpha=0.1, pvalues=TRUE)
+    }
+}
+
+#Generate the plots -- assume symmetrical data
+col.years.pal <- brewer.pal(3, 'Dark2')
+mmer <- cnjpop.mmer.p2[[1]]
+for( j in 1:length(mmer$analyses) ) {
+    analysis <- mmer$analyses[[j]]
+    quartzw(file=paste0("p13_scanone_QTLS_",paste(analysis$traits,collapse="__"),".pdf"), title="Whole Genome QTL Plots")
+    old.par <- par(mfrow=c(2,length(analysis$traits))) #2 rows for 2 graphs per trait: 1 for all years combined, 1 for all-years in model
+    scanones.year.l <- list(cnjpop.mmer.p2[[1]]$analyses[[j]]$scanone.out.ehk,cnjpop.mmer.p2[[2]]$analyses[[j]]$scanone.out.ehk,cnjpop.mmer.p2[[3]]$analyses[[j]]$scanone.out.ehk)
+    years.v <- c(cnjpop.mmer.p2[[1]]$description, cnjpop.mmer.p2[[2]]$description, cnjpop.mmer.p2[[3]]$description)
+    #First combine plots over all years
+    for( k in 1:length(analysis$traits) ) {
+        trait <- analysis$traits[[k]]
+        do.call.list <- scanones.year.l
+        do.call.list$main <- paste0("Trait ",analysis$traits[[k]],collapse="")
+        do.call.list$col <-  col.years.pal[1:3]
+        do.call.list$lodcolumn <- k
+        do.call("plot", do.call.list)
+        legend("topleft", legend=years.v, fill=col.years.pal[1:3], col=col.years.pal[1:3])
+    }
+    #Then show all-years plot.
+    for( k in 1:length(analysis$traits) ) {
+        trait <- analysis$traits[[k]]
+        plot(cnjpop.mmer.p2[[4]]$analyses[[j]]$scanone.out.ehk, main=paste0("Trait (", cnjpop.mmer.p2[[4]]$description, ") ", analysis$traits[[k]],collapse=""),lodcolumn=k)
+    }
+    par(old.par)
+    dev.off()
+}
+
+for (i in 1:length(cnjpop.mmer.p2)) {
+    for(j in 1:length(mmer)) {
+        analysis <- mmer$analyses[[j]]
+        #Have to index in main structure as R doesn't keep lists as references but instead makes copies!
+        traits <- analysis$traits
+        cnjpop.mmer.p2[[i]]$analyses[[j]]$trait_qtls <- vector("list",length(traits))
+        qtlfile=paste0('qtl/',mmer$description,"__",paste(analysis$traits,collapse="__"),"__QTL.csv")
+        cnjpop.cross <- (read.cross(format = "csv", file=geno_dpath2fpath(qtlfile),genotypes = NULL))
+        cnjpop.mmer.p2[[i]]$analyses[[j]]$cross <- calc.genoprob(cnjpop.cross,step=0,map.function="kosambi") 
+        cnjpop.mmer.p2[[i]]$analyses[[j]]$scanone.out.ehk <- scanone(cnjpop.mmer.p2[[i]]$analyses[[j]]$cross,method='ehk',pheno.col=1:length(traits))
+        #To get statistical thresholds
+        #operms <- scanone(cnjpop.mmer.p2[[i]]$analyses[[j]]$cross, n.perm=1000, verbose=FALSE)
+        #cnjpop.mmer.p2[[i]]$analyses[[j]]$trait_qtls[[k]]$scanone.out.hk.sum <- summary(cnjpop.mmer.p2[[i]]$analyses[[j]]$trait_qtls[[k]]$scanone.out.hk, perms=operms, alpha=0.1, pvalues=TRUE)
+        #cnjpop.mmer.p2[[i]]$analyses[[j]]$trait_qtls[[k]]$scanone.out.ehk.sum <- summary(cnjpop.mmer.p2[[i]]$analyses[[j]]$trait_qtls[[k]]$scanone.out.ehk, perms=operms, alpha=0.1, pvalues=TRUE)
+    }
+}
+
+cnjpop.mmer.p2[[1]]$analyses[[1]]$trait_qtls[[1]]$scanone.out.ehk
+#Resave the mixed model analysis results to an R-data file for later analysis
+saveRDSw(cnjpop.mmer.p2,'cnjpop.mmer2.p2.rds', compress=T)
+
+#Print chromosome 2, 10, and 11 QTL plots for trait berry_length, width, and weight (num_seeds looked like noise on output)
+postscriptw(file="p14_scanone_chr2_10_11_length_width_weight_QTLS.eps", title="Chromosome 2, 10, and 11 for berry_length, width, and weight QTL Plots")
+for (i in 1:length(cnjpop.mmer.p2)) {
+    mmer <- cnjpop.mmer.p2[[i]]
+    analysis <- mmer$analyses[[1]]
+    traits <- analysis$traits
+    trait_qtls <- analysis$trait_qtls
+    traits.num <- length(traits)
+    for( k in 1:traits.num ) {
+        plot(trait_qtls[[k]]$scanone.out.hk, trait_qtls[[k]]$scanone.out.ehk, chr=c(2,10,11), main=paste0(mmer$description, ": HK Regression on Trait ", traits[[k]]), col=c("blue","red"))
+        legend("top", legend=c("HK", "EHK"), fill=c("blue", "red"), col=c("blue","red"))
+    }
+}
+dev.off()
 
 sixo<-c(4.081565, 9.150947, 6.473634)
 
