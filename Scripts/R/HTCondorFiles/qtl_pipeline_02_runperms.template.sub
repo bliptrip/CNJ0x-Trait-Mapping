@@ -1,0 +1,29 @@
+# Specify the HTCondor Universe (vanilla is the default and is used
+#  for almost all jobs), the desired name of the HTCondor log file,
+#  and the desired name of the standard error file.  
+#  Wherever you see $(Cluster), HTCondor will insert the queue number
+#  assigned to this set of jobs at the time of submission.
+universe = vanilla
+#Use InitialDir to generate a subset of directories 
+InitialDir = $(Process)
+executable = qtl_pipeline_02_runperms.sh
+arguments = input.seed 10 R-3.4.1-chtc.tar.gz "2011,2012" "total_berry_weight" 
+output = $(Process)/qtl_pipeline_02_runperms.out
+error = $(Process)/qtl_pipeline_02_runperms.err
+log = $(Process)/qtl_pipeline_02_runperms.log
+# Specify that HTCondor should transfer files to and from the
+#  computer where each job runs. The last of these lines *would* be
+#  used if there were any other files needed for the executable to run.
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files=R-3.4.1-chtc.tar.gz,$(Process)/input.seed,qtl_pipeline_02_runperms.R,qtl_pipeline_02_runperms.datafiles.tar.gz
+transfer_output_files = cnjpop.scanones.p2.rds.gz
+# Tell HTCondor what amount of compute resources
+#  each job will need on the computer where it runs.
+request_cpus = 1
+request_memory = 1GB
+request_disk = 1MB
+#
+# Tell HTCondor to run <num> instances of our job:
+#Note: The makefile will automatically update this file per the configuration specified
+queue 1
