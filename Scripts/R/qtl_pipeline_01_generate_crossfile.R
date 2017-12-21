@@ -1,3 +1,5 @@
+#!/usr/bin/env RScript
+
 #This is a QTL pipeline script given to me by Luis, but I've adapted to work with the Vorsa upright datasets from 2011-2014
 #
 
@@ -98,7 +100,7 @@ for (mmer in cnjpop.mmer.p2) {
         gData.sub<-data.frame(rbind('','',y),gData.sub)
         rownames(gData.sub)[1:2]<-c('chr','pos')
 
-        qtlfile=paste0('qtl/',mmer$description,"__",paste(traits,collapse="__"),"__QTL.csv")
+        qtlfile=paste0('qtl/',mmer$description,"--",paste(traits,collapse="__"),"--QTL.csv")
         write.csv(file=geno_dpath2fpath(qtlfile),gData.sub,row.names = FALSE)
     }
 }
