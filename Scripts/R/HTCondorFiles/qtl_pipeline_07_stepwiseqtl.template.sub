@@ -1,0 +1,29 @@
+# Specify the HTCondor Universe (vanilla is the default and is used
+#  for almost all jobs), the desired name of the HTCondor log file,
+#  and the desired name of the standard error file.  
+#  Wherever you see $(Cluster), HTCondor will insert the queue number
+#  assigned to this set of jobs at the time of submission.
+universe = vanilla
+#Use InitialDir to generate a subset of directories 
+executable = ../qtl_pipeline_07_stepwiseqtl.sh
+arguments = input.mtraits input.qtlmethod input.maxqtl
+output = qtl_pipeline_07_stepwiseqtl.out
+error = qtl_pipeline_07_stepwiseqtl.err
+log = qtl_pipeline_07_stepwiseqtl.log
+
+#The following is necessary to run R-3.4.1.  It seems that other operating system versions can give trouble.  I can test this later.
+requirements = (OpSysMajorVer == 6) || (OpSysMajorVer == 7)
+
+# Specify that HTCondor should transfer files to and from the
+#  computer where each job runs. The last of these lines *would* be
+#  used if there were any other files needed for the executable to run.
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+#The following will be modified by a script to include the correct version of R
+transfer_input_files=input.model,input.mtraits,input.qtlmethod,input.maxqtl,cross.csv,operms.2D.rds,../qtl_pipeline_07_stepwiseqtl.R
+transfer_output_files = scansw.rds,scansw.summary.rds 
+# Tell HTCondor what amount of compute resources
+#  each job will need on the computer where it runs.
+request_cpus = 1
+request_memory = 1GB
+request_disk = 100MB
