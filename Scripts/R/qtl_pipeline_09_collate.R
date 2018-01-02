@@ -27,7 +27,7 @@ supermap.bin.df <- readRDS(file=geno_rpath2fpath(paste0(geno_consensus_file,".rd
 #index into qtl.collated.df
 qtl.collated.df <- data.frame(model=character(),year=numeric(),mtraits=character(),trait=character(),chr=numeric(),position=numeric(),nearest.marker=numeric(),marker.variance=numeric(),model.variance=numeric(),interval=numeric(),stringsAsFactors=FALSE)
 qtl.collated.df.p <- newPointer(qtl.collated.df)
-collate_qtl     <- function(trait.cfg, trait.names, trait, trait.path, args) {
+collate_qtl     <- function(trait.cfg, trait.names, trait, trait.path, funArgs) {
 		model <- as.character(trait.cfg$model)
 		year  <- as.numeric(trait.cfg$year)
         trait_subsubfolder_fpath <- file.path(trait.path, trait)
@@ -48,7 +48,7 @@ collate_qtl     <- function(trait.cfg, trait.names, trait, trait.path, args) {
                     x2    <- scan.sw.mdres$drop[f2,]
                     x.var <- x2$'%var'
                 }
-                append.pointer(args, c(model, year, trait.names, trait, mychr, mypos, mymarker, x.var, scan.sw.mdres$variance, scan.sw.mdres$inter[i]))
+                append.pointer(funArgs, c(model, year, trait.names, trait, mychr, mypos, mymarker, x.var, scan.sw.mdres$variance, scan.sw.mdres$inter[i]))
             }
         }
 }
