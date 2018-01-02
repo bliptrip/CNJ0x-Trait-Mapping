@@ -22,9 +22,6 @@ plotcors:
 genmodels:
 		R CMD BATCH '--args workflow="../../Workflows/1"' qtl_pipeline_01_genmodels.R
 
-GenCross:
-		R CMD BATCH qtl_pipeline_01_generate_crossfile.R
-
 #Rbuild tars up the packages necessary for installing an R-build and then transferring to submit server.  Untar Rpackage.tgz, submit an interactive session using
 #condor_submit -i Rpackage.sub
 #Comment-out any packages you don't want to install if they're already in the tarball.
