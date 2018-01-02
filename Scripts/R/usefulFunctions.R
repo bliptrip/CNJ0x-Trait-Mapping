@@ -73,3 +73,91 @@ pheno_rpath2fpath <- function(rpath) {
 pheno_dpath2fpath <- function(rpath) {
     return(paste0(PDDATA_FOLDER_PREFIX, "/", rpath))
 }
+
+trait_is_unmasked <- function(trait.cfg) {
+    return(is.na(trait.cfg$mask) || (trait.cfg$mask != "TRUE"))
+}
+
+mtrait_subfolder <- function(trait.cfg) {
+    model                    <- as.character(trait.cfg$model)
+    year                     <- as.numeric(trait.cfg$year)
+    traits                   <- unlist(strsplit(trait.cfg$mtraits,","))
+    trait.names              <- paste0(traits,collapse="__")
+    trait_subfolder          <- paste0(c(trait.cfg$model,trait.names),collapse="--")
+    return(trait_subfolder)
+}
+
+#Function for looping through all unmasked traits in the configs/model-traits.cfg.csv file.
+loopThruTraits <- function(workflow, loopFunCallback, loopArgs=NUL) {
+        #Loop over all mmers, trait groups, subgroups, and perform makeqtl() and fitqtl().
+		traits.df <- read.csv(file=paste0(workflow,"/configs/model-traits.cfg.csv"),header=T,stringsAsFactors=F)
+		for( i in 1:length(traits.df[,1]) ) {
+            trait.cfg       <- traits.df[i,]
+            if ( trait_is_unmasked(trait.cfg) ) {
+                    model                    <- as.character(trait.cfg$model)
+                    year                     <- as.numeric(trait.cfg$year)
+                    traits                   <- unlist(strsplit(trait.cfg$mtraits,","))
+                    trait.names              <- paste0(traits,collapse="__")
+                    trait_subfolder          <- paste0(c(trait.cfg$model,trait.names),collapse="--")
+                    trait_subfolder_fpath    <- file.path(paste0(workflow,"/traits"), trait_subfolder)
+                    #Read in the model result file
+                    traits  <- unlist(strsplit(trait.cfg$mtraits,","))
+                    for( trait in traits ) {
+                        loopFunCallback(trait.cfg, trait.names, trait, trait_subfolder_fpath, loopArgs)
+                    }
+            }
+		}
+}
+
+#Define a poiner object that uses the environment to pass variables by reference.  It uses generic S3 methods to
+#generate the constructor with the envrionment and more.
+newPointer<-function(inputValue){ 
+    object=new.env(parent=globalenv()) 
+    object$value=inputValue 
+    class(object)='pointer'
+
+    return(object) 
+} 
+
+copy<-function (object, ...) { # create S3 generic 
+    UseMethod("copy")  
+}  
+copy.pointer<-function(object1,object2=NULL,...){ 
+    if (is.null(object2)) {  
+        object2 <- new.env(parent = globalenv())  
+            class(object2) <- class(object1) 
+            nullFlag <- TRUE  
+    }  
+    elements <- names(object1)  
+        for (index in 1:length(elements)) {  
+            assign(elements[index], get(elements[index], env = object1,  
+                        inherits = FALSE), env = object2)  
+        }  
+    if (nullFlag)  
+    { return(object2)  
+    } else {  
+        return(NULL)  
+    }  
+} 
+
+updatePointerValue<-function (object, ...) { # create S3 generic 
+    UseMethod("updatePointerValue")  
+}  
+updatePointerValue.pointer<-function(object,newValue){ # create S3 method 
+    if (!is(object, "pointer")) { stop(" 'object' argument must be of class 'pointer' .") }  
+    object$value<-newValue 
+        return(NULL) 
+} 
+
+append.pointer<-function(object, value) {
+    if (!is(object, "pointer")) { stop(" 'object' argument must be of class 'pointer' .") }
+    pos <- nrow(object$value) + 1
+    object$value[pos,] <- value
+    return(object)
+}
+
+assign.pointer<-function(object, value, pos) {
+    if (!is(object, "pointer")) { stop(" 'object' argument must be of class 'pointer' .") }  
+    object$value[pos,] <- value
+    return(object)
+}
