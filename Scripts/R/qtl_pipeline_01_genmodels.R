@@ -67,9 +67,6 @@ geno.num <-atcg1234(t(geno))
 #Read in the phenotype file
 pheno.means.df<-read.csv(file=pheno_dpath2fpath(pheno_file))
 
-#Read in the model trait configuration file to determine how to model traits.
-traits.df <- as.matrix(read.csv(file=paste0(workflow,"/configs/model-traits.cfg.csv")))
-
 #Convert consensus map to bins
 superMap.df<-read.table(geno_rpath2fpath(geno_consensus_file),header=T,sep=',')
 superMap.df<-superMap.df[,c('marker','LG','consensus')]
@@ -188,8 +185,13 @@ generate_cross_file <- function(trait.cfg, traits, blups, gData, superMap.bin.df
 
     #Now write the cross file as a csv in the appropriate folder
     write.csv(gData.sub,file=paste0(file.path,"/cross.csv"),row.names=FALSE)
+    cross <- read.cross(format = "csv", file=paste0(file.path,"/cross.csv"), genotypes = NULL)
+    cross <- calc.genoprob(cross,step=0,map.function="kosambi")
+    saveRDS(cross, file=paste0(file.path,"/cross.rds"), compress=TRUE)
 }
 
+#Read in the model trait configuration file to determine how to model traits.
+traits.df <- as.matrix(read.csv(file=paste0(workflow,"/configs/model-traits.cfg.csv")))
 #So as not to repeat the following for each trait, calculate the indices/year only once
 intersect.geno.pheno <- intersect(unique(pheno.means.df[,"accession_name"]), rownames(geno.num))
 include.idx.base     <- (pheno.means.df$accession_name %in% intersect.geno.pheno)
