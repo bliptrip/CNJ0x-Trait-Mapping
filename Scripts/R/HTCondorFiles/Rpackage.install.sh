@@ -2,7 +2,7 @@
 #Because of snafus I experienced when building R-3.4.1, I've setup a script to deal with my issues.
 #
 #Note: This is to be manually run from within HTCondor cluster node (not submit server!)
-R_VERSION=R-3.4.1
+R_VERSION=R-3.1.2
 tar -xzf ${R_VERSION}.tar.gz
 cd ${R_VERSION}
 #Need to specify JAVA_HOME or the compilation stage doesn't appear to work on their CENTOS clusters

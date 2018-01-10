@@ -9,6 +9,6 @@
 
 for file in *; do
    if [ -d $file ]; then
-		cd $file; condor_submit qtl_pipeline_05_runperms2D.sub; cd ..
+		cd $file; condor_submit -batch-name "AM_RUNPERMS2D" qtl_pipeline_05_runperms2D.sub; cd ..
    fi
 done

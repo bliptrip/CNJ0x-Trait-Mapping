@@ -6,23 +6,28 @@
 universe = vanilla
 #Use InitialDir to generate a subset of directories 
 InitialDir = $(Process)
-executable = qtl_pipeline_02_runperms.sh
-arguments = input.seed 10 R-3.4.1-chtc.tar.gz "2011,2012" "total_berry_weight" 
-output = $(Process)/qtl_pipeline_02_runperms.out
-error = $(Process)/qtl_pipeline_02_runperms.err
-log = $(Process)/qtl_pipeline_02_runperms.log
+executable = ../qtl_pipeline_02_runperms.sh
+arguments = $(Process) input.seed input.nperms input.model input.mtraits input.qtlmethod
+output = qtl_pipeline_02_runperms.out
+error = qtl_pipeline_02_runperms.err
+log = qtl_pipeline_02_runperms.log
+
+#The following is necessary to run R-3.4.1.  It seems that other operating system versions can give trouble.  I can test this later.
+requirements = (OpSysMajorVer == 6) || (OpSysMajorVer == 7)
+
 # Specify that HTCondor should transfer files to and from the
 #  computer where each job runs. The last of these lines *would* be
 #  used if there were any other files needed for the executable to run.
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-transfer_input_files=R-3.4.1-chtc.tar.gz,$(Process)/input.seed,qtl_pipeline_02_runperms.R,qtl_pipeline_02_runperms.datafiles.tar.gz
-transfer_output_files = cnjpop.scanones.p2.rds.gz
+#The following will be modified by a script to include the correct version of R
+transfer_input_files=input.seed,input.nperms,input.model,input.mtraits,../cross.csv,../../qtl_pipeline_02_runperms.R
+transfer_output_files = operms.$(Process).rds
 # Tell HTCondor what amount of compute resources
 #  each job will need on the computer where it runs.
 request_cpus = 1
-request_memory = 1GB
-request_disk = 1MB
+request_memory = 750MB
+request_disk = 600MB
 #
 # Tell HTCondor to run <num> instances of our job:
 #Note: The makefile will automatically update this file per the configuration specified
