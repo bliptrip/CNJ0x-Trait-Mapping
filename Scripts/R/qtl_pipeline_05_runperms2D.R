@@ -40,8 +40,7 @@ operms$uname     <- system("uname -a", intern=TRUE)
 set.seed(seed)
 #Read in the cross files for R/qtl and then calculate the genotype probabilities
 #Generate a cross datastructure for running analyses on
-cnjpop.cross <- (read.cross(format = "csv", file="cross.csv", genotypes = NULL))
-cnjpop.cross <- calc.genoprob(cnjpop.cross,step=0,map.function="kosambi") 
+cnjpop.cross <- readRDS(file="cross.rds")
 #For the current analysis
 #Derive the columns of interest for running the permutations on.
 operms[["perms"]] <- scantwo(cnjpop.cross, n.perm=n.perms, pheno.col=query_mtraits.l.v, method=query_method, verbose=FALSE)
