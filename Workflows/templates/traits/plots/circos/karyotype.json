@@ -1,0 +1,74 @@
+[
+  {
+    "id": "vm1",
+    "label": "chr1",
+    "color": "rgb(82,82,82)",
+    "len": 115880
+  },
+  {
+    "id": "vm2",
+    "label": "chr2",
+    "color": "rgb(82,82,82)",
+    "len": 100750
+  },
+  {
+    "id": "vm3",
+    "label": "chr3",
+    "color": "rgb(82,82,82)",
+    "len": 92400
+  },
+  {
+    "id": "vm4",
+    "label": "chr4",
+    "color": "rgb(82,82,82)",
+    "len": 86350
+  },
+  {
+    "id": "vm5",
+    "label": "chr5",
+    "color": "rgb(82,82,82)",
+    "len": 93090
+  },
+  {
+    "id": "vm6",
+    "label": "chr6",
+    "color": "rgb(82,82,82)",
+    "len": 93770
+  },
+  {
+    "id": "vm7",
+    "label": "chr7",
+    "color": "rgb(82,82,82)",
+    "len": 97030
+  },
+  {
+    "id": "vm8",
+    "label": "chr8",
+    "color": "rgb(82,82,82)",
+    "len": 85200
+  },
+  {
+    "id": "vm9",
+    "label": "chr9",
+    "color": "rgb(82,82,82)",
+    "len": 89860
+  },
+  {
+    "id": "vm10",
+    "label": "chr10",
+    "color": "rgb(82,82,82)",
+    "len": 84110
+  },
+  {
+    "id": "vm11",
+    "label": "chr11",
+    "color": "rgb(82,82,82)",
+    "len": 95250
+  },
+  {
+    "id": "vm12",
+    "label": "chr12",
+    "color": "rgb(82,82,82)",
+    "len": 77560
+  }
+]
