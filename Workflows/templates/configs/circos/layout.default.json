@@ -1,0 +1,16 @@
+{
+    "innerRadius": 0,
+    "outerRadius": 0,
+    "ticks": {
+        "display": false,
+        "spacing": 1000000,
+        "labelSuffix": ""
+    },
+    "labels": {
+        "position": "center",
+        "display": true,
+        "size": 14,
+        "color": "#000",
+        "radialOffset": 30
+    }
+}
