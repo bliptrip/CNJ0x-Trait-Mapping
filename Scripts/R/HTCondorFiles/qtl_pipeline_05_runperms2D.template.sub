@@ -21,7 +21,7 @@ requirements = (OpSysMajorVer == 6) || (OpSysMajorVer == 7)
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 #The following will be modified by a script to include the correct version of R
-transfer_input_files=input.seed,input.nperms,input.model,input.mtraits,../cross.csv,../../qtl_pipeline_05_runperms2D.R
+transfer_input_files=input.seed,input.nperms,input.model,input.mtraits,input.qtlmethod,../cross.rds,../../qtl_pipeline_05_runperms2D.R
 transfer_output_files = operms.2D.$(Process).rds
 # Tell HTCondor what amount of compute resources
 #  each job will need on the computer where it runs.
