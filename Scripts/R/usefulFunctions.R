@@ -87,6 +87,11 @@ mtrait_subfolder <- function(trait.cfg) {
     return(trait_subfolder)
 }
 
+circosfile2path <- function(filename) {
+		#For now, this is the relative path to the location of the interactive circos qtl html file/javascript set
+		return(paste0("../../../configs/circos/",filename))
+}
+
 #Function for looping through all unmasked traits in the configs/model-traits.cfg.csv file.
 loopThruTraits <- function(workflow, loopFunCallback, loopArgs=NUL) {
         #Loop over all mmers, trait groups, subgroups, and perform makeqtl() and fitqtl().
