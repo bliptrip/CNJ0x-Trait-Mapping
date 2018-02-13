@@ -9,9 +9,11 @@ library(qtl)
 
 args = commandArgs(trailingOnly=TRUE)
 
+#Default command-line value
+workflow="../../Workflows/1"
+
 if(length(args)==0) {
     print("No arguments supplied.")
-    workflow="../../../Workflows/1"
 } else{
     for(i in 1:length(args)){
         eval(parse(text=args[[i]]))
