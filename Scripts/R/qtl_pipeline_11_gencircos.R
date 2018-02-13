@@ -64,8 +64,7 @@ exportQTL2D3 <- function(traits.df) {
                 trait_subfolder           <- paste0(c(trait.cfg$model,trait.names),collapse="--")
                 trait_subfolder_fpath     <- file.path(paste0(workflow,"/traits"), trait_subfolder)
                 trait_subsubfolder_fpath  <- file.path(paste0(trait_subfolder_fpath, "/", trait))
-                cross                     <- read.cross(format='csv', file=paste0(trait_subfolder_fpath,"/cross.csv"), genotypes=NULL)
-                cross                     <- calc.genoprob(cross, step=0, map.function="kosambi")
+                cross                     <- readRDS(file=paste0(trait_subfolder_fpath,"/cross.rds"))
                 json.l[["phenotype"]]     <- trait
                 scan.sw  <- readRDS(paste0(trait_subsubfolder_fpath,'/scansw.RDS'))
                 lodprofs <- attr(scan.sw, "lodprofile")
@@ -181,9 +180,9 @@ traits.df <- read.csv(file=paste0(workflow,"/configs/model-traits.cfg.csv"),head
 #Remove all masked entries
 traits.df <- traits.df[which(is.na(traits.df$mask) | (traits.df$mask != "TRUE") ),]
 #Apply an 'aggregate' function whereby we organize by mtrait/trait, and then within these subsets, we plot a set of lod profiles across all models (years)
-by(traits.df, INDICES=traits.df[, "mtraits"], myPlotLodProfiles)
+#by(traits.df, INDICES=traits.df[, "mtraits"], myPlotLodProfiles)
 
-exportQTL2D3(traits.df)
+#exportQTL2D3(traits.df)
 
 exportLODProfiles <- function(models, mtraits, trait) {
     #These should all be in the same mtrait category.  Select the first entry and get a breakdown of the subtraits, and for each
@@ -269,9 +268,9 @@ exportLODProfiles2 <- function(models, mtraits, trait) {
         lodprofs.l[[i]] <- trait.merged.lods.df <- group_by(trait.lods.df, model, mtraits, trait, chr, position) %>% summarize(lod=max(lod))
     }
     names(lodprofs.l) <- models
-    lod_file <- paste0(workflow,"/configs/circos/",mtraits,"--",trait,"--lodprofiles.json")
-    write_json(lodprofs.l, lod_file, auto_unbox=T, pretty=T)
-    return(lod_file)
+    lod_file <- paste0(mtraits,"--",trait,"--lodprofiles.json")
+    write_json(lodprofs.l, paste0(workflow,"/configs/circos/",lod_file), auto_unbox=T, pretty=T)
+    return(circosfile2path(lod_file))
 }
 
 #Consider looping through all QTL's and only keep those that are consistent across all years?
@@ -370,11 +369,12 @@ for( i in 1:length(indices) ) {
     traits           <- unlist(strsplit(labels$mtraits[i],","))
     trait.names      <- paste0(traits,collapse="__")
     trait_prefix     <- paste0(c(trait.names, labels$trait[i]),collapse="--")
-    fakedata.mut.df <- mutate(fakedata.df, trait=rep(labels$trait[i], df.nrows), mtraits=rep(labels$mtraits[i], df.nrows),
+    fakedata.mut.df  <- mutate(fakedata.df, trait=rep(labels$trait[i], df.nrows), mtraits=rep(labels$mtraits[i], df.nrows),
                                                       mtraits_trait=rep(paste0(labels$mtraits[i],labels$trait[i]), df.nrows),
                                                       nearest_marker=rep(paste0("marker--fake--trait--",labels$trait[i]), df.nrows))
-    qtl_files[i]     <- file.path(paste0(workflow,"/configs/circos/", trait_prefix, "__circos_qtl_file.csv"))
-    write.csv(rbind(data.frame(supermap.bin.grouped[indices[[i]]+1,]),fakedata.mut.df), file=qtl_files[i], row.names=F)
+    qtl_file		 <- paste0(trait_prefix, "__circos_qtl_file.csv")
+    qtl_files[i]     <- circosfile2path(qtl_file)
+    write.csv(rbind(data.frame(supermap.bin.grouped[indices[[i]]+1,]),fakedata.mut.df), file=paste0(workflow,"/configs/circos/",qtl_file), row.names=F)
     models           <- as.vector(unique(supermap.bin.grouped[indices[[i]]+1, "model"])$model)
     lod_files[i]     <- exportLODProfiles2(models, labels$mtraits[i], labels$trait[i])
 }
