@@ -77,6 +77,10 @@ FitQTL:
 CollateQTL:
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_09_collate.R
 
+#Generate Circos Plot
+GenCircos:
+		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_11_gencircos.R
+
 #Merge H2
 MergeH2:
 		echo "model,mtraits,trait,h2" > $(WORKFLOW)/traits/h2.csv; \
