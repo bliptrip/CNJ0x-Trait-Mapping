@@ -27,7 +27,7 @@ supermap.bin.df <- readRDS(file=geno_rpath2fpath(paste0(geno_consensus_file,".rd
 #index into qtl.collated.df
 qtl.collated.df <- data.frame(model=character(),year=numeric(),mtraits=character(),trait=character(),chr=numeric(),position=numeric(),nearest.marker=numeric(),marker.variance=numeric(),model.variance=numeric(),interval=numeric(),stringsAsFactors=FALSE)
 qtl.collated.df.p <- newPointer(qtl.collated.df)
-collate_qtl     <- function(trait.cfg, trait.names, traits, trait.path, funArgs) {
+collateQtlCB     <- function(trait.cfg, trait.names, traits, trait.path, funArgs) {
         model <- as.character(trait.cfg$model)
         year  <- as.numeric(trait.cfg$year)
         for( trait in traits ) {
@@ -56,7 +56,7 @@ collate_qtl     <- function(trait.cfg, trait.names, traits, trait.path, funArgs)
 }
 
 #Loop through all legitimate traits and build collated qtl file.
-loopThruTraits(workflow, collate_qtl, qtl.collated.df.p)
+loopThruTraits(workflow, collateQtlCB, qtl.collated.df.p)
 
 qtl.collated.df <- qtl.collated.df.p$value
 write.csv(qtl.collated.df, file=paste0(workflow,'/traits/qtl_collated.csv'), row.names=F)
