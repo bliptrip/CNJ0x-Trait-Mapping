@@ -26,7 +26,7 @@ PermBuild:
 
 #RunPerms will extract the permutations folder and submit the condor jobs.
 RunPerms:
-		ssh maule2@submit-5.chtc.wisc.edu 'mkdir -p projects/CNJ0x-Trait-Mapping-runperms; cd projects/CNJ0x-Trait-Mapping-runperms; rm -rf *; tar -xzf ../../qtl_pipeline_02_runperms.tar.gz; ./qtl_pipeline_05_runperms2D.all.sh'
+		ssh maule2@submit-5.chtc.wisc.edu 'mkdir -p projects/CNJ0x-Trait-Mapping-runperms; cd projects/CNJ0x-Trait-Mapping-runperms; rm -rf *; tar -xzf ../../qtl_pipeline_02_runperms.tar.gz; ./qtl_pipeline_02_runperms.all.sh'
 
 #PullPerms will extract the calculated permutations from the submit server
 PullPerms:
