@@ -6,16 +6,17 @@
 
 args = commandArgs(trailingOnly=TRUE)
 
+#Set defaults
+process <- 0
+seed <- 54955149
+n.perms <- 2
+query_model <- "2011"
+query_mtraits <- "total_berry_weight"
+query_method <- "hk"
+
+#Parse arguments, if provided
 if(length(args)==0) {
     print("No arguments supplied.")
-    #Maybe get seed from system time
-    process=0
-    seed=54955149
-    n.perms=2
-    query_model="2011"
-    #query_mtraits="berry_length,berry_width,berry_weight"
-    query_mtraits="total_berry_weight"
-    query_method="hk"
 } else{
     for(i in 1:length(args)){
         eval(parse(text=args[[i]]))
