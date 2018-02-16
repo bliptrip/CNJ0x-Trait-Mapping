@@ -383,7 +383,7 @@ for( i in 1:length(indices) ) {
 write_json(qtl_files, file.path(paste0(workflow,"/configs/circos/all_traits.json")), auto_unbox=T, pretty=T)
 write_json(lod_files, file.path(paste0(workflow,"/configs/circos/all_lods.json")), auto_unbox=T, pretty=T)
 
-rmin<-seq(.3,.90,length.out=length(indices))
+rmin<-seq(.3,1.0,length.out=length(indices)+1)
 rmax<-rmin-(.01-diff(rmin[1:2]))
 
 rdiff<-diff(rmin[1:2])
