@@ -1,4 +1,6 @@
 var width = document.getElementsByClassName('mdl-card__supporting-text')[0].offsetWidth
+var circos_trait2traitname = {};
+
 var circosScatter = new Circos({
       container: '#scatterChart',
       width: width,
@@ -56,7 +58,7 @@ var inject_scatter = function(error, data)
                     model_color: d.model_color,
                     nearest_marker: d.nearest_marker,
                     position: d.position * 1000,
-                    size: Math.round(d.marker_variance * 10.0),
+                    size: Math.round(d.marker_variance * 50.0),
                     class: d.class
                 });
             });
@@ -172,14 +174,14 @@ var gen_scatter_stroke_color = function(d) {
 }
 
 var gen_scatter_tooltip = function(d) {
-    return(d.model+"<br>"+d.trait+"<br>"+d.nearest_marker);
+    return("<H1><b>"+circos_trait2traitname[d.trait]+"</b><br />"+d.model+"<br />"+d.nearest_marker+"</H1>");
 }
 
 var gen_scatter_size = function(d) {
     return(d.size);
 }
 
-var drawCircos = function (error, karyotypes, layout, trait_files, lod_files, scatter_configs, stack_configs, line_configs) {
+var drawCircos = function (error, karyotypes, layout, trait_files, lod_files, scatter_configs, stack_configs, line_configs, circos_trait_config) {
   if(error) {
     throw error;
   }
@@ -188,6 +190,9 @@ var drawCircos = function (error, karyotypes, layout, trait_files, lod_files, sc
         karyotypes,
         layout
     );
+  for( i = 0; i < circos_trait_config.length; i++ ) {
+    circos_trait2traitname[circos_trait_config[i].trait] = circos_trait_config[i].trait_name;
+  }
   var q = d3.queue();
   for( i = 0; i < trait_files.length; i++ ) {
     trait_file                =  trait_files[i];
@@ -222,4 +227,5 @@ d3.queue()
   .defer(d3.json, '../../../configs/circos/scatter.configs.json')
   .defer(d3.json, '../../../configs/circos/stack.configs.json')
   .defer(d3.json, '../../../configs/circos/line.configs.json')
+  .defer(d3.csv,  '../../../configs/circos/circos-traits.default.cfg.csv')
   .await(drawCircos);
