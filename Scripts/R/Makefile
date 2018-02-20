@@ -9,6 +9,8 @@ export RDS_DIR ?= "../../Data/phenotypic\ data/DerivedData/cleanup_data.R.output
 export SCAN_DIR ?= ../../Analysis
 export SCANONE_MERGE ?= $(SCAN_DIR)/runperms/cnjpop.scanone.p2.rds
 export SCANTWO_MERGE ?= $(SCAN_DIR)/runperms2D/cnjpop.scantwo.p2.rds
+#Set the following to "scanone" or "stepwiseqtl" depending on what dataset you want to use for generating the circos plot.
+export CIRCOS_QTL_TYPE ?= "stepwiseqtl"
 
 install:
 		R CMD BATCH packagedeps.R
@@ -79,7 +81,7 @@ CollateQTL:
 
 #Generate Circos Plot
 GenCircos:
-		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_11_gencircos.R
+		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_type="$(CIRCOS_QTL_TYPE)"' qtl_pipeline_11_gencircos.R
 
 #Merge H2
 MergeH2:
