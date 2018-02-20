@@ -31,9 +31,9 @@ stepwiseQtlCB <- function(trait.cfg, trait.names, traits, trait.path, funArgs) {
         trait_subsubfolder_fpath = paste0(trait.path, '/', trait) 
         dir.create(trait_subsubfolder_fpath, showWarnings = FALSE)
 		if( traits.len > 1 ) {
-		    scan.sw <- stepwiseqtl(cross,pheno.col=trait,max.qtl=qtl_max,method=qtl_method,penalties=pens[j,],additive.only=FALSE)
+		    scan.sw <- stepwiseqtl(cross,pheno.col=trait,max.qtl=qtl_max,method=qtl_method,penalties=pens[j,],additive.only=FALSE, keeplodprofile=TRUE, keeptrace=TRUE)
 		} else {
-		    scan.sw <- stepwiseqtl(cross,pheno.col=trait,max.qtl=qtl_max,method=qtl_method,penalties=pens,additive.only=FALSE)
+		    scan.sw <- stepwiseqtl(cross,pheno.col=trait,max.qtl=qtl_max,method=qtl_method,penalties=pens,additive.only=FALSE, keeplodprofile=TRUE, keeptrace=TRUE)
 		}
         saveRDS(scan.sw, file=paste0(trait_subsubfolder_fpath, "/scansw.rds"), compress=TRUE)
     }
