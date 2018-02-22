@@ -10,7 +10,7 @@ export SCAN_DIR ?= ../../Analysis
 export SCANONE_MERGE ?= $(SCAN_DIR)/runperms/cnjpop.scanone.p2.rds
 export SCANTWO_MERGE ?= $(SCAN_DIR)/runperms2D/cnjpop.scantwo.p2.rds
 #Set the following to "scanone" or "stepwiseqtl" depending on what dataset you want to use for generating the circos plot.
-export CIRCOS_QTL_TYPE ?= "stepwiseqtl"
+export CIRCOS_QTL_TYPE ?= stepwiseqtl
 
 install:
 		R CMD BATCH packagedeps.R
@@ -78,6 +78,10 @@ FitQTL:
 #Collate all QTL info into one file
 CollateQTL:
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_09_collate.R
+
+#Collate all QTL info into one file
+GenConsensus:
+		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_type="$(CIRCOS_QTL_TYPE)"' qtl_pipeline_10_genconsensus.R
 
 #Generate Circos Plot
 GenCircos:
