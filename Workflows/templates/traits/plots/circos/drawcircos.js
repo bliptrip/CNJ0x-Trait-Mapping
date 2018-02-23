@@ -1,3 +1,7 @@
+qtl_bubble_opacity            = 0.75;
+qtl_bubble_highlight_opacity  = 1.0;
+qtl_bubble_scale_factor       = 40;
+
 var width = document.getElementsByClassName('mdl-card__supporting-text')[0].offsetWidth
 var circos_trait2traitname = {};
 
@@ -7,6 +11,29 @@ var circosScatter = new Circos({
       height: width
 });
 
+var change_scan_type = function() {
+    selected_type = this.value;
+    //Hide everything
+    //Need to hide any old state for the LOD profile lines.
+    d3.selectAll("*[class^='lines-']")
+        .attr('visibility', 'hidden');
+    //Hide all current scatter-
+    d3.selectAll("*[class^='scatter-']")
+        .attr('opacity','0')
+        .attr('visibility','hidden');
+    d3.selectAll("*[class^='stacks-']")
+        .attr('opacity','0')
+        .attr('visibility','hidden');
+
+    //Show what we care about
+    d3.selectAll("*[class^='scatter-"+selected_type+"--']")
+        .attr('opacity','1')
+        .attr('visibility','visible');
+    d3.selectAll("*[class^='stacks-"+selected_type+"--']")
+        .attr('opacity','1')
+        .attr('visibility','visible');
+}
+
 var get_current_config = function(config,callback) {
     setTimeout(function() {
         callback(null, config);
@@ -14,25 +41,30 @@ var get_current_config = function(config,callback) {
 }
 
 var show_lod_profs = function(datum, index, nodes, event) {
-    var mclass = 'lines--'+datum.model+'--'+datum.mtraits+'--'+datum.trait;
+    var mclass = 'lines-'+datum.method+'--'+datum.model+'--'+datum.mtraits+'--'+datum.trait;
     //Hide other lodprofiles that are displaying in the current trait
-    d3.selectAll("*[class^='lines--'][class$='"+datum.mtraits+"--"+datum.trait+"']").attr('visibility','hidden');
-    d3.selectAll("*[class='"+mclass+"']").attr('visibility','visible');
+    d3.selectAll("*[class^='lines-'][class$='"+datum.mtraits+"--"+datum.trait+"']")
+        .attr('visibility', 'hidden');
+    d3.selectAll("*[class='"+mclass+"']")
+        .attr('visibility', 'show');
 }
 
 var hide_lod_profs = function(datum, index, nodes, event) {
-    var mclass = 'lines--'+datum[0].model+'--'+datum[0].mtraits+'--'+datum[0].trait;
-    d3.selectAll("*[class='"+mclass+"']").attr('visibility','hidden');
+    var mclass = 'lines-'+datum[0].method+'--'+datum[0].model+'--'+datum[0].mtraits+'--'+datum[0].trait;
+    d3.selectAll("*[class='"+mclass+"']")
+        .attr('visibility', 'hidden');
 }
 
 var highlight_markers = function(datum, index, nodes, event) {
     var marker = datum.nearest_marker;
-    d3.selectAll("*[marker='"+marker+"']").attr('opacity', '1.0');
+    d3.selectAll("*[marker='"+marker+"']")
+        .attr('opacity', qtl_bubble_highlight_opacity);
 }
 
 var unhighlight_markers = function(datum, index, nodes, event) {
     var marker = datum.nearest_marker;
-    d3.selectAll("*[marker='"+marker+"']").attr('opacity', '0.75');
+    d3.selectAll("*[marker='"+marker+"']")
+        .attr('opacity', qtl_bubble_opacity);
 }
 
 var inject_scatter = function(error, data)
@@ -45,49 +77,212 @@ var inject_scatter = function(error, data)
             'click.showlodprofs': show_lod_profs
 
         };
-        scatter_trait_data = trait_data.map(function(d) {
-                return({
-                    block_id: "vm"+d.chr,
-                    position: +d.position*1000,
-                    value: +d.model_idx,  
-                    model: d.model,
-                    mtraits: d.mtraits,
-                    trait: d.trait,
-                    color: d.color,
-                    stroke_color: d.stroke_color,
-                    model_color: d.model_color,
-                    nearest_marker: d.nearest_marker,
-                    position: d.position * 1000,
-                    size: Math.round(d.marker_variance * 50.0),
-                    class: d.class
-                });
-            });
-        mtraits_trait = "scatter--" + scatter_trait_data[0].mtraits + "--" + scatter_trait_data[0].trait;
+        //scanone results
+        scatter_trait_data = trait_data
+									 .filter(function(d) { return((d.method == "scanone") || (d.method == "fakeqtl")); })
+									 .map(function(d) {
+											 return({
+                                                     method: d.method,
+													 block_id: "vm"+d.chr,
+													 position: +d.position_consensus*1000,
+													 value: +d.model_idx,  
+													 model: d.model,
+													 mtraits: d.mtraits,
+													 trait: d.trait,
+													 color: d.color,
+													 stroke_color: d.stroke_color,
+													 model_color: d.model_color,
+													 nearest_marker: d.nearest_marker,
+													 size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
+													 lod: +d.qtl_lod,
+													 pval: +d.qtl_pvalue,
+													 class: d.class
+											 });
+									 });
+        mtraits_trait = "scatter-scanone-consensus--" + scatter_trait_data[0].mtraits + "--" + scatter_trait_data[0].trait;
+        circosScatter.scatter(mtraits_trait, scatter_trait_data, scatter_config);
+        scatter_trait_data = trait_data
+									 .filter(function(d) { return((d.method == "scanone") || (d.method == "fakeqtl")); })
+									 .map(function(d) {
+											 return({
+                                                     method: d.method,
+													 block_id: "vm"+d.chr,
+													 position: +d.position*1000,
+													 value: +d.model_idx,  
+													 model: d.model,
+													 mtraits: d.mtraits,
+													 trait: d.trait,
+													 color: d.color,
+													 stroke_color: d.stroke_color,
+													 model_color: d.model_color,
+													 nearest_marker: d.nearest_marker,
+													 size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
+													 lod: +d.qtl_lod,
+													 pval: +d.qtl_pvalue,
+													 class: d.class
+											 });
+									 });
+        mtraits_trait = "scatter-scanone-normal--" + scatter_trait_data[0].mtraits + "--" + scatter_trait_data[0].trait;
+        circosScatter.scatter(mtraits_trait, scatter_trait_data, scatter_config);
+        //stepwiseqtl results
+        scatter_trait_data = trait_data
+									 .filter(function(d) { return((d.method == "stepwiseqtl") || (d.method == "fakeqtl")); })
+									 .map(function(d) {
+											 return({
+                                                     method: d.method,
+													 block_id: "vm"+d.chr,
+													 position: +d.position_consensus*1000,
+													 value: +d.model_idx,  
+													 model: d.model,
+													 mtraits: d.mtraits,
+													 trait: d.trait,
+													 color: d.color,
+													 stroke_color: d.stroke_color,
+													 model_color: d.model_color,
+													 nearest_marker: d.nearest_marker,
+													 size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
+													 lod: +d.qtl_lod,
+													 pval: +d.qtl_pvalue,
+													 class: d.class
+											 });
+									 });
+        mtraits_trait = "scatter-stepwiseqtl-consensus--" + scatter_trait_data[0].mtraits + "--" + scatter_trait_data[0].trait;
+        circosScatter.scatter(mtraits_trait, scatter_trait_data, scatter_config);
+        scatter_trait_data = trait_data
+									 .filter(function(d) { return((d.method == "stepwiseqtl") || (d.method == "fakeqtl")); })
+									 .map(function(d) {
+											 return({
+                                                     method: d.method,
+													 block_id: "vm"+d.chr,
+													 position: +d.position*1000,
+													 value: +d.model_idx,  
+													 model: d.model,
+													 mtraits: d.mtraits,
+													 trait: d.trait,
+													 color: d.color,
+													 stroke_color: d.stroke_color,
+													 model_color: d.model_color,
+													 nearest_marker: d.nearest_marker,
+													 size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
+													 lod: +d.qtl_lod,
+													 pval: +d.qtl_pvalue,
+													 class: d.class
+											 });
+									 });
+        mtraits_trait = "scatter-stepwiseqtl-normal--" + scatter_trait_data[0].mtraits + "--" + scatter_trait_data[0].trait;
         circosScatter.scatter(mtraits_trait, scatter_trait_data, scatter_config);
         stack_configs     = data[(bin_size*i)+2];
         for( j = 0; j < stack_configs.length; j++ ) {
-            stack_trait_data = trait_data.filter(function(d) 
-                    { 
-                        var match = (+d.model_idx == (j+1)); 
-                        return(match);
-                    })
-                    .map(function(d) {
-                        return({
-                            block_id: "vm"+d.chr,
-                            start: (+d.position - (+d.interval/2))*1000,
-                            end: (+d.position + (+d.interval/2))*1000,
-                            model: d.model,
-                            mtraits: d.mtraits,
-                            trait: d.trait,
-                            color: d.color,
-                            stroke_color: d.stroke_color,
-                            model_color: d.model_color,
-                            nearest_marker: d.nearest_marker,
-                            class: d.class
-                        });
+            //scanone normal
+            stack_trait_data = trait_data
+                .filter(function(d) 
+                { 
+                    var match = (+d.model_idx == (j+1)) && ((d.method == "scanone") || (d.method == "fakeqtl"));
+                    return(match);
+                })
+                .map(function(d) {
+                    return({
+                        block_id: "vm"+d.chr,
+                        start: (+d.position - (+d.interval/2))*1000,
+                        end: (+d.position + (+d.interval/2))*1000,
+                        model: d.model,
+                        mtraits: d.mtraits,
+                        trait: d.trait,
+                        color: d.color,
+                        stroke_color: d.stroke_color,
+                        model_color: d.model_color,
+                        nearest_marker: d.nearest_marker,
+                        class: d.class
                     });
+                });
             if( stack_trait_data.length > 0 ) {
-                mtraits_trait = "stacks--"+stack_trait_data[0].model+"--"+ stack_trait_data[0].mtraits+"--"+stack_trait_data[0].trait;
+                mtraits_trait = "stacks-scanone-normal--"+stack_trait_data[0].model+"--"+ stack_trait_data[0].mtraits+"--"+stack_trait_data[0].trait;
+                circosScatter.stack(mtraits_trait, stack_trait_data, stack_configs[j]);
+            } else {
+                console.log("Non-zero stack_trait_data length.")
+            }
+            //scanone consensus 
+            stack_trait_data = trait_data
+                .filter(function(d) 
+                { 
+                    var match = (+d.model_idx == (j+1)) && ((d.method == "scanone") || (d.method == "fakeqtl"));
+                    return(match);
+                })
+                .map(function(d) {
+                    return({
+                        block_id: "vm"+d.chr,
+                        start: (+d.position_consensus - (+d.interval/2))*1000,
+                        end: (+d.position_consensus + (+d.interval/2))*1000,
+                        model: d.model,
+                        mtraits: d.mtraits,
+                        trait: d.trait,
+                        color: d.color,
+                        stroke_color: d.stroke_color,
+                        model_color: d.model_color,
+                        nearest_marker: d.nearest_marker,
+                        mposition: +d.position_consensus,
+                        class: d.class
+                    });
+                });
+            if( stack_trait_data.length > 0 ) {
+                mtraits_trait = "stacks-scanone-consensus--"+stack_trait_data[0].model+"--"+ stack_trait_data[0].mtraits+"--"+stack_trait_data[0].trait;
+                circosScatter.stack(mtraits_trait, stack_trait_data, stack_configs[j]);
+            } else {
+                console.log("Non-zero stack_trait_data length.")
+            }
+            //stepwiseqtl normal
+            stack_trait_data = trait_data
+                .filter(function(d) 
+                { 
+                    var match = (+d.model_idx == (j+1)) && ((d.method == "stepwiseqtl") || (d.method == "fakeqtl"));
+                    return(match);
+                })
+                .map(function(d) {
+                    return({
+                        block_id: "vm"+d.chr,
+                        start: (+d.position - (+d.interval/2))*1000,
+                        end: (+d.position + (+d.interval/2))*1000,
+                        model: d.model,
+                        mtraits: d.mtraits,
+                        trait: d.trait,
+                        color: d.color,
+                        stroke_color: d.stroke_color,
+                        model_color: d.model_color,
+                        nearest_marker: d.nearest_marker,
+                        class: d.class
+                    });
+                });
+            if( stack_trait_data.length > 0 ) {
+                mtraits_trait = "stacks-stepwiseqtl-normal--"+stack_trait_data[0].model+"--"+ stack_trait_data[0].mtraits+"--"+stack_trait_data[0].trait;
+                circosScatter.stack(mtraits_trait, stack_trait_data, stack_configs[j]);
+            } else {
+                console.log("Non-zero stack_trait_data length.")
+            }
+            //stepwiseqtl consensus 
+            stack_trait_data = trait_data
+                .filter(function(d) 
+                { 
+                    var match = (+d.model_idx == (j+1)) && ((d.method == "stepwiseqtl") || (d.method == "fakeqtl"));
+                    return(match);
+                })
+                .map(function(d) {
+                    return({
+                        block_id: "vm"+d.chr,
+                        start: (+d.position_consensus - (+d.interval/2))*1000,
+                        end: (+d.position_consensus + (+d.interval/2))*1000,
+                        model: d.model,
+                        mtraits: d.mtraits,
+                        trait: d.trait,
+                        color: d.color,
+                        stroke_color: d.stroke_color,
+                        model_color: d.model_color,
+                        nearest_marker: d.nearest_marker,
+                        mposition: +d.position_consensus,
+                        class: d.class
+                    });
+                });
+            if( stack_trait_data.length > 0 ) {
+                mtraits_trait = "stacks-stepwiseqtl-consensus--"+stack_trait_data[0].model+"--"+ stack_trait_data[0].mtraits+"--"+stack_trait_data[0].trait;
                 circosScatter.stack(mtraits_trait, stack_trait_data, stack_configs[j]);
             } else {
                 console.log("Non-zero stack_trait_data length.")
@@ -103,9 +298,13 @@ var inject_line = function(error, data)
         lod_data     = data[bin_size*i];
         lod_config   = data[(bin_size*i)+1];
         for( var model in lod_data ) {
-            lod_trait_data = lod_data[model].map(function(d) {
+            //scanone
+            lod_trait_data = lod_data[model]
+                .filter(function(d) { return(d.method == "scanone"); })
+                .map(function(d) {
             //I need to figure out how to separate the different models into different datasets
                     return({
+                        method: d.method,
                         block_id: "vm"+d.chr,
                         position: +d.position*1000,
                         value: +d.lod,
@@ -122,7 +321,32 @@ var inject_line = function(error, data)
             lod_config.backgrounds[0].end = lod_config.max;
             //Have 4 horizontal axes per dataset
             lod_config.axes[0].spacing = lod_config.max/4;
-            mtraits_trait = "lines--"+model+"--"+lod_trait_data[0].mtraits+"--"+lod_trait_data[0].trait;
+            mtraits_trait = "lines-scanone--"+model+"--"+lod_trait_data[0].mtraits+"--"+lod_trait_data[0].trait;
+            circosScatter.line(mtraits_trait, lod_trait_data, lod_config);
+            //stepwiseqtl
+            lod_trait_data = lod_data[model]
+                .filter(function(d) { return(d.method == "stepwiseqtl"); })
+                .map(function(d) {
+            //I need to figure out how to separate the different models into different datasets
+                    return({
+                        method: d.method,
+                        block_id: "vm"+d.chr,
+                        position: +d.position*1000,
+                        value: +d.lod,
+                        model: d.model,
+                        mtraits: d.mtraits,
+                        trait: d.trait
+                    });
+                });
+            //Edit the lod_config per the max lod values, axes spacing, etc.
+            max_lod = lod_trait_data.reduce(function(a,b) { 
+                return(a.value > b.value ? a : b);
+            }).value;
+            lod_config.max = max_lod + max_lod/10; // Add 10% to top
+            lod_config.backgrounds[0].end = lod_config.max;
+            //Have 4 horizontal axes per dataset
+            lod_config.axes[0].spacing = lod_config.max/4;
+            mtraits_trait = "lines-stepwiseqtl--"+model+"--"+lod_trait_data[0].mtraits+"--"+lod_trait_data[0].trait;
             circosScatter.line(mtraits_trait, lod_trait_data, lod_config);
         }
     }
@@ -133,9 +357,20 @@ var inject_line = function(error, data)
     d3.selectAll(".tile")
       .on('mouseover.highlight', highlight_markers)
       .on('mouseout.highlight', unhighlight_markers);
-    d3.selectAll("*[class^='lines--']").attr('visibility','hidden');
     d3.selectAll("g[class='line']")
-      .on('click', hide_lod_profs);
+        .on('click', hide_lod_profs);
+    d3.selectAll("*[class^='lines-']")
+        .attr('opacity','0.8')
+        .attr('visibility','hidden');
+    d3.selectAll("*[class^='scatter-']")
+        .attr('opacity','0')
+        .attr('visibility','hidden');
+    d3.selectAll("*[class^='stacks-']")
+        .attr('opacity','0')
+        .attr('visibility','hidden');
+    //Register the radio buttons to change the scan type that is displayed.
+    d3.selectAll("input[name='scan-type']").on("change", change_scan_type);
+    d3.select('input[name="scan-type"]:checked').each(change_scan_type);
     //Find the arc of the centermost scatterplot and build a square.
             d3.selectAll("*[class^='scatter']")
             .selectAll(".block")
@@ -197,12 +432,10 @@ var drawCircos = function (error, karyotypes, layout, trait_files, lod_files, sc
   for( i = 0; i < trait_files.length; i++ ) {
     trait_file                =  trait_files[i];
     scatter_configs[i].color          =  gen_scatter_color;
-    //scatter_configs[i].strokeColor    =  gen_scatter_stroke_color;
     scatter_configs[i].tooltipContent =  gen_scatter_tooltip;
     scatter_configs[i].size           =  gen_scatter_size;
     for( j = 0; j < stack_configs[i].length; j++ ) {
         stack_configs[i][j].color          =  gen_scatter_color;
-        //scatter_configs[i].strokeColor    =  gen_scatter_stroke_color;
         stack_configs[i][j].tooltipContent =  gen_scatter_tooltip;
     }
     q.defer(d3.csv, trait_file)
