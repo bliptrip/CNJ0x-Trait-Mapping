@@ -1,6 +1,8 @@
 {
     "innerRadius": 0,
     "outerRadius": 0,
+    "cornerRadius": 100,
+    "gap": 0.02,
     "ticks": {
         "display": false,
         "spacing": 1000000,
@@ -9,7 +11,7 @@
     "labels": {
         "position": "center",
         "display": true,
-        "size": 14,
+        "size": 48,
         "color": "#000",
         "radialOffset": 30
     }
