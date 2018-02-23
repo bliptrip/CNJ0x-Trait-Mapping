@@ -8,7 +8,6 @@ library(factoextra)
 # loading libraries
 source('./usefulFunctions.R')
 
-qtl_type="stepwiseqtl"
 workflow <- "../../Workflows/1"
 
 args = commandArgs(trailingOnly=TRUE)
@@ -26,11 +25,11 @@ if(length(args)==0) {
 qtl.collated.df <- read.csv(file=paste0(workflow,'/traits/qtl_collated.csv'), head=TRUE)
 #Only look at those qtls derived from the specified method, and moreover, remove interaction qtls and focus on additive-only ones.
 qtl.collated.df <- qtl.collated.df %>%
-                        filter(method == qtl_type & is.na(chr2) & is.na(position2)) %>%
-                        arrange(mtraits,trait,chr,model)
+                        filter(is.na(chr2) & is.na(position2)) %>%
+                        arrange(method,mtraits,trait,chr,model)
 
 #Group by trait and chromosome, and then apply hierarchical agglomerative clustering to see if can create consensus for some of the markers
-qtl.collated.grouped.df <- qtl.collated.df %>% group_by(mtraits,trait,chr)
+qtl.collated.grouped.df <- qtl.collated.df %>% group_by(method,mtraits,trait,chr)
 
 generate_consensus <- function(model, mtraits, trait, chr, position) {
     #Initialize the consensus position to the current positions
@@ -49,4 +48,4 @@ generate_consensus <- function(model, mtraits, trait, chr, position) {
 }
 
 qtl.collated.consensus.df <- qtl.collated.grouped.df %>% mutate(position.consensus = generate_consensus(model, mtraits, trait, chr, position))
-write.csv(qtl.collated.consensus.df, file=paste0(workflow,'/traits/qtl_collated.consensus.csv'))
+write.csv(qtl.collated.consensus.df, file=paste0(workflow,'/traits/qtl_collated.consensus.csv'), row.names=FALSE)
