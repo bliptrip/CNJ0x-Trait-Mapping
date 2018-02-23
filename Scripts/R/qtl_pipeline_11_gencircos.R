@@ -34,14 +34,14 @@ source(paste0(workflow,"/configs/model.cfg"))
 supermap.bin.df <- readRDS(file=geno_rpath2fpath(paste0(geno_consensus_file,".rds")))
 
 extract_bin <- function(mname) {
-    bin <- sub('@', ".", mname, fixed=T)
-    return(bin)
+bin <- sub('@', ".", mname, fixed=T)
+return(bin)
 }
 extract_effects <- function(binname, markername, cross, trait) {
-    binname <- extract_bin(binname)
-    m.effects <- effectplot(cross, pheno.col=trait, mname1=binname, draw=FALSE)
-    names(m.effects$Means) <- gsub(paste0(binname,"."),"",names(m.effects$Means))
-    names(m.effects$SEs) <- gsub(paste0(binname,"."),"",names(m.effects$SEs))
+binname <- extract_bin(binname)
+m.effects <- effectplot(cross, pheno.col=trait, mname1=binname, draw=FALSE)
+names(m.effects$Means) <- gsub(paste0(binname,"."),"",names(m.effects$Means))
+names(m.effects$SEs) <- gsub(paste0(binname,"."),"",names(m.effects$SEs))
     return(m.effects)
 }
 
@@ -65,7 +65,31 @@ traits.df <- traits.df[which(is.na(traits.df$mask) | (traits.df$mask != "TRUE") 
 #Apply an 'aggregate' function whereby we organize by mtrait/trait, and then within these subsets, we plot a set of lod profiles across all models (years)
 #by(traits.df, INDICES=traits.df[, "mtraits"], myPlotLodProfiles)
 
-exportLODProfiles2 <- function(models, mtraits, trait) {
+exportLODProfile <- function(scan.obj, qtl_type, model, trait.names, trait) {
+    lodprofs         <- attr(scan.obj, "lodprofile")
+    num_lod_entries  <- length(unlist(lodprofs))/ncol(lodprofs[[1]])
+    model.v          <- vector("character", num_lod_entries)
+    mtraits.v        <- rep(trait.names, num_lod_entries)
+    trait.v          <- rep(trait, num_lod_entries)
+    chr.v            <- vector("numeric", num_lod_entries)
+    lod.v            <- vector("numeric", num_lod_entries)
+    position.v       <- vector("numeric", num_lod_entries)
+    #nearest_marker.v <- vector("character", num_lod_entries)
+    current_index    <- 1
+    for( lodprof in lodprofs ) {
+        lodprof.len                         <- nrow(lodprof)
+        end_index                           <- current_index+lodprof.len-1
+        model.v[current_index:end_index]    <- rep(model, nrow(lodprof))
+        chr.v[current_index:end_index]      <- as.numeric(as.character(lodprof$chr))
+        lod.v[current_index:end_index]      <- lodprof$lod
+        position.v[current_index:end_index] <- lodprof$pos
+        current_index                       <- end_index + 1
+    }
+    lodprofs <- list(method=rep(qtl_type,length(model.v)), model=model.v, mtraits=mtraits.v, trait=trait.v, chr=chr.v, lod=lod.v, position=position.v)
+    return(lodprofs)
+}
+
+exportLODProfiles <- function(models, mtraits, trait) {
     #These should all be in the same mtrait category.  Select the first entry and get a breakdown of the subtraits, and for each
     #subtrait, plot it's LOD profile.
     traits                    <- unlist(strsplit(mtraits,","))
@@ -77,29 +101,16 @@ exportLODProfiles2 <- function(models, mtraits, trait) {
         trait_subfolder                 <- paste0(model,"--",trait.names);
         trait_subfolder_fpath           <- file.path(paste0(workflow,"/traits"), trait_subfolder)
         trait_subsubfolder_fpath        <- file.path(paste0(trait_subfolder_fpath, "/", trait))
-        scan.sw  <- readRDS(paste0(trait_subsubfolder_fpath,'/scansw.RDS'))
-        lodprofs         <- attr(scan.sw, "lodprofile")
-        num_lod_entries  <- length(unlist(lodprofs))/ncol(lodprofs[[1]])
-        model.v          <- vector("character", num_lod_entries)
-        mtraits.v        <- rep(trait.names, num_lod_entries)
-        trait.v          <- rep(trait, num_lod_entries)
-        chr.v            <- vector("numeric", num_lod_entries)
-        lod.v            <- vector("numeric", num_lod_entries)
-        position.v       <- vector("numeric", num_lod_entries)
-        #nearest_marker.v <- vector("character", num_lod_entries)
-        current_index    <- 1
-        for( lodprof in lodprofs ) {
-            lodprof.len                         <- nrow(lodprof)
-            end_index                           <- current_index+lodprof.len-1
-            model.v[current_index:end_index]    <- rep(model, nrow(lodprof))
-            chr.v[current_index:end_index]      <- as.numeric(as.character(lodprof$chr))
-            lod.v[current_index:end_index]      <- lodprof$lod
-            position.v[current_index:end_index] <- lodprof$pos
-            current_index                       <- end_index + 1
-        }
-        trait.lods.df <- data.frame(model=model.v, mtraits=mtraits.v, trait=trait.v, chr=chr.v, lod=lod.v, position=position.v)
+        scan.sw  <- readRDS(paste0(trait_subsubfolder_fpath,'/scansw.rds'))
+        scan.sw.lodprofs <- exportLODProfile(scan.sw, "stepwiseqtl", model, trait.names, trait)
+        trait.sw.lods.df <- data.frame(scan.sw.lodprofs)
+        trait.sw.merged.lods.df <- group_by(trait.sw.lods.df, method, model, mtraits, trait, chr, position) %>% summarize(lod=max(lod))
+        scan.one.qtl <- readRDS(paste0(trait_subsubfolder_fpath,'/scanone.qtl.rds'))
+        scan.one.lodprofs <- exportLODProfile(scan.one.qtl, "scanone", model, trait.names, trait)
+        trait.one.lods.df <- data.frame(scan.one.lodprofs)
+        trait.one.merged.lods.df <- group_by(trait.one.lods.df, method, model, mtraits, trait, chr, position) %>% summarize(lod=max(lod))
         #Due to overlapping positions b/w different detected QTLs with different LOD scores (how?), I've decided to take the max lod score of either where they overlap to make the graphs look continuous.
-        lodprofs.l[[i]] <- trait.merged.lods.df <- group_by(trait.lods.df, model, mtraits, trait, chr, position) %>% summarize(lod=max(lod))
+        lodprofs.l[[i]] <- rbind(trait.sw.merged.lods.df, trait.one.merged.lods.df)
     }
     names(lodprofs.l) <- models
     lod_file <- paste0(mtraits,"--",trait,"--lodprofiles.json")
@@ -109,8 +120,7 @@ exportLODProfiles2 <- function(models, mtraits, trait) {
 
 #Consider looping through all QTL's and only keep those that are consistent across all years?
 # finding QTL in at least two years
-qtl.collated.df <-  read.csv(file=paste0(workflow,"/traits/qtl_collated.csv"),header=T) %>%
-                        filter(method %in% qtl_type) 
+qtl.collated.df <-  read.csv(file=paste0(workflow,"/traits/qtl_collated.consensus.csv"),header=T)
 
 
 # Circos.js
@@ -171,7 +181,7 @@ gen_color <- function(model, mtraits_trait) {
 #Specify to the input the traits we care about rendering in the circos plot.
 circostraits.cfg.df <- read.csv(file=paste0(workflow,'/configs/circos/',circostraits.cfg),header=T) %>% filter(is.na(mask) | (mask != "TRUE")) %>% mutate(mtraits_trait=paste0(mtraits,trait))
 
-supermap.bin.chr.df <- qtl.collated.df %>%
+qtl.collated.augmented.df <- qtl.collated.df %>%
                         filter(is.na(chr2) & is.na(position2)) %>% #Filter out only additive components, leaving out pairwise QTL interactions
                         arrange(mtraits,trait,model) %>% 
                         mutate(mtraits_trait=paste0(mtraits,trait)) %>%
@@ -184,25 +194,26 @@ supermap.bin.chr.df <- qtl.collated.df %>%
                         mutate(model.cols=model.cols[as.numeric(model)])
 
 #Periods in variable names aren't allowed in javascript, as they have special meaning.  Replace all periods with underscores in the column names.
-colnames(supermap.bin.chr.df) <- gsub(".", "_", colnames(supermap.bin.chr.df), fixed=T)
+colnames(qtl.collated.augmented.df) <- gsub(".", "_", colnames(qtl.collated.augmented.df), fixed=T)
                     
-supermap.bin.grouped <- supermap.bin.chr.df %>% group_by(mtraits,trait)
+qtl.collated.grouped.df <- qtl.collated.augmented.df %>% group_by(mtraits,trait)
 
-indices <- attr(supermap.bin.grouped,"indices")
-labels  <- attr(supermap.bin.grouped,"labels")
+indices <- attr(qtl.collated.grouped.df,"indices")
+labels  <- attr(qtl.collated.grouped.df,"labels")
 labels$mtraits <- as.character(labels$mtraits)
 labels$trait <- as.character(labels$trait)
 qtl_files <- vector("character", length(indices))
 lod_files <- vector("character", length(indices))
 #Generate a fake dataset to have all tracks display
-models.v      <- rep(unique(as.character(supermap.bin.chr.df$model)), length(k.chrs))
-models_idx.v  <- rep(unique(as.numeric(supermap.bin.chr.df$model)), length(k.chrs))
+models.v      <- rep(unique(as.character(qtl.collated.augmented.df$model)), length(k.chrs))
+models_idx.v  <- rep(unique(as.numeric(qtl.collated.augmented.df$model)), length(k.chrs))
 chr.v         <- unlist(lapply(k.chrs, function(x) { rep(x,num_models) } ))
 df.nrows      <- length(models.v)
-fakedata.df   <- data.frame(method=rep(qtl_type,df.nrows), model=models.v, year=rep("",df.nrows), chr=chr.v, position=rep(-1,df.nrows),
-                            chr2=rep(NA,df.nrows), position2=rep(NA,df.nrows), qtl_lod=rep(0,df.nrows), qtl_pvalue=rep(0,df.nrows),
-                            marker_variance=rep(0,df.nrows), model_variance=rep(0,df.nrows), interval=rep(0,df.nrows), class=rep("", df.nrows),
-                            model_idx=models_idx.v, color=rep("transparent",df.nrows), stroke_color=rep("transparent",df.nrows), model_cols=rep("transparent",df.nrows))
+fakedata.df   <- data.frame(method=rep("fakeqtl",df.nrows), model=models.v, year=rep("",df.nrows), chr=chr.v, position=rep(-1,df.nrows),
+                            chr2=rep(NA,df.nrows), position2=rep(NA,df.nrows), nearest_marker=rep("",df.nrows), qtl_lod=rep(0,df.nrows), qtl_pvalue=rep(0,df.nrows),
+                            marker_variance=rep(0,df.nrows), model_variance=rep(0,df.nrows), interval=rep(0,df.nrows), position_consensus=rep(-1,df.nrows),
+							class=rep("", df.nrows), model_idx=models_idx.v, color=rep("transparent",df.nrows), stroke_color=rep("transparent",df.nrows), 
+							model_cols=rep("transparent",df.nrows))
 for( i in 1:length(indices) ) {
     #To avoid rendering issues where there are not at least multiple values for each tile/scatterplot in data file, inject 'hidden' elements to get around this.
     traits           <- unlist(strsplit(labels$mtraits[i],","))
@@ -213,10 +224,9 @@ for( i in 1:length(indices) ) {
                                                       nearest_marker=rep(paste0("marker--fake--trait--",labels$trait[i]), df.nrows))
     qtl_file		 <- paste0(trait_prefix, "__circos_qtl_file.csv")
     qtl_files[i]     <- circosfile2path(qtl_file)
-    #browser()
-    write.csv(rbind(data.frame(supermap.bin.grouped[indices[[i]]+1,]),fakedata.mut.df), file=paste0(workflow,"/configs/circos/",qtl_file), row.names=F)
-    models           <- as.vector(unique(supermap.bin.grouped[indices[[i]]+1, "model"])$model)
-    lod_files[i]     <- exportLODProfiles2(models, labels$mtraits[i], labels$trait[i])
+    write.csv(rbind(data.frame(qtl.collated.grouped.df[indices[[i]]+1,]),fakedata.mut.df), file=paste0(workflow,"/configs/circos/",qtl_file), row.names=F)
+    models           <- as.vector(unique(qtl.collated.grouped.df[indices[[i]]+1, "model"])$model)
+    lod_files[i]     <- exportLODProfiles(models, labels$mtraits[i], labels$trait[i])
 }
 
 #Write all the trait datafiles in one file for the javascript file to parse these out.
