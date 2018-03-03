@@ -52,7 +52,6 @@ focal.cols <- c("berry_length", "berry_width", "berry_weight", "num_seeds", "num
 
 #Do a combined population assessment
 cnjpop.pheno.combined.means.cor.mat <- cor(cnjpop.pheno.means.df[,focal.cols])
-cnjpop.pheno.means.df[,focal.cols]
 write.csvw(cnjpop.pheno.combined.means.cor.mat, "combinedpopulations_phenotype_correlations_global.csv")
 
 #Generate the overall correlation matrix between variables across all years
@@ -66,14 +65,14 @@ write.csvw(cnjpop.pheno.p2.means.cor.mat, "CNJ02_phenotype_correlations_global.c
 cnjpop.pheno.p1.means.split.df <- split_by_year(cnjpop.pheno.p1.means.df, year.col="year", vars.col=focal.cols, by="accession_name")
 cnjpop.pheno.p1.means.cor.split.mat <- cor(cnjpop.pheno.p1.means.split.df[,-1])
 write.csvw(cnjpop.pheno.p1.means.cor.split.mat, "CNJ04_phenotype_correlations_by_year.csv")
-cnjpop.pheno.p1.means.cor.split.mat <- read.csvw("CNJ04_phenotype_correlations_by_year.csv")
+#cnjpop.pheno.p1.means.cor.split.mat <- read.csvw("CNJ04_phenotype_correlations_by_year.csv")
 
 
 cnjpop.pheno.p2.means.sub.df <- cnjpop.pheno.p2.means.df[,focal.cols]
 cnjpop.pheno.p2.means.split.df <- split_by_year(cnjpop.pheno.p2.means.df, year.col="year", vars.col=focal.cols, by="accession_name")
 cnjpop.pheno.p2.means.cor.split.mat <- cor(cnjpop.pheno.p2.means.split.df[,-1])
 write.csvw(cnjpop.pheno.p2.means.cor.split.mat, "CNJ02_phenotype_correlations_by_year.csv")
-cnjpop.pheno.p2.means.cor.split.mat <- read.csvw("CNJ02_phenotype_correlations_by_year.csv", row.names=1)
+#cnjpop.pheno.p2.means.cor.split.mat <- read.csvw("CNJ02_phenotype_correlations_by_year.csv", row.names=1)
 
 #graph.cols <- colorRampPalette(c(rgb(0,0,1),rgb(1,0,0)))(100)
 graph.cols <- colorRampPalette(c('white','black'))(100)
