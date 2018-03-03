@@ -22,7 +22,7 @@ plotcors:
 		R CMD BATCH qtl_pipeline_00_2_plotcors.R 
 
 genmodels:
-		R CMD BATCH '--args workflow="../../Workflows/1"' qtl_pipeline_01_genmodels.R
+		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_genmodels.R
 
 #Rbuild tars up the packages necessary for installing an R-build and then transferring to submit server.  Untar Rpackage.tgz, submit an interactive session using
 #condor_submit -i Rpackage.sub
@@ -86,6 +86,14 @@ GenConsensus:
 #Generate Circos Plot
 GenCircos:
 		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_type="$(CIRCOS_QTL_TYPE)"' qtl_pipeline_11_gencircos.R
+
+#Push the template drawcircos.* and other html support files to appropriate workflow folder
+PushCircos:
+		cp -r ../../Workflows/templates/traits/plots/circos/* $(WORKFLOW)/traits/plots/circos/
+
+#Pull the template drawcircos.* and other html support files to appropriate workflow folder
+PullCircos:
+		cp -r $(WORKFLOW)/traits/plots/circos/drawcircos.* ../../Workflows/templates/traits/plots/circos/ 
 
 #Merge H2
 MergeH2:
