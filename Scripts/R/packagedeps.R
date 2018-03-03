@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 ##### For analyzing phenotypes #####
+install.packages(c("dplyr"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("pryr"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("openxlsx","RColorBrewer"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("lm"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
@@ -11,8 +12,7 @@ install.packages(c("lme4"), repos = "http://mirror.las.iastate.edu/CRAN/", depen
 install.packages(c("qtl"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("sommer"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("lattice"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
-#IRanges is a part of bioconductor package: 
-## try http:// if https:// URLs are not supported
+#IRanges is a part of bioconductor package: ## try http:// if https:// URLs are not supported
 source("http://bioconductor.org/biocLite.R")
 biocLite("IRanges")
 biocLite("GenomicRanges")
@@ -24,3 +24,13 @@ install.packages(c("snow"), repos = "http://mirror.las.iastate.edu/CRAN/", depen
 install.packages(c("doSNOW"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 
 install.packages(c("jsonlite"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+
+#For performing clustering of qtls to group them appropriately.
+install.packages(c("hclust"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+install.packages(c("factoextra"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+
+#For generating interesting, interactive plots
+install.packages(c("plotly"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+#For generating correlation-type heatmaps
+install.packages(c("GGally"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+
