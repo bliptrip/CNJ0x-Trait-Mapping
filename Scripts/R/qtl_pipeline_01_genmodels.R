@@ -9,7 +9,7 @@
 # loading libraries
 source('./usefulFunctions.R')
 
-workflow <- "../../Workflows/1"
+workflow <- "../../Workflows/2"
 
 #In case we override the workflow on the command-line
 args = commandArgs(trailingOnly=TRUE)
@@ -21,6 +21,7 @@ if(length(args)!=0) {
 
 library(sommer)
 library(qtl)
+library(dplyr)
 
 #Load the configuration file for this workflow
 source(paste0(workflow,"/configs/model.cfg"))
@@ -62,59 +63,98 @@ source(paste0(workflow,"/configs/model.cfg"))
 geno<-read.table(geno_rpath2fpath(geno_file),header=T,sep=',')  
 rownames(geno)<-geno$X
 geno<-geno[,-c(1:6)] #Remove the marker name, segregation pattern, phase, classification, position, and lg fields -- only keep the genotype calls
-geno.num <-atcg1234(t(geno))
+#geno.num is input to sommer's A.mat() function in order to calculate the realized additive matrix, aiding in calculation of breeding values (BLUPS)
+#
+#
+
+#Make a copy of geno for passing to atcg1234() and ultimately A.mat()
+#The goal is to convert ab x cd bi-allelic SNPs to an hk x hk form, thus allowing atcg1234() to do its work.
+geno.amat <- as.matrix(geno)
+#Always filter scaffolds here, as this section is for calculating the Additive relationship matrix for calculating BLUPS, which is distinct
+#from the encoding for the R/qtl cross file.
+geno.scaffolds.idx <- which(grepl("^scaffold_", rownames(geno.amat), ignore.case=T))
+ac.i <- which(geno.amat[geno.scaffolds.idx,] == "ac")
+bc.i <- which(geno.amat[geno.scaffolds.idx,] == "bc")
+ad.i <- which(geno.amat[geno.scaffolds.idx,] == "ad")
+bd.i <- which(geno.amat[geno.scaffolds.idx,] == "bd")
+geno.amat[geno.scaffolds.idx,][ac.i] <- "hh"
+geno.amat[geno.scaffolds.idx,][bc.i] <- "hk"
+geno.amat[geno.scaffolds.idx,][ad.i] <- "hk"
+geno.amat[geno.scaffolds.idx,][bd.i] <- "kk"
+
+geno.num <-atcg1234(t(geno.amat))
 
 #Read in the phenotype file
 pheno.means.df<-read.csv(file=pheno_dpath2fpath(pheno_file))
 
-#Convert consensus map to bins
-superMap.df<-read.table(geno_rpath2fpath(geno_consensus_file),header=T,sep=',')
-superMap.df<-superMap.df[,c('marker','LG','consensus')]
-superMap.df<-superMap.df[order(superMap.df[,2],superMap.df[,3]),]
-superMap.df$binID<-NA
-superMap.bin.df<-numeric()
-for (LG in unique(superMap.df$LG)){
-  f<-which(superMap.df$LG==LG)
-  mybins<-unique(superMap.df$consensus[f])
-  mybinsID<-paste0('bin_',LG,'@',mybins,'cM')
-  
-  for (j in 1:length(mybins)){
-    f2<-which(superMap.df$consensus[f]==mybins[j])
-    superMap.df$binID[f[f2]]<-mybinsID[j]      
-    superMap.bin.df<-rbind(superMap.bin.df,superMap.df[f[f2[1]],])
-  }
+generate_bin_id <- function(LG, position) {
+    return(paste0("bin_",LG,"@",position,"cM"))
 }
-rownames(superMap.bin.df)<-superMap.bin.df$marker
-
+#Convert consensus map to bins
+#First convert a map into a 3-column dataset with following column names: 'marker', 'LG', and 'consensus'
+#before passing to this function.
+condense_map_bins <- function(map.df, filter_scaffolds=FALSE) {
+    map.df$marker <- rownames(map.df)
+    if( filter_scaffolds ) {
+        map.df <- map.df %>%
+                    filter(grepl("^scaffold_", marker, ignore.case=T))
+    }
+    map.df <- map.df %>%
+            group_by(LG, consensus) %>%
+            summarize(marker=marker[1], binID = generate_bin_id(LG[1],consensus[1]))
+    map.df <- data.frame(map.df, row.names=map.df$marker)
+    return(map.df)
+}
+superMap.df       <- read.csv(geno_rpath2fpath(geno_consensus_file),header=T)[,c("marker","LG","consensus")] %>%
+                        mutate(binID = generate_bin_id(LG,consensus))
+rownames(superMap.df) <- superMap.df$marker
+superMap.bin.df   <- condense_map_bins(superMap.df)
+rownames(superMap.bin.df) <- superMap.bin.df$marker
 saveRDS(superMap.bin.df, file=geno_rpath2fpath(paste0(geno_consensus_file,".rds")), compress=T)
 
-matrixK<-matrix(NA,nrow=nrow(geno),ncol=ncol(geno)-6)
-g<-which(geno[,7:ncol(geno)]=='ac')
+#The following is necessary to convert the mapqtl codes in a four-way cross to those that are defined
+#according to the R/qtl read.cross() specifications.
+matrixK<-matrix(NA,nrow=nrow(geno),ncol=ncol(geno))
+g<-which(geno=='ac')
 matrixK[g]<-1
-g<-which(geno[,7:ncol(geno)]=='ad')
+g<-which(geno=='ad')
 matrixK[g]<-3  
-g<-which(geno[,7:ncol(geno)]=='bc')
+g<-which(geno=='bc')
 matrixK[g]<-2
-g<-which(geno[,7:ncol(geno)]=='bd')
+g<-which(geno=='bd')
 matrixK[g]<-4
-g<-which(geno[,7:ncol(geno)]=='ll')
+g<-which(geno=='ll')
 matrixK[g]<-5
-g<-which(geno[,7:ncol(geno)]=='lm')
+g<-which(geno=='lm')
 matrixK[g]<-6
-g<-which(geno[,7:ncol(geno)]=='nn')
+g<-which(geno=='nn')
 matrixK[g]<-7
-g<-which(geno[,7:ncol(geno)]=='np')
+g<-which(geno=='np')
 matrixK[g]<-8
-g<-which(geno[,7:ncol(geno)]=='hh')
+g<-which(geno=='hh')
 matrixK[g]<-1
-g<-which(geno[,7:ncol(geno)]=='hk')
+g<-which(geno=='hk')
 matrixK[g]<-10
-g<-which(geno[,7:ncol(geno)]=='kk')
+g<-which(geno=='kk')
 matrixK[g]<-4
 
 gData<-t(matrixK)
-rownames(gData)<-colnames(geno)[7:ncol(geno)]
+rownames(gData)<-colnames(geno)
 colnames(gData)<-rownames(geno)
+
+#Eduardo Covarrubias dramatically changed the sommer package, breaking old formatting/support.  He introduced a pin() function to calculate the heritability,
+#but it requires a strange formatting that necessitates my need to keep track of what V1, V2
+generate_h2_formula <- function(mmer.out, genotype_id_string) {
+    num_var_components <- length(mmer.out$var.comp);
+    genotype_var_idx   <- which(grepl(genotype_id_string, names(mmer.out$var.comp)))
+    h2_denom           <- vector("character",length(mmer.out$var.comp))
+    for( i in 1:length(mmer.out$var.comp) ) {
+        h2_denom[i]    <- paste0("V",i)
+    }
+    h2_string          <- paste0("h2 ~ V",genotype_var_idx,"/(",paste0(h2_denom,collapse=" + "),")")
+    return(h2_string)
+}
+
 
 #A note here: Luis calculated his additive genetic effects using the means of his phenotypic values.  I'd like to both try the means and the actual values (will need to duplicate rows for each duplicated genotype in realized additive matrix)
 #and see what differences I can find in heritability of one versus the other.
@@ -126,7 +166,7 @@ mixed_model_analyze <- function(trait.cfg, pheno, geno, include.idx) {
     geno					<- geno[unique(pheno$accession_name),]
 
     ETA.A <- list()
-    if( !is.na(trait.cfg["covars"]) ) {
+    if( !is.empty(trait.cfg["covars"]) ) {
         covars <- unlist(strsplit(trait.cfg["covars"], ","))
         for( covar in covars ) {
             #Now do a all-years analysis of traits
@@ -144,20 +184,14 @@ mixed_model_analyze <- function(trait.cfg, pheno, geno, include.idx) {
     }
 
     #Random genotype effects incidence matrix (per sommer documentation)
-    browser()
     Zg                     <- model.matrix(~accession_name-1,pheno); colnames(Zg) <- gsub("accession_name","",colnames(Zg))
     A                      <- A.mat(geno)
     ETA.A$accession_name   <- list(Z=Zg,K=A)
 
     traits  <- unlist(strsplit(trait.cfg["mtraits"],","))
     print(paste0("Running trait(s) \"",paste0(traits,collapse="__"), "\" model analysis."))
-	if( length(traits) > 1 ) {
-		a_MVM <- TRUE
-    } else {
-		a_MVM <- FALSE
-	}
-    mmer.expr <- "mmer(Y=pheno[,traits],Z=ETA.A,MVM=a_MVM"
-    if( !is.na(trait.cfg["mmer_args"]) ) {
+    mmer.expr <- "mmer(Y=pheno[,traits],Z=ETA.A"
+    if( !is.empty(trait.cfg["mmer_args"]) ) {
         mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
     }
     mmer.expr <- paste0(mmer.expr,")")
@@ -165,20 +199,30 @@ mixed_model_analyze <- function(trait.cfg, pheno, geno, include.idx) {
     return(repo)
 }
 
-generate_cross_file <- function(trait.cfg, traits, blups, gData, superMap.bin.df, file.path) {
+generate_cross_file <- function(trait.cfg, traits, blups, gData, superMap.df, file.path) {
     print(paste0("Population Analysis Set: ", trait.cfg["model"]))
+    #First make sure to use individuals only in common in the blups data and in the marker data
     geno.intersect<-intersect(rownames(blups),rownames(gData))
     y<-as.data.frame(blups[geno.intersect,traits]) #Convert to data.frame to deal with issues in setting colnames in univariate analysis (blups aren't a data.frame in this case)
     colnames(y)<-traits
-
     gData.sub <- gData[geno.intersect,]
-    geno.intersect.sub<-intersect(colnames(gData.sub),superMap.bin.df$marker)
+
+    #Second, we are only interested in markers in common with the consensus map
+    geno.intersect.sub<-intersect(colnames(gData.sub),superMap.df$marker)
     gData.sub<-gData.sub[,geno.intersect.sub]
-    superMap.sub<-superMap.bin.df[geno.intersect.sub,]
+    superMap.sub<-superMap.df[geno.intersect.sub,]
 
     gData.sub<-rbind(superMap.sub$LG,superMap.sub$consensus,gData.sub)
+    colnames(gData.sub)<-superMap.sub$marker
 
-    colnames(gData.sub)<-superMap.sub$binID
+    #Invert the gData.sub, bin the data, re-invert, and then write cross file.
+    gData.inv.sub <- t(gData.sub)
+    colnames(gData.inv.sub) <- c("LG","consensus",colnames(gData.inv.sub)[3:ncol(gData.inv.sub)])
+    #Bin the marker data
+    gData.bin.df  <- condense_map_bins(data.frame(gData.inv.sub))
+    #Subset the genotype marker calls based on the binned results
+    gData.inv.sub <- gData.inv.sub[rownames(gData.bin.df),]
+    gData.sub     <- t(gData.inv.sub)
 
     gData.sub<-data.frame(rbind('','',y),gData.sub)
     rownames(gData.sub)[1:2]<-c('chr','pos')
@@ -186,6 +230,7 @@ generate_cross_file <- function(trait.cfg, traits, blups, gData, superMap.bin.df
     #Now write the cross file as a csv in the appropriate folder
     write.csv(gData.sub,file=paste0(file.path,"/cross.csv"),row.names=FALSE)
     cross <- read.cross(format = "csv", file=paste0(file.path,"/cross.csv"), genotypes = NULL)
+    cross <- jittermap(cross)
     cross <- calc.genoprob(cross,step=0,map.function="kosambi")
     saveRDS(cross, file=paste0(file.path,"/cross.rds"), compress=TRUE)
 }
@@ -218,12 +263,15 @@ for( i in 1:length(traits.df[,1]) ) {
     write.csv(vcov,file=paste0(trait_subfolder_fpath,"/vcov.csv"))
     #TODO: Save vcov
     if( length(traits) > 1 ) {
+        #Not sure why the sommer package pin() function doesn't allow me to look at h2 for a multivariate regression output,
+        # but in this case just use my former function (doesn't include SE estimates).
         h2      <- (diag(length(traits))*(vcov$accession_name/Reduce('+',vcov))) %*% rep(1,length(traits))
     } else {
         colnames(blups) <- traits
-        h2      <- vcov['Var(accession_name)','component']/sum(vcov[,'component'])
+        h2_str  <- generate_h2_formula(repo, "accession_name")
+        h2      <- eval(parse(text=paste0("pin(repo, ", h2_str, ")")))
     }
     write.csv(h2,file=paste0(trait_subfolder_fpath,"/h2.csv"))
     #TODO: Save h2
-    generate_cross_file(trait.cfg, traits, blups, gData, superMap.bin.df, trait_subfolder_fpath) 
+    generate_cross_file(trait.cfg, traits, blups, gData, superMap.df, trait_subfolder_fpath) 
 }
