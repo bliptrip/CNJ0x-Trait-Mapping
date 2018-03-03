@@ -58,6 +58,10 @@ write.csvw <- function(df, file) {
     write.csv(df,paste0(DATA_FOLDER_PREFIX,"/",file))
 }
 
+read.csvw <- function(file, row.names=NULL) {
+    return(read.csv(paste0(DATA_FOLDER_PREFIX,"/",file), row.names=row.names))
+}
+
 geno_rpath2fpath <- function(rpath) {
     return(paste0(GDATA_FOLDER_PREFIX, "/", rpath))
 }
@@ -72,6 +76,10 @@ pheno_rpath2fpath <- function(rpath) {
 
 pheno_dpath2fpath <- function(rpath) {
     return(paste0(PDDATA_FOLDER_PREFIX, "/", rpath))
+}
+
+is.empty <- function(mstr) {
+    return(is.na(mstr) || (trimws(mstr,which="both") == ""))
 }
 
 trait_is_unmasked <- function(trait.cfg) {
@@ -154,13 +162,24 @@ updatePointerValue.pointer<-function(object,newValue){ # create S3 method
 
 append.pointer<-function(object, value) {
     if (!is(object, "pointer")) { stop(" 'object' argument must be of class 'pointer' .") }
-    pos <- nrow(object$value) + 1
-    object$value[pos,] <- value
+    object.class <- class(object$value)
+    if( object.class == "data.frame" ) {
+        pos <- nrow(object$value) + 1
+        object$value[pos,] <- value
+    } else if( object.class == "list" ) {
+        pos <- length(object$value) + 1
+        object$value[[pos]] <- value
+    }
     return(object)
 }
 
 assign.pointer<-function(object, value, pos) {
     if (!is(object, "pointer")) { stop(" 'object' argument must be of class 'pointer' .") }  
-    object$value[pos,] <- value
+    object.class <- class(object$value)
+    if( object.class == "data.frame" ) {
+        object$value[pos,] <- value
+    } else if( object.class == "list" ) {
+        object$value[[pos]] <- value
+    }
     return(object)
 }
