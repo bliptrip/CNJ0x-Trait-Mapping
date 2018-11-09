@@ -129,8 +129,8 @@ qtl.collated.df <-  read.csv(file=paste0(workflow,"/traits/qtl_collated.consensu
 karyotype<-numeric()
 k.chrs <- 1:12
 k.ids <- paste0("vm",k.chrs)
-k.labs <-  paste0("chr",k.chrs)
-k.cols <- rep("rgb(82,82,82)", length(k.chrs))
+k.labs <-  paste0("LG",k.chrs)
+k.cols <- rep("rgb(150,150,150)", length(k.chrs))
 k.lens <- (arrange(supermap.bin.df, LG) %>% group_by(LG) %>% summarize(max_consensus=max(consensus)*1000))$max_consensus
 karyotype.df <- data.frame(id=k.ids, label=k.labs, color=k.cols, len=k.lens)
 karyotype.json <- toJSON(karyotype.df, pretty=T)
@@ -168,11 +168,12 @@ extract_marker <- function(chr, position, nearest.marker) {
     return(marker[i])
 }
 
-gen_color <- function(model, mtraits_trait) {
-    m.idx <- as.numeric(model)
+gen_color <- function(model_idx, mtraits_trait) {
+    #m.idx <- as.numeric(model)
+	m.idx <- model_idx
     t.idx <- as.numeric(mtraits_trait)
-    colors <- vector("character", length(model))
-    for( i in 1:length(model) ) {
+    colors <- vector("character", length(model_idx))
+    for( i in 1:length(model_idx) ) {
         colors[i] <- mycols[m.idx[i],t.idx[i]]
     }
     return(colors)
@@ -187,10 +188,10 @@ qtl.collated.augmented.df <- qtl.collated.df %>%
                         mutate(mtraits_trait=paste0(mtraits,trait)) %>%
                         filter(mtraits_trait %in% circostraits.cfg.df$mtraits_trait) %>%
                         mutate(mtraits_trait=as.factor(mtraits_trait)) %>%
-                        mutate(model_idx=as.numeric(model)) %>%
+                        mutate(model_idx=as.numeric(as.factor(model))) %>%
                         mutate(class=paste0("marker_", extract_marker(chr, position, nearest.marker), " ", extract_bin(chr, position), "trait_", trait)) %>%
-                        mutate(color=gen_color(model, mtraits_trait)) %>%
-                        mutate(stroke_color=gen_color(model, mtraits_trait)) %>%
+                        mutate(color=gen_color(model_idx, mtraits_trait)) %>%
+                        mutate(stroke_color=gen_color(model_idx, mtraits_trait)) %>%
                         mutate(model.cols=model.cols[as.numeric(model)])
 
 #Periods in variable names aren't allowed in javascript, as they have special meaning.  Replace all periods with underscores in the column names.
@@ -202,19 +203,22 @@ indices <- attr(qtl.collated.grouped.df,"indices")
 labels  <- attr(qtl.collated.grouped.df,"labels")
 labels$mtraits <- as.character(labels$mtraits)
 labels$trait <- as.character(labels$trait)
+#Generate a set of indices sorted by the order listed in circos-traits.default.cfg.csv
+sorted_indices = match(paste0(circostraits.cfg.df$mtraits,circostraits.cfg.df$trait),paste0(labels$mtraits,labels$trait))
 qtl_files <- vector("character", length(indices))
 lod_files <- vector("character", length(indices))
 #Generate a fake dataset to have all tracks display
 models.v      <- rep(unique(as.character(qtl.collated.augmented.df$model)), length(k.chrs))
-models_idx.v  <- rep(unique(as.numeric(qtl.collated.augmented.df$model)), length(k.chrs))
+models_idx.v  <- rep(unique(as.numeric(qtl.collated.augmented.df$model_idx)), length(k.chrs))
 chr.v         <- unlist(lapply(k.chrs, function(x) { rep(x,num_models) } ))
 df.nrows      <- length(models.v)
 fakedata.df   <- data.frame(method=rep("fakeqtl",df.nrows), model=models.v, year=rep("",df.nrows), chr=chr.v, position=rep(-1,df.nrows),
                             chr2=rep(NA,df.nrows), position2=rep(NA,df.nrows), nearest_marker=rep("",df.nrows), qtl_lod=rep(0,df.nrows), qtl_pvalue=rep(0,df.nrows),
                             marker_variance=rep(0,df.nrows), model_variance=rep(0,df.nrows), interval=rep(0,df.nrows), position_consensus=rep(-1,df.nrows),
-							class=rep("", df.nrows), model_idx=models_idx.v, color=rep("transparent",df.nrows), stroke_color=rep("transparent",df.nrows), 
-							model_cols=rep("transparent",df.nrows))
-for( i in 1:length(indices) ) {
+							class=rep("", df.nrows), model_idx=models_idx.v, color=rep("rgb(0,0,0)",df.nrows), stroke_color=rep("rgb(0,0,0)",df.nrows), 
+							model_cols=rep("rgb(0,0,0)",df.nrows))
+for( j in 1:length(indices) ) {
+	i = sorted_indices[j]
     #To avoid rendering issues where there are not at least multiple values for each tile/scatterplot in data file, inject 'hidden' elements to get around this.
     traits           <- unlist(strsplit(labels$mtraits[i],","))
     trait.names      <- paste0(traits,collapse="__")
@@ -223,10 +227,10 @@ for( i in 1:length(indices) ) {
                                                       mtraits_trait=rep(paste0(labels$mtraits[i],labels$trait[i]), df.nrows),
                                                       nearest_marker=rep(paste0("marker--fake--trait--",labels$trait[i]), df.nrows))
     qtl_file		 <- paste0(trait_prefix, "__circos_qtl_file.csv")
-    qtl_files[i]     <- circosfile2path(qtl_file)
+    qtl_files[j]     <- circosfile2path(qtl_file)
     write.csv(rbind(data.frame(qtl.collated.grouped.df[indices[[i]]+1,]),fakedata.mut.df), file=paste0(workflow,"/configs/circos/",qtl_file), row.names=F)
     models           <- as.vector(unique(qtl.collated.grouped.df[indices[[i]]+1, "model"])$model)
-    lod_files[i]     <- exportLODProfiles(models, labels$mtraits[i], labels$trait[i])
+    lod_files[j]     <- exportLODProfiles(models, labels$mtraits[i], labels$trait[i])
 }
 
 #Write all the trait datafiles in one file for the javascript file to parse these out.
@@ -256,8 +260,8 @@ for(i in 1:length(rmin1)) {
 
 #Edit the layout here per the script preferences
 layout.json <- read_json(file.path(workflow,'/configs/circos/layout.default.json'))
-layout.json$innerRadius <- 1500 - 150
-layout.json$outerRadius <- 1500 - 130
+#layout.json$innerRadius <- 1500 - 150
+#layout.json$outerRadius <- 1500 - 130
 #Write back
 write_json(layout.json, file.path(workflow,'/configs/circos/layout.json'), simplifyVector=TRUE, auto_unbox=TRUE, pretty=T)
 
@@ -281,7 +285,7 @@ for( i in 1:length(indices) ) {
     }
     scatter.config.json$backgrounds[[1]]$start <- 0;
     scatter.config.json$backgrounds[[1]]$end   <- num_models+1;
-    scatter.config.json$backgrounds[[1]]$color <- col2rgb("gray15");
+    scatter.config.json$backgrounds[[1]]$color <- paste0("rgb(",paste0(as.numeric(col2rgb("gray45")),collapse=","),")");
     scatter.config.json$backgrounds[[1]]$opacity <- 1;
     scatter.configs.json[[i]] <- scatter.config.json
     #Edit the stack layout
@@ -293,7 +297,7 @@ for( i in 1:length(indices) ) {
         #stack.config.json$max          <- (num_models*5) + 1
         stack.config.json$backgrounds[[1]]$start <- 0;
         #stack.config.json$backgrounds[[1]]$end   <- (num_models*5)+1;
-        stack.config.json$backgrounds[[1]]$color <- col2rgb("gray15");
+        stack.config.json$backgrounds[[1]]$color <- paste0("rgb(",paste0(as.numeric(col2rgb("gray22")),collapse=","),")");
         stack.config.json$backgrounds[[1]]$opacity <- 1;
         stack.configs.inner.json[[j]] <- stack.config.json
     }
@@ -303,6 +307,7 @@ for( i in 1:length(indices) ) {
     line.config.json <- read_json(file.path(workflow,'/configs/circos/line.default.json'))
     line.config.json$innerRadius  <- rmin1[i]
     line.config.json$outerRadius  <- rmax1[i]
+	line.config.json$backgrounds[[1]]$color <- paste0("rgb(",paste0(as.numeric(col2rgb("gray45")),collapse=","),")");
     line.configs.json[[i]] <- line.config.json
 }
 #Write the axes
