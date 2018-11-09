@@ -9,7 +9,7 @@
 # loading libraries
 source('./usefulFunctions.R')
 
-workflow <- "../../Workflows/2"
+workflow <- "../../Workflows/1"
 
 #In case we override the workflow on the command-line
 args = commandArgs(trailingOnly=TRUE)
@@ -22,6 +22,7 @@ if(length(args)!=0) {
 library(sommer)
 library(qtl)
 library(dplyr)
+library(tidyverse)
 
 #Load the configuration file for this workflow
 source(paste0(workflow,"/configs/model.cfg"))
@@ -164,12 +165,13 @@ mixed_model_analyze <- function(trait.cfg, pheno, geno, include.idx) {
     pheno					<- pheno[include.idx,]
     pheno$accession_name	<- as.character(pheno$accession_name)
     geno					<- geno[unique(pheno$accession_name),]
+    traits                  <- unlist(strsplit(trait.cfg["mtraits"],","))
+    print(paste0("Running trait(s) \"",paste0(traits,collapse="__"), "\" model analysis."))
 
     ETA.A <- list()
     if( !is.empty(trait.cfg["covars"]) ) {
         covars <- unlist(strsplit(trait.cfg["covars"], ","))
         for( covar in covars ) {
-            #Now do a all-years analysis of traits
             #The following only generates the correct matrix if years are converted to factors first.
             #Run the following when you need to model on covariates
             pheno[,covar] <- as.factor(pheno[,covar])
@@ -188,8 +190,6 @@ mixed_model_analyze <- function(trait.cfg, pheno, geno, include.idx) {
     A                      <- A.mat(geno)
     ETA.A$accession_name   <- list(Z=Zg,K=A)
 
-    traits  <- unlist(strsplit(trait.cfg["mtraits"],","))
-    print(paste0("Running trait(s) \"",paste0(traits,collapse="__"), "\" model analysis."))
     mmer.expr <- "mmer(Y=pheno[,traits],Z=ETA.A"
     if( !is.empty(trait.cfg["mmer_args"]) ) {
         mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
@@ -246,18 +246,19 @@ for( year in unique(pheno.means.df$year) ) {
 }
 for( i in 1:length(traits.df[,1]) ) {
     trait.cfg <- traits.df[i,]
-    if( is.na(trait.cfg["year.subset"]) ) {
-        include.idx <- which(include.idx.base)
-    } else {
-        include.idx <- include.idx.l[[as.character(trait.cfg["year.subset"])]]
-    }
-    repo <- mixed_model_analyze(trait.cfg, pheno.means.df, geno.num, include.idx) 
     #Make a trait folder if it doesn't exist and add output files, such as blups, heritability, and cross files to it.
     traits           <- unlist(strsplit(trait.cfg["mtraits"],","))
     trait.names      <- paste0(traits,collapse="__")
     trait_subfolder  <- paste0(c(trait.cfg["model"],trait.names),collapse="--")
     trait_subfolder_fpath <- file.path(paste0(workflow,"/traits"), trait_subfolder)
     dir.create(trait_subfolder_fpath, showWarnings = FALSE)
+    if( is.na(trait.cfg["year.subset"]) ) {
+        include.idx <- which(include.idx.base)
+    } else {
+        include.idx <- include.idx.l[[as.character(trait.cfg["year.subset"])]]
+    }
+    repo <- mixed_model_analyze(trait.cfg, pheno.means.df, geno.num, include.idx) 
+    saveRDS(repo, file=paste0(trait_subfolder_fpath,"/mmer.rds"), compress=TRUE)
     blups   <- repo$u.hat$accession_name
     vcov    <- repo$var.comp
     write.csv(vcov,file=paste0(trait_subfolder_fpath,"/vcov.csv"))
