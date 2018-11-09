@@ -22,7 +22,7 @@
         "start": 0,
         "end": 5,
         "color": "rgb(0,0,0)",
-        "opacity": 0.5
+        "opacity": 0.75
     }],
     "tooltipContent": ""
 }
