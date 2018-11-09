@@ -24,6 +24,12 @@ plotcors:
 genmodels:
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_genmodels.R
 
+genmodels_mmer2:
+		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_genmodels_mmer.R
+
+genh2plot:
+		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_02_genh2plots.R
+
 #Rbuild tars up the packages necessary for installing an R-build and then transferring to submit server.  Untar Rpackage.tgz, submit an interactive session using
 #condor_submit -i Rpackage.sub
 #Comment-out any packages you don't want to install if they're already in the tarball.
@@ -90,10 +96,25 @@ GenCircos:
 #Push the template drawcircos.* and other html support files to appropriate workflow folder
 PushCircos:
 		cp -r ../../Workflows/templates/traits/plots/circos/* $(WORKFLOW)/traits/plots/circos/
+		cp -r ../../Workflows/templates/configs/circos/*.default.json $(WORKFLOW)/configs/circos/
 
 #Pull the template drawcircos.* and other html support files to appropriate workflow folder
 PullCircos:
 		cp -r $(WORKFLOW)/traits/plots/circos/drawcircos.* ../../Workflows/templates/traits/plots/circos/ 
+		cp -r $(WORKFLOW)/configs/circos/*.default.json ../../Workflows/templates/configs/circos/
+
+#Copy all circos files and their dependencies to a sandbox folder in a specified folder (to have an independent sandbox for displaying the circos plots)
+#NOTE: Must specify SANDBOX on command-line to give destination directory to copy to.
+GenCircosSandbox:
+		mkdir -p $(SANDBOX)
+		mkdir -p $(SANDBOX)/D3/
+		cp -r ~/Zalapa/projects/TOOLS/D3/circosJS-master $(SANDBOX)/D3/
+		cp -r ~/Zalapa/projects/TOOLS/D3/d3 $(SANDBOX)/D3/
+		cp -r ~/Zalapa/projects/TOOLS/D3/d3-queue $(SANDBOX)/D3/
+		cp -r $(WORKFLOW)/traits/plots/circos/drawcircos.*  $(SANDBOX)/
+		cp -r $(WORKFLOW)/traits/plots/circos/styles.css $(SANDBOX)/
+		cp -r $(WORKFLOW)/traits/plots/circos/karyotype.json $(SANDBOX)/
+		cp -r $(WORKFLOW)/configs $(SANDBOX)/
 
 #Merge H2
 MergeH2:
