@@ -22,8 +22,8 @@
 
 # generador de huecolors
 # 
-hueGen<-function(n,from,to){
-    hsl<-paste0('hsl(',round(seq(from,to,length.out=n),0),',100%,50%',')')
+hueGen<-function(n,from,to,s="100%",l="50%"){
+    hsl<-paste0('hsl(',round(seq(from,to,length.out=n),0),',',s,',',l,')')
     return(hsl)
 }
 
@@ -95,9 +95,25 @@ mtrait_subfolder <- function(trait.cfg) {
     return(trait_subfolder)
 }
 
+trait.abbrev.map.df <- read.csv(pheno_dpath2fpath("trait_to_abbreviation_map.csv"), header=F, row.names=1, stringsAsFactors=F)
+rename_traits <- function(traits, abbrevmap) {
+    #If you don't convert the trait to a character (if it's a factor), this function will fail to correctly map!
+    traits  <- as.character(traits)
+    abbrevs <- vector("character", length(traits))
+    for( i in 1:length(traits) ) {
+        trait        <- traits[i]
+        if( trait %in% rownames(abbrevmap) ) {
+            abbrevs[i]   <- abbrevmap[trait, 1]
+        } else {
+            abbrevs[i]   <- trait
+        }
+    }
+    return(abbrevs)
+}
+
 circosfile2path <- function(filename) {
 		#For now, this is the relative path to the location of the interactive circos qtl html file/javascript set
-		return(paste0("../../../configs/circos/",filename))
+		return(paste0("configs/circos/",filename))
 }
 
 #Function for looping through all unmasked traits in the configs/model-traits.cfg.csv file.
