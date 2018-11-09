@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 ##### For analyzing phenotypes #####
+install.packages(c("Hmisc"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("dplyr"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("pryr"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("openxlsx","RColorBrewer"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
@@ -28,5 +29,6 @@ install.packages(c("jsonlite"), repos = "http://mirror.las.iastate.edu/CRAN/", d
 #For generating interesting, interactive plots
 install.packages(c("plotly"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 #For generating correlation-type heatmaps
-install.packages(c("GGally"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+install.packages(c("corrplot"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) install.packages(c("GGally"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) #Themese package for ggplot2
+install.packages(c("ggthemes"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 
