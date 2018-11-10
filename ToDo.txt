@@ -1,0 +1,9 @@
+- Modify model regression code to estimate BLUPS within a year and using row/column spline, per Giovanny's email
+suggestion.
+- Modify drawcircos.js to use a class to isolate independent instances of invoking a circos plot, for the purpose of
+presenting multiple different circos plots in a slideshow.
+- Modify drawcircos.js to specify parameters such a label and karyotype radial offsets through parameters passed to
+class constructor for circos.  Consider modifying Circos.js to allow for opening up the ring for better label insertion.
+Also see if can build in features such as assigning classes to certain datasets that are plotted on tracks, in order
+to allow for plugging in callback functions, etc -- to hide elements, etc, more seamlessly.  Also, this could be
+extended to apply filters for only displaying certain subsets of data on tracks, etc.
