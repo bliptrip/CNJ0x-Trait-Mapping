@@ -1,18 +1,11 @@
-qtl_bubble_opacity            = 0.75;
-qtl_bubble_highlight_opacity  = 1.0;
-qtl_bubble_scale_factor       = 40;
-
-var width = document.getElementsByClassName('mdl-card__supporting-text')[0].offsetWidth
+var qtl_bubble_opacity            = 0.75;
+var qtl_bubble_highlight_opacity  = 1.0;
+var qtl_bubble_scale_factor       = 15;
+var gfolder_prefix                = "./";
+var circosScatter;
 var circos_trait2traitname = {};
 
-var circosScatter = new Circos({
-      container: '#scatterChart',
-      width: width,
-      height: width
-});
-
-var change_scan_type = function() {
-    selected_type = this.value;
+var change_scan_type = function(selected_type) {
     //Hide everything
     //Need to hide any old state for the LOD profile lines.
     d3.selectAll("*[class^='lines-']")
@@ -79,96 +72,100 @@ var inject_scatter = function(error, data)
         };
         //scanone results
         scatter_trait_data = trait_data
-									 .filter(function(d) { return((d.method == "scanone") || (d.method == "fakeqtl")); })
-									 .map(function(d) {
-											 return({
+                                     .filter(function(d) { return((d.method == "scanone") || (d.method == "fakeqtl")); })
+                                     .map(function(d) {
+                                             return({
                                                      method: d.method,
-													 block_id: "vm"+d.chr,
-													 position: +d.position_consensus*1000,
-													 value: +d.model_idx,  
-													 model: d.model,
-													 mtraits: d.mtraits,
-													 trait: d.trait,
-													 color: d.color,
-													 stroke_color: d.stroke_color,
-													 model_color: d.model_color,
-													 nearest_marker: d.nearest_marker,
-													 size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
-													 lod: +d.qtl_lod,
-													 pval: +d.qtl_pvalue,
-													 class: d.class
-											 });
-									 });
+                                                     block_id: "vm"+d.chr,
+                                                     position: +d.position_consensus*1000,
+                                                     value: +d.model_idx,  
+                                                     model: d.model,
+                                                     mtraits: d.mtraits,
+                                                     trait: d.trait,
+                                                     color: d.color,
+                                                     stroke_color: d.stroke_color,
+                                                     model_color: d.model_color,
+                                                     nearest_marker: d.nearest_marker,
+													 variance: d.marker_variance,
+                                                     size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
+                                                     lod: +d.qtl_lod,
+                                                     pval: +d.qtl_pvalue,
+                                                     class: d.class
+                                             });
+                                     });
         mtraits_trait = "scatter-scanone-consensus--" + scatter_trait_data[0].mtraits + "--" + scatter_trait_data[0].trait;
         circosScatter.scatter(mtraits_trait, scatter_trait_data, scatter_config);
         scatter_trait_data = trait_data
-									 .filter(function(d) { return((d.method == "scanone") || (d.method == "fakeqtl")); })
-									 .map(function(d) {
-											 return({
+                                     .filter(function(d) { return((d.method == "scanone") || (d.method == "fakeqtl")); })
+                                     .map(function(d) {
+                                             return({
                                                      method: d.method,
-													 block_id: "vm"+d.chr,
-													 position: +d.position*1000,
-													 value: +d.model_idx,  
-													 model: d.model,
-													 mtraits: d.mtraits,
-													 trait: d.trait,
-													 color: d.color,
-													 stroke_color: d.stroke_color,
-													 model_color: d.model_color,
-													 nearest_marker: d.nearest_marker,
-													 size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
-													 lod: +d.qtl_lod,
-													 pval: +d.qtl_pvalue,
-													 class: d.class
-											 });
-									 });
+                                                     block_id: "vm"+d.chr,
+                                                     position: +d.position*1000,
+                                                     value: +d.model_idx,  
+                                                     model: d.model,
+                                                     mtraits: d.mtraits,
+                                                     trait: d.trait,
+                                                     color: d.color,
+                                                     stroke_color: d.stroke_color,
+                                                     model_color: d.model_color,
+                                                     nearest_marker: d.nearest_marker,
+													 variance: d.marker_variance,
+                                                     size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
+                                                     lod: +d.qtl_lod,
+                                                     pval: +d.qtl_pvalue,
+                                                     class: d.class
+                                             });
+                                     });
         mtraits_trait = "scatter-scanone-normal--" + scatter_trait_data[0].mtraits + "--" + scatter_trait_data[0].trait;
         circosScatter.scatter(mtraits_trait, scatter_trait_data, scatter_config);
         //stepwiseqtl results
         scatter_trait_data = trait_data
-									 .filter(function(d) { return((d.method == "stepwiseqtl") || (d.method == "fakeqtl")); })
-									 .map(function(d) {
-											 return({
+                                     .filter(function(d) { return((d.method == "stepwiseqtl") || (d.method == "fakeqtl")); })
+                                     .map(function(d) {
+                                             return({
                                                      method: d.method,
-													 block_id: "vm"+d.chr,
-													 position: +d.position_consensus*1000,
-													 value: +d.model_idx,  
-													 model: d.model,
-													 mtraits: d.mtraits,
-													 trait: d.trait,
-													 color: d.color,
-													 stroke_color: d.stroke_color,
-													 model_color: d.model_color,
-													 nearest_marker: d.nearest_marker,
-													 size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
-													 lod: +d.qtl_lod,
-													 pval: +d.qtl_pvalue,
-													 class: d.class
-											 });
-									 });
+                                                     block_id: "vm"+d.chr,
+                                                     position: +d.position_consensus*1000,
+                                                     value: +d.model_idx,  
+                                                     model: d.model,
+                                                     mtraits: d.mtraits,
+                                                     trait: d.trait,
+                                                     color: d.color,
+                                                     stroke_color: d.stroke_color,
+                                                     model_color: d.model_color,
+                                                     nearest_marker: d.nearest_marker,
+													 variance: d.marker_variance,
+                                                     size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
+                                                     lod: +d.qtl_lod,
+                                                     pval: +d.qtl_pvalue,
+                                                     class: d.class
+                                             });
+                                     });
         mtraits_trait = "scatter-stepwiseqtl-consensus--" + scatter_trait_data[0].mtraits + "--" + scatter_trait_data[0].trait;
         circosScatter.scatter(mtraits_trait, scatter_trait_data, scatter_config);
         scatter_trait_data = trait_data
-									 .filter(function(d) { return((d.method == "stepwiseqtl") || (d.method == "fakeqtl")); })
-									 .map(function(d) {
-											 return({
+                                     .filter(function(d) { return((d.method == "stepwiseqtl") || (d.method == "fakeqtl")); })
+                                     .map(function(d) {
+                                             return({
                                                      method: d.method,
-													 block_id: "vm"+d.chr,
-													 position: +d.position*1000,
-													 value: +d.model_idx,  
-													 model: d.model,
-													 mtraits: d.mtraits,
-													 trait: d.trait,
-													 color: d.color,
-													 stroke_color: d.stroke_color,
-													 model_color: d.model_color,
-													 nearest_marker: d.nearest_marker,
-													 size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
-													 lod: +d.qtl_lod,
-													 pval: +d.qtl_pvalue,
-													 class: d.class
-											 });
-									 });
+                                                     block_id: "vm"+d.chr,
+                                                     position: +d.position*1000,
+                                                     value: +d.model_idx,  
+                                                     model: d.model,
+                                                     mtraits: d.mtraits,
+                                                     trait: d.trait,
+                                                     color: d.color,
+                                                     stroke_color: d.stroke_color,
+                                                     model_color: d.model_color,
+                                                     nearest_marker: d.nearest_marker,
+													 variance: d.marker_variance,
+                                                     size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
+                                                     lod: +d.qtl_lod,
+                                                     pval: +d.qtl_pvalue,
+                                                     class: d.class
+                                             });
+                                     });
         mtraits_trait = "scatter-stepwiseqtl-normal--" + scatter_trait_data[0].mtraits + "--" + scatter_trait_data[0].trait;
         circosScatter.scatter(mtraits_trait, scatter_trait_data, scatter_config);
         stack_configs     = data[(bin_size*i)+2];
@@ -368,9 +365,6 @@ var inject_line = function(error, data)
     d3.selectAll("*[class^='stacks-']")
         .attr('opacity','0')
         .attr('visibility','hidden');
-    //Register the radio buttons to change the scan type that is displayed.
-    d3.selectAll("input[name='scan-type']").on("change", change_scan_type);
-    d3.select('input[name="scan-type"]:checked').each(change_scan_type);
     //Find the arc of the centermost scatterplot and build a square.
             d3.selectAll("*[class^='scatter']")
             .selectAll(".block")
@@ -409,8 +403,18 @@ var gen_scatter_stroke_color = function(d) {
 }
 
 var gen_scatter_tooltip = function(d) {
-    return("<H1><b>"+circos_trait2traitname[d.trait]+"</b><br />"+d.model+"<br />"+d.nearest_marker+"</H1>");
+		var variance = Math.round(d.variance, 1);
+		var position = Math.round(d.position/1000.0, 1);
+		return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+d.model+"<br />Pos: "+position.toString()+"cM<br />Var: "+variance.toString()+"%<br />"+d.nearest_marker);
 }
+
+var gen_stack_tooltip = function(d) {
+		var start = Math.round(d.start/1000.0, 1);
+		var end = Math.round(d.end/1000.0, 1);
+		var range = Math.round((d.end-d.start)/1000.0, 1);
+		return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+d.model+"<br />Start-End: "+start.toString()+"-"+end.toString()+"cM<br />Range: "+range.toString()+"cM");
+}
+
 
 var gen_scatter_size = function(d) {
     return(d.size);
@@ -430,13 +434,13 @@ var drawCircos = function (error, karyotypes, layout, trait_files, lod_files, sc
   }
   var q = d3.queue();
   for( i = 0; i < trait_files.length; i++ ) {
-    trait_file                =  trait_files[i];
+    trait_file                =  gfolder_prefix + trait_files[i];
     scatter_configs[i].color          =  gen_scatter_color;
     scatter_configs[i].tooltipContent =  gen_scatter_tooltip;
     scatter_configs[i].size           =  gen_scatter_size;
     for( j = 0; j < stack_configs[i].length; j++ ) {
         stack_configs[i][j].color          =  gen_scatter_color;
-        stack_configs[i][j].tooltipContent =  gen_scatter_tooltip;
+        stack_configs[i][j].tooltipContent =  gen_stack_tooltip;
     }
     q.defer(d3.csv, trait_file)
      .defer(get_current_config, scatter_configs[i])
@@ -446,19 +450,35 @@ var drawCircos = function (error, karyotypes, layout, trait_files, lod_files, sc
 
   var q = d3.queue();
   for( i = 0; i < lod_files.length; i++ ) {
-    q.defer(d3.json, lod_files[i])
+    lod_file = gfolder_prefix + lod_files[i]
+    q.defer(d3.json, lod_file)
      .defer(get_current_config, line_configs[i])
   }
   q.awaitAll(inject_line);
 }
 
-d3.queue()
-  .defer(d3.json, 'karyotype.json')
-  .defer(d3.json, '../../../configs/circos/layout.json')
-  .defer(d3.json, '../../../configs/circos/all_traits.json')
-  .defer(d3.json, '../../../configs/circos/all_lods.json')
-  .defer(d3.json, '../../../configs/circos/scatter.configs.json')
-  .defer(d3.json, '../../../configs/circos/stack.configs.json')
-  .defer(d3.json, '../../../configs/circos/line.configs.json')
-  .defer(d3.csv,  '../../../configs/circos/circos-traits.default.cfg.csv')
-  .await(drawCircos);
+
+
+var generate_new_circos = function (container="#scatterChart", folder_prefix="./", width="1024", height="1024", opacity=0.75, highlight_opacity=1.0, bubble_scale=15) {
+    circosScatter = new Circos({
+        container: container,
+        width: width,
+        height: height 
+    });
+
+    gfolder_prefix                = folder_prefix
+    qtl_bubble_opacity            = opacity;
+    qtl_bubble_highlight_opacity  = highlight_opacity;
+    qtl_bubble_scale_factor       = bubble_scale;
+
+    d3.queue()
+    .defer(d3.json, folder_prefix+'karyotype.json')
+    .defer(d3.json, folder_prefix+'configs/circos/layout.json')
+    .defer(d3.json, folder_prefix+'configs/circos/all_traits.json')
+    .defer(d3.json, folder_prefix+'configs/circos/all_lods.json')
+    .defer(d3.json, folder_prefix+'configs/circos/scatter.configs.json')
+    .defer(d3.json, folder_prefix+'configs/circos/stack.configs.json')
+    .defer(d3.json, folder_prefix+'configs/circos/line.configs.json')
+    .defer(d3.csv,  folder_prefix+'configs/circos/circos-traits.default.cfg.csv')
+    .await(drawCircos);
+}
