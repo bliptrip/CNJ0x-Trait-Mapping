@@ -18,9 +18,12 @@
         }
     </style>
     <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
-    <script src='/projects/Tools/D3/circosJS-master/dist/circos.min.js'></script>
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/d3/4.5.0/d3.js'></script>
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/d3-queue/3.0.3/d3-queue.js'></script>
+    <script src='D3/circosJS-master/dist/circos.min.js'></script>
+	<!-- <script src='https://cdnjs.cloudflare.com/ajax/libs/d3/4.5.0/d3.js'></script> -->
+	<script src='D3/d3/d3.js'></script>
+	<!-- <script src='https://cdnjs.cloudflare.com/ajax/libs/d3-queue/3.0.3/d3-queue.js'></script> -->
+	<script src='D3/d3-queue/d3-queue.js'></script>
+
   </head>
   <body>
   <div class="mdl-layout mdl-js-layout mdl-layout--fixed-drawer">
@@ -44,6 +47,7 @@
                     <input type="radio" id="option-4" class="mdl-radio__button" name="scan-type" value="scanone-consensus">
                     <span class="mdl-radio__label">scanone():consensus</span>
                 </label>
+                <a onclick="download_circos('circos.svg')" target="_blank">Download Circos Plot</a>
             </div
         </nav>
     </div>
@@ -53,7 +57,41 @@
             <div id='scatterChart'></div>
         </div>
     </div>
+    <script>
+        var download_circos = function() {
+            var a;
+            var xml, ev, svg;
+            var serializer = new XMLSerializer();
+
+            //Create an invisible link that we invoke subsequent
+            a = d3.select("body")
+                  .append("a")
+                  .attr("visibility", "hidden")
+                  .attr("download", "circos.svg");
+
+            svg = d3.select("svg").node();
+
+            //Please note that any "Save As" dialogue will depend on the client's configuration.
+
+            xml = serializer.serializeToString(svg); // convert node to xml string
+            //xml = svg.outerHTML;
+            //Set the href attribute to the datastream
+            a.attr("href", 'data:application/octet-stream;base64,' + btoa(xml)); // create data uri
+            a.node().click();
+            a.remove();
+        }
+    </script>
     <script src='drawcircos.js'></script>
+    <script>
+        var execute_scan_type_change = function() {
+            selected_type = this.value;
+            //Now call the drawcircos.js function to change which scan type we're displaying.
+            change_scan_type(selected_type);
+        }
+        d3.selectAll("input[name='scan-type']").on("change", execute_scan_type_change);
+        generate_new_circos();
+        setTimeout(function() { change_scan_type("scanone-normal"); }, 2000);
+    </script>
   </main>
   </div>
   </body>
