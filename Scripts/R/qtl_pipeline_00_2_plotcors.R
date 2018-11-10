@@ -108,22 +108,22 @@ g <- ggcorr(cnjpop.pheno.p2.means.split.df, label=FALSE, geom="circle", hjust=0.
             , legend.background = element_rect(fill = "transparent") # get rid of legend bg
             , legend.box.background = element_rect(fill = "transparent") # get rid of legend panel bg
          )
-png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait_year.corr.png"), width="1365", height="1024", units="px", bg="transparent")
-ggsave(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait.corr.png"), plot=g, device="png", background="transparent")
-#png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait_year.corr.png"), width="1280", height="1024", units="px", bg="transparent")
+png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait_year.corr.png"), width=1365, height=1024, units='px', bg="transparent")
+ggsave(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait.corr.png"), plot=g, device="png", bg="transparent")
+#png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait_year.corr.png"), width=1280, height=1024, units='px', bg="transparent")
 #g
 #dev.off()
 
 #Also try using the corrplot package.
 #Trait by year association
-png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait_year.corrplot.png"), bg="transparent", width=1024, height=1024, units="px")
+png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait_year.corrplot.png"), bg="transparent", width=1024, height=1024, units='px')
 #corrplot(cnjpop.pheno.p2.means.cor.split.mat$r, p.mat=cnjpop.pheno.p2.means.cor.split.mat$P, method="square", order="hclust", addrect=4, insig="blank", tl.col="white", tl.srt=45, tl.cex=0.7, rect.col="white", pch="N", bg="transparent", addgrid.col="white")
 #corrplot(cnjpop.pheno.p2.means.cor.split.mat$r, p.mat=cnjpop.pheno.p2.means.cor.split.mat$P, method="square", order="hclust", addrect=4, insig="blank", tl.col="white", tl.srt=45, tl.cex=0.7, rect.col="white", pch="N", bg="transparent", addgrid.col="white", col=brewer.pal(11,"Spectral"))
 corrplot(cnjpop.pheno.p2.means.cor.split.mat$r, p.mat=cnjpop.pheno.p2.means.cor.split.mat$P, method="square", order="hclust", addrect=4, insig="blank", tl.col="black", tl.srt=45, tl.cex=0.8, bg="transparent")
 dev.off()
 
 #Trait association
-png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait.corrplot.png"), bg="transparent", width=1024, height=1024, units="px")
+png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait.corrplot.png"), bg="transparent", width=1024, height=1024, units='px')
 #corrplot(cnjpop.pheno.p2.means.cor.split.mat$r, p.mat=cnjpop.pheno.p2.means.cor.split.mat$P, method="square", order="hclust", addrect=4, insig="blank", tl.col="white", tl.srt=45, tl.cex=0.7, rect.col="white", pch="N", bg="transparent", addgrid.col="white")
 #corrplot(cnjpop.pheno.p2.means.cor.split.mat$r, p.mat=cnjpop.pheno.p2.means.cor.split.mat$P, method="square", order="hclust", addrect=4, insig="blank", tl.col="white", tl.srt=45, tl.cex=0.7, rect.col="white", pch="N", bg="transparent", addgrid.col="white", col=brewer.pal(11,"Spectral"))
 corrplot(cnjpop.pheno.p2.means.cor.mat$r, p.mat=cnjpop.pheno.p2.means.cor.mat$P, method="square", order="hclust", addrect=3, insig="blank", tl.col="black", tl.srt=45, tl.cex=0.8, bg="transparent")
@@ -131,8 +131,6 @@ dev.off()
 
 
 #All traits
-colnames(cnjpop.pheno.p2.means.sub.df) <- trait.abbrev.map.df[colnames(cnjpop.pheno.p2.means.sub.df), 1]
-#        theme_solarized_2(light = FALSE) +
 g <- ggcorr(cnjpop.pheno.p2.means.sub.df, label=FALSE, geom="circle", hjust=0.575, min_size=1, max_size=16, size=5, label_color=white) +
          theme(
             text = element_text(color="white"),
@@ -144,11 +142,12 @@ g <- ggcorr(cnjpop.pheno.p2.means.sub.df, label=FALSE, geom="circle", hjust=0.57
             , legend.background = element_rect(fill = "transparent") # get rid of legend bg
             , legend.box.background = element_rect(fill = "transparent") # get rid of legend panel bg
          )
-png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait.corr.png"), bg="transparent", width=1024, height=1024, units="px")
+png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait.corr.png"), bg="transparent", width=1024, height=1024, units='px')
 g
 dev.off()
-#ggsave(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait.corr.png"), plot=g, device="png", background="transparent")
+#ggsave(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait.corr.png"), plot=g, device="png", bg="transparent")
 
+browser()
 #Generate a scatterplot of the CNJ02 population's traits of interest
 g <- ggpairs(cnjpop.pheno.p2.means.sub.df) +
          theme(
