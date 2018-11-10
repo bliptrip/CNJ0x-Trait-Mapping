@@ -7,3 +7,5 @@ class constructor for circos.  Consider modifying Circos.js to allow for opening
 Also see if can build in features such as assigning classes to certain datasets that are plotted on tracks, in order
 to allow for plugging in callback functions, etc -- to hide elements, etc, more seamlessly.  Also, this could be
 extended to apply filters for only displaying certain subsets of data on tracks, etc.
+- A lot of the trait correlation plots, etc., should be shifted to the workflow folders to reflect the fact that
+different workflows may want to display/highlight different datasets.
