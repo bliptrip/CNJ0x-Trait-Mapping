@@ -54,7 +54,7 @@ for( var in vars.col ) {
 
 
 #This could potentially be an input from a configuration file, but in general, these initial scripts are specific to the project.
-focal.cols <- c("berry_length", "berry_width", "berry_weight", "num_seeds", "num_peds", "num_berries", "total_berry_weight")
+focal.cols <- c("berry_length", "berry_width", "berry_weight", "total_berry_weight", "num_berries", "num_seeds")
 colnames(cnjpop.pheno.means.df) <- rename_traits(colnames(cnjpop.pheno.means.df), trait.abbrev.map.df)
 colnames(cnjpop.pheno.p1.means.df) <- rename_traits(colnames(cnjpop.pheno.p1.means.df), trait.abbrev.map.df)
 colnames(cnjpop.pheno.p2.means.df) <- rename_traits(colnames(cnjpop.pheno.p2.means.df), trait.abbrev.map.df)
@@ -147,19 +147,49 @@ g
 dev.off()
 #ggsave(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait.corr.png"), plot=g, device="png", bg="transparent")
 
-browser()
 #Generate a scatterplot of the CNJ02 population's traits of interest
-g <- ggpairs(cnjpop.pheno.p2.means.sub.df) +
-         theme(
-            text = element_text(color="white"),
-            axis.text.x = element_text(color="white"),
-            panel.background = element_rect(fill = "transparent") # bg of the panel
-            , plot.background = element_rect(fill = "transparent") # bg of the plot
-            , panel.grid.major = element_blank() # get rid of major grid
-            , panel.grid.minor = element_blank() # get rid of minor grid
-            , legend.background = element_rect(fill = "transparent") # get rid of legend bg
-            , legend.box.background = element_rect(fill = "transparent") # get rid of legend panel bg
-         )
-png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p13_phenotypes.trait.pwscatter.png"), bg="transparent")
+g <- ggpairs(cnjpop.pheno.p2.means.sub.df, upper = list(continuous = wrap("cor", size = 16))) +
+         theme_minimal() +
+         theme(axis.title = element_text(face="bold",size=16),
+               axis.text.x  = element_text(size=14,angle=60),
+               axis.text.y  = element_text(size=14),
+               strip.text = element_text(face="bold",size=24)
+#         theme(
+#            text = element_text(color="white"),
+#            axis.text.x = element_text(color="white"),
+#            panel.background = element_rect(fill = "transparent") # bg of the panel
+#            , plot.background = element_rect(fill = "transparent") # bg of the plot
+#            , panel.grid.major = element_blank() # get rid of major grid
+#            , panel.grid.minor = element_blank() # get rid of minor grid
+#            , legend.background = element_rect(fill = "transparent") # get rid of legend bg
+#            , legend.box.background = element_rect(fill = "transparent") # get rid of legend panel bg
+)
+png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p13_phenotypes.trait.pwscatter.png"), width=1280,height=960,bg="transparent")
+g
+dev.off()
+
+#Generate a scatterplot of the CNJ02 population's traits of interest -- but separated by years
+cnjpop.pheno.p2.means.df$year <- as.factor(cnjpop.pheno.p2.means.df$year)
+g <- ggpairs(cnjpop.pheno.p2.means.df, columns = c(focal.cols,"year"), color="year", alpha=0.8, diag=list(combo="box"), upper = list(continuous = wrap("cor", size = 18))) +
+         theme_minimal() +
+         theme(axis.title = element_blank(),
+               axis.text.x  = element_text(size=14,angle=60),
+               axis.text.y  = element_text(size=14),
+               strip.text = element_text(face="bold",size=18),
+               legend.text=element_text(face="bold",size=16),
+               legend.title=element_text(face="bold",size=18))
+png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p14_phenotypes.trait.yearpairs.png"), width=1280,height=960,bg="white")
+g
+dev.off()
+
+g <- ggscatmat(cnjpop.pheno.p2.means.df, columns = c(focal.cols,"year"), color="year", alpha=0.8) +
+         theme_minimal() +
+         theme(axis.title = element_blank(),
+               axis.text.x  = element_text(size=14,angle=60),
+               axis.text.y  = element_text(size=14),
+               strip.text = element_text(face="bold",size=18),
+               legend.text=element_text(face="bold",size=16),
+               legend.title=element_text(face="bold",size=18))
+png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p14_phenotypes.trait.yearpwscatter.png"), width=1280,height=960,bg="white")
 g
 dev.off()
