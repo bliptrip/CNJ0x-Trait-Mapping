@@ -1,0 +1,11 @@
+Workflows/
+.*.icloud
+README.html
+*.Rout
+*.DS_Store
+*.svg
+*.RData
+*.Rhistory
+*.rds
+.vscode/
+*.tar.gz
