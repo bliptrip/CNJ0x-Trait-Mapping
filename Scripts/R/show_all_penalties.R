@@ -18,15 +18,13 @@ pens.df     <- data.frame(model=character(), mtraits=character(), trait=characte
 pens.df.p   <- newPointer(pens.df)
 
 #Loop over all mmers, trait groups, subgroups, and perform stepwiseqtl()
-constructPensTable <- function(trait.cfg, trait.names, traits, trait.path, funArgs) {
+constructPensTable <- function(trait.cfg, trait.path, funArgs) {
 	traits.len = length(traits)
-    for( j in 1:traits.len ) {
-        trait <- traits[j]
-        trait_subsubfolder_fpath = paste0(trait.path, '/', trait) 
-        scan.sw <- readRDS(file=paste0(trait_subsubfolder_fpath, "/scansw.rds"))
-        pens <- attr(scan.sw, "penalties")
-        append.pointer(funArgs,c(trait.cfg$model, trait.cfg$mtraits, trait, pens[["main"]], pens[["heavy"]], pens[["light"]]))
-    }
+    trait <- trait.cfg$trait
+    trait_subsubfolder_fpath = paste0(trait.path, '/', trait) 
+    scan.sw <- readRDS(file=paste0(trait_subsubfolder_fpath, "/scansw.rds"))
+    pens <- attr(scan.sw, "penalties")
+    append.pointer(funArgs,c(trait.cfg$model, trait, pens[["main"]], pens[["heavy"]], pens[["light"]]))
 }
 
 #Loop through all legitimate traits and build collated qtl file.
