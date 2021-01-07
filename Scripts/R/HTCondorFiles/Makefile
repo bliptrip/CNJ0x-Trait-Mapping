@@ -1,5 +1,8 @@
 #Makefile for building/packaging data & scripts for HTCondor submission
 
+USERNAME ?= maule2
+SUBMIT_SERVER ?= submit-1.chtc.wisc.edu
+R_VERSION ?= 402
 include $(WORKFLOW)/configs/perms.mk
 
 .PHONY: Rbuild PermBuild
@@ -7,9 +10,18 @@ include $(WORKFLOW)/configs/perms.mk
 #Rbuild tars up the packages necessary for installing an R-build and then transferring to submit server.  Untar Rpackage.tgz, submit an interactive session using
 #condor_submit -i Rpackage.sub
 #Comment-out any packages you don't want to install if they're already in the tarball.
-		sed -E -i.bak -e 's/^R_VERSION\s*=.*/R_VERSION=$(R_VERSION)/g' Rpackage.install.sh
-		tar -czf Rpackage.tgz packagedeps.R Rpackage.install.sh Rpackage.sub $(R_VERSION).tar.gz
-		scp Rpackage.tgz maule2@submit-5.chtc.wisc.edu:~/
+Rbuild:
+		gsed -e 's/{R_VERSION}/$(R_VERSION)/g' Rpackage.install.sh.template > Rpackage.install.sh
+		gsed -e 's/{R_VERSION}/$(R_VERSION)/g' Rpackage.sub.template > Rpackage.sub
+		chmod u+x Rpackage.install.sh
+		ssh $(USERNAME)@$(SUBMIT_SERVER) 'mkdir -p projects/'
+		scp ../packagedeps.chtc.R Rpackage.install.sh Rpackage.sub $(USERNAME)@$(SUBMIT_SERVER):~/projects/
+		ssh $(USERNAME)@$(SUBMIT_SERVER) 'cd ~/projects; condor_submit -batch-name "$(USERNAME)_Rpackage" Rpackage.sub'
+
+#Run the following after checking that the Rbuild condor task completed successfully.
+Rdownload:
+		scp $(USERNAME)@$(SUBMIT_SERVER):~/projects/packages-R$(R_VERSION).tar.gz .
+		
 		
 #Permbuild is meant for building a tarball of necessary scripts/etc. needed for running single-QTL (scanone) permutation test on cluster.
 PermBuild:
