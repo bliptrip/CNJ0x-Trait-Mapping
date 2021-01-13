@@ -1,11 +1,16 @@
 #!/bin/sh
 
-if [ "$#" != "7" ]; then
+if [ "$#" != "8" ]; then
     echo "FAILED: Incorrect number of input parameters on commandline! $#" >&2
 fi
 
 #Untar the R install and set the path
 tar -xzf $7
+export PATH=$PWD/R/bin:$PATH
+export RHOME=$PWD/R
+tar -xzf $8
+export R_LIBS=$PWD/packages
+
 
 # make sure the script will use your R installation
 export PATH=$(pwd)/R/bin:$PATH

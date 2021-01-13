@@ -1,4 +1,4 @@
-#!/opt/local/bin/python
+#!/usr/bin/env python
 
 import csv
 import os
@@ -20,20 +20,19 @@ def parse_args():
     parsed = parser.parse_args(sys.argv[1:])
     return(parsed)
 
-def generate_submit_data(num_clusters, num_perms, seed, workflow, model, mtraits, qtlmethod, r_version, template, tarfile):
-    #Generate a trait master folder with model__mtraits designator
-    masterfold = model + '--' + '__'.join(mtraits.split(','))
+def generate_submit_data(num_clusters, num_perms, seed, workflow, model, trait, qtlmethod, r_version, template, tarfile):
+    masterfold = model + '--' + trait 
     os.mkdir(masterfold)
     #Copy the template submit file to this folder
     subfile = re.sub(r'(.+)\.template\.sub', r'\1.sub', template)
     subfile = masterfold + '/' + subfile
     shutil.copy(template, subfile)
     #Edit the sub file to match configuration settings
-    cmd = "sed -E -i \"\" -e 's/^(arguments[[:space:]]*=.*)/\\1 " + r_version + "-chtc.tar.gz/g' " + subfile
+    cmd = "/usr/local/bin/gsed -i -e 's/{R_VERSION}/" + r_version + "/g' " + subfile
+    print(cmd)
     subprocess.call(cmd, shell=True)
-    cmd = "sed -E -i \"\" -e 's/^(transfer_input_files[[:space:]]*=.*)/\\1,..\/..\/" + r_version + "-chtc.tar.gz/g\' " + subfile
-    subprocess.call(cmd, shell=True)
-    cmd = "sed -E -i \"\" -e 's/^(queue[[:space:]]*)[[:digit:]]+/\\1" + str(num_clusters) + "/g' " + subfile
+    cmd = "/usr/local/bin/gsed -E -i -e 's/^(queue[[:space:]]*)[[:digit:]]+/\\1" + str(num_clusters) + "/g' " + subfile
+    print(cmd)
     subprocess.call(cmd, shell=True)
     #Copy the appropriate cross.csv into the current folder.
     srcfold = workflow + "/traits/" + masterfold
@@ -52,8 +51,8 @@ def generate_submit_data(num_clusters, num_perms, seed, workflow, model, mtraits
         model_fd = open(subfold + '/input.model', 'w+')
         model_fd.write(model)
         model_fd.close()
-        traitg_fd = open(subfold + '/input.mtraits', 'w+')
-        traitg_fd.write(mtraits)
+        traitg_fd = open(subfold + '/input.trait', 'w+')
+        traitg_fd.write(trait)
         traitg_fd.close()
         qtlmethod_fd = open(subfold + '/input.qtlmethod', 'w+')
         qtlmethod_fd.write(qtlmethod)
@@ -76,7 +75,7 @@ if __name__ == '__main__':
 
     #Read in configuration file.
     #These should be read in from workflow/configs/model.cfg.R
-    execfile(workflow+'/configs/model.cfg')
+    exec(open(workflow+'/configs/model.cfg', 'r').read())
 
     #Loop through entries in the config file and generate a submit file for each entry
     #Don't forget to look for masked items and ignore them.
@@ -86,9 +85,9 @@ if __name__ == '__main__':
         i = 0
         for model_trait in config_reader:
             model = model_trait["model"]
-            mtraits = model_trait["mtraits"]
+            trait = model_trait["trait"]
             mask = model_trait["mask"]
             if( (not mask) or (mask != "TRUE") ):
-                generate_submit_data(num_cluster_per_trait,num_perms_per_trait,initial_seed+(i),workflow,model,mtraits,qtl_method,r_version,template,tarfile)
+                generate_submit_data(num_cluster_per_trait,num_perms_per_trait,initial_seed+(i),workflow,model,trait,qtl_method,r_version,template,tarfile)
             i += 1
         csvfile.close()
