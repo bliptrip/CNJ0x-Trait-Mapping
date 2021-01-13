@@ -55,9 +55,9 @@ strip_effect_prefix_2way <- function(effects) {
 
 
 #Function that iterates through a set of model qtls and fills in the collated datatable
-generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, year, trait.names, trait, trait_subfolder_path, funArgs) {
-    collated.df.p <- funArgs$qtls
-    effects.l.p   <- funArgs$effects
+generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, trait, loopArgs) {
+    collated.df.p <- loopArgs$qtls
+    effects.l.p   <- loopArgs$effects
 
     qtl.model.terms  <- deconstruct_qtl_formula(formula(qtl))
     qtl.num          <- length(qtl.model.terms)
@@ -123,7 +123,7 @@ generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, year, tra
             m.effects$SEs     <- data.frame(m.effects$SEs)
         }
         #TODO: Fill in interaction qtls
-        append.pointer(collated.df.p, c(method, model, year, trait.names, trait, mychr, mypos, mychr2, mypos2, mymarker, qtl.lod, qtl.var, qtl.p, qtl_model.var, qtl_lodint))
+        append.pointer(collated.df.p, c(method, model, trait, mychr, mypos, mychr2, mypos2, mymarker, qtl.lod, qtl.var, qtl.p, qtl_model.var, qtl_lodint))
         append.pointer(effects.l.p, m.effects)
     }
 }
@@ -131,11 +131,11 @@ generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, year, tra
 
 #Generate a single dataframe with qtl information in it, and save to a csv file.
 #index into qtl.collated.df
-qtl.collated.df   <- data.frame(method=character(),model=character(),year=numeric(),mtraits=character(),trait=character(),chr=numeric(),position=numeric(),chr2=numeric(),position2=numeric(),nearest.marker=numeric(),qtl.lod=numeric(),marker.variance=numeric(),qtl.pvalue=numeric(),model.variance=numeric(),interval=numeric(),stringsAsFactors=FALSE)
+qtl.collated.df   <- data.frame(method=character(),model=character(),trait=character(),chr=numeric(),position=numeric(),chr2=numeric(),position2=numeric(),nearest.marker=numeric(),qtl.lod=numeric(),marker.variance=numeric(),qtl.pvalue=numeric(),model.variance=numeric(),interval=numeric(),stringsAsFactors=FALSE)
 qtl.collated.df.p <- newPointer(qtl.collated.df)
 qtl.effects.l.p   <- newPointer(list())
 
-collateQtlCB      <- function(trait.cfg, trait.path, funArgs) {
+collateQtlCB      <- function(trait.cfg, trait.path, loopArgs) {
     model <- as.character(trait.cfg$model)
     #Read in the cross file
     cross <- readRDS(file=paste0(trait.path,'/cross.rds'))
@@ -144,22 +144,24 @@ collateQtlCB      <- function(trait.cfg, trait.path, funArgs) {
     #scanone-derived results
     scan.one.qtl <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scanone.qtl.rds'))
     scan.one.md  <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scanone.md.rds'))
-    generate_qtl_collate(cross, scan.one.qtl, scan.one.md, "scanone", model, trait, trait_subsubfolder_fpath, funArgs)
+    generate_qtl_collate(cross, scan.one.qtl, scan.one.md, "scanone", model, trait, loopArgs)
     #stepwiseqtl-derived results
     scan.sw.qtl <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scansw.rds'))
     scan.sw.md  <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scansw.md.rds'))
-    generate_qtl_collate(cross, scan.sw.qtl, scan.sw.md, "stepwiseqtl", model, trait, trait_subsubfolder_fpath, funArgs)
+    generate_qtl_collate(cross, scan.sw.qtl, scan.sw.md, "stepwiseqtl", model, trait, loopArgs)
 }
 
 #Loop through all legitimate traits and build collated qtl file.
-loopThruTraits(workflow, collateQtlCB, list(qtls=qtl.collated.df.p, effects=qtl.effects.l.p))
+loopThruTraits(workflow, collateQtlCB, loopArgs=list(qtls=qtl.collated.df.p, effects=qtl.effects.l.p))
 
+browser()
 qtl.collated.df <- qtl.collated.df.p$value
 write.csv(qtl.collated.df, file=paste0(workflow,'/traits/qtl_collated.csv'), row.names=F)
 
 #Construct a set of names associated with the effect list, just in case the collated file changes order, etc.  This allows
 #us to quickly lookup the qtl effects
-qtl.collated.names.df <- qtl.collated.df %>% mutate(id=paste(method,model,mtraits,trait,chr,position,chr2,position2,sep="/"))
+qtl.collated.names.df <- qtl.collated.df %>% mutate(model_trait=paste(model,trait,sep="--"))
+qtl.collated.names.df <- qtl.collated.names.df %>% mutate(id=paste(method,model_trait,trait,chr,position,chr2,position2,sep="/"))
 qtl.effects.l   <- qtl.effects.l.p$value
 names(qtl.effects.l) <- qtl.collated.names.df$id
 saveRDS(qtl.effects.l, file=paste0(workflow,'/traits/effects_collated.rds'), compress=T)
