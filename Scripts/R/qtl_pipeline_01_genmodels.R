@@ -167,6 +167,7 @@ mixed_model_analyze <- function(trait.cfg, pheno, geno) {
     A           <- A.mat(geno)
 
     print(paste0("Running trait \"", trait, "\" model analysis."))
+    browser()
     mmer.expr <- paste0(c("mmer(fixed=", trait.cfg$fixed, ", random=", trait.cfg$random, ", rcov=", trait.cfg$rcov, ", data=pheno"), collapse="")
     if( !is.empty(trait.cfg["mmer_args"]) ) {
         mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
@@ -218,26 +219,28 @@ traits.df <- read.csv(file=paste0(workflow,"/configs/model-traits.cfg.csv"))
 for( i in 1:length(traits.df[,1]) ) {
     pheno.filtered.df    <- pheno.means.df %>% filter(accession_name %in% rownames(geno.num))
     trait.cfg <- traits.df[i,]
-    #Make a trait folder if it doesn't exist and add output files, such as blups, heritability, and cross files to it.
-    trait            <- trait.cfg$trait
-    trait_subfolder  <- paste0(c(trait.cfg$model,trait),collapse="--")
-    trait_subfolder_fpath <- file.path(paste0(workflow,"/traits"), trait_subfolder)
-    dir.create(trait_subfolder_fpath, showWarnings = FALSE)
-    if( !is.empty(trait.cfg$filter) ) {
-        pheno.filtered.df <- eval(parse(text=paste0("pheno.filtered.df %>% filter(", trait.cfg$filter, ")")))
-    }
+    if ( trait_is_unmasked(trait.cfg) ) {
+        #Make a trait folder if it doesn't exist and add output files, such as blups, heritability, and cross files to it.
+        trait            <- trait.cfg$trait
+        trait_subfolder  <- paste0(c(trait.cfg$model,trait),collapse="--")
+        trait_subfolder_fpath <- file.path(paste0(workflow,"/traits"), trait_subfolder)
+        dir.create(trait_subfolder_fpath, showWarnings = FALSE)
+        if( !is.empty(trait.cfg$filter) ) {
+            pheno.filtered.df <- eval(parse(text=paste0("pheno.filtered.df %>% filter(", trait.cfg$filter, ")")))
+        }
 
-    ans <- mixed_model_analyze(trait.cfg, pheno.filtered.df, geno.num)
-    saveRDS(ans, file=paste0(trait_subfolder_fpath,"/mmer.rds"), compress=TRUE)
-    blups   <- ans$U[["u:id"]][[trait]]
-    vcov    <- data.frame(unlist(ans$sigma))
-    rownames(vcov) <- gsub("u:(.+$)", "\\1", rownames(vcov), fixed=FALSE)
-    colnames(vcov) <- c("variance")
-    write.csv(vcov,file=paste0(trait_subfolder_fpath,"/vcov.csv"))
-    #TODO: Save vcov
-    h2_str  <- generate_h2_formula(vcov, "id")
-    h2      <- eval(parse(text=paste0("pin(ans, ", h2_str, ")")))
-    write.csv(h2,file=paste0(trait_subfolder_fpath,"/h2.csv"))
-    #TODO: Save h2
-    generate_cross_file(trait.cfg, blups, gData, superMap.df, trait_subfolder_fpath) 
+        ans <- mixed_model_analyze(trait.cfg, pheno.filtered.df, geno.num)
+        saveRDS(ans, file=paste0(trait_subfolder_fpath,"/mmer.rds"), compress=TRUE)
+        blups   <- ans$U[["u:id"]][[trait]]
+        vcov    <- data.frame(unlist(ans$sigma))
+        rownames(vcov) <- gsub("u:(.+$)", "\\1", rownames(vcov), fixed=FALSE)
+        colnames(vcov) <- c("variance")
+        write.csv(vcov,file=paste0(trait_subfolder_fpath,"/vcov.csv"))
+        #TODO: Save vcov
+        h2_str  <- generate_h2_formula(vcov, "id")
+        h2      <- eval(parse(text=paste0("pin(ans, ", h2_str, ")")))
+        write.csv(h2,file=paste0(trait_subfolder_fpath,"/h2.csv"))
+        #TODO: Save h2
+        generate_cross_file(trait.cfg, blups, gData, superMap.df, trait_subfolder_fpath) 
+    }
 }
