@@ -9,7 +9,7 @@ args = commandArgs(trailingOnly=TRUE)
 # loading libraries
 library(qtl)
 
-workflow="../../Workflows/1"
+workflow="../../Workflows/8"
 
 if(length(args)==0) {
     print("No arguments supplied.")
@@ -25,7 +25,6 @@ source('./usefulFunctions.R')
 scanoneCB <- function(trait.cfg, trait.path, funArgs) {
     cross            <- readRDS(file=paste0(trait.path,"/cross.rds"))
     scan.one.perms   <- readRDS(paste0(trait.path, "/operms.rds"))
-    traits.len = length(traits)
     trait <- trait.cfg$trait
     print(paste0("Running scanone() with model: ",trait.cfg$model, " | trait: ", trait))
     trait_subsubfolder_fpath = paste0(trait.path, '/', trait) 
