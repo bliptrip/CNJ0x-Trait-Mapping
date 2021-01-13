@@ -167,7 +167,6 @@ mixed_model_analyze <- function(trait.cfg, pheno, geno) {
     A           <- A.mat(geno)
 
     print(paste0("Running trait \"", trait, "\" model analysis."))
-    browser()
     mmer.expr <- paste0(c("mmer(fixed=", trait.cfg$fixed, ", random=", trait.cfg$random, ", rcov=", trait.cfg$rcov, ", data=pheno"), collapse="")
     if( !is.empty(trait.cfg["mmer_args"]) ) {
         mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
