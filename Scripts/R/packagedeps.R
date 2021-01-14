@@ -32,3 +32,4 @@ install.packages(c("plotly"), repos = "http://mirror.las.iastate.edu/CRAN/", dep
 install.packages(c("corrplot"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) 
 install.packages(c("GGally"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) #Themese package for ggplot2
 install.packages(c("ggthemes"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+install.packages(c("factoextra"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)

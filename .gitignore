@@ -1,3 +1,4 @@
+sandbox/
 Workflows/
 .*.icloud
 README.html
@@ -9,3 +10,6 @@ README.html
 *.rds
 .vscode/
 *.tar.gz
+.*.sw*
+Scripts/R/HTCondorFiles/Rpackage.install.sh
+Scripts/R/HTCondorFiles/Rpackage.sub

@@ -7,13 +7,13 @@ universe = vanilla
 #Use InitialDir to generate a subset of directories 
 InitialDir = $(Process)
 executable = ../qtl_pipeline_05_runperms2D.sh
-arguments = $(Process) input.seed input.nperms input.model input.mtraits input.qtlmethod
+arguments = $(Process) input.seed input.nperms input.model input.trait input.qtlmethod R{R_VERSION}.tar.gz packages-R{R_VERSION}.tar.gz
+
 output = qtl_pipeline_05_runperms2D.out
 error = qtl_pipeline_05_runperms2D.err
 log = qtl_pipeline_05_runperms2D.log
 
-#The following is necessary to run R-3.4.1.  It seems that other operating system versions can give trouble.  I can test this later.
-requirements = (OpSysMajorVer == 6) || (OpSysMajorVer == 7)
+requirements = (OpSysMajorVer =?= 7)
 
 # Specify that HTCondor should transfer files to and from the
 #  computer where each job runs. The last of these lines *would* be
@@ -21,7 +21,7 @@ requirements = (OpSysMajorVer == 6) || (OpSysMajorVer == 7)
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 #The following will be modified by a script to include the correct version of R
-transfer_input_files=input.seed,input.nperms,input.model,input.mtraits,input.qtlmethod,../cross.rds,../../qtl_pipeline_05_runperms2D.R
+transfer_input_files=http://proxy.chtc.wisc.edu/SQUID/chtc/R{R_VERSION}.tar.gz,input.seed,input.nperms,input.model,input.trait,input.qtlmethod,../cross.rds,../../qtl_pipeline_05_runperms2D.R,../../packages-R{R_VERSION}.tar.gz
 transfer_output_files = operms.2D.$(Process).rds
 # Tell HTCondor what amount of compute resources
 #  each job will need on the computer where it runs.

@@ -1,0 +1,23 @@
+#This HTCondor submit file will install the necessary R packages into a 'packages' directory and tar them
+#up for later use by other scripts
+#Note: Guidance on this taken from https://chtc.cs.wisc.edu/r-jobs.shtml
+universe = vanilla
+# Name the log file:
+log = Rpackage.log
+# Name the files where standard output and error should be saved:
+output = Rpackage.out
+error = Rpackage.err
+
+# Choose a version of R from the table above
+transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R{R_VERSION}.tar.gz, packagedeps.chtc.R, Rpackage.install.sh
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+executable = Rpackage.install.sh
+
++IsBuildJob = true
+requirements = (OpSysMajorVer =?= 7)
+request_cpus = 1
+request_memory = 2GB
+request_disk = 2GB
+
+queue

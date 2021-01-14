@@ -83,7 +83,7 @@ geno.amat[geno.scaffolds.idx,][bc.i] <- "hk"
 geno.amat[geno.scaffolds.idx,][ad.i] <- "hk"
 geno.amat[geno.scaffolds.idx,][bd.i] <- "kk"
 
-geno.num <-atcg1234(t(geno.amat))
+geno.num <- atcg1234(t(geno.amat))$M
 
 #Read in the phenotype file
 pheno.means.df<-read.csv(file=pheno_dpath2fpath(pheno_file))
@@ -143,13 +143,12 @@ gData<-t(matrixK)
 rownames(gData)<-colnames(geno)
 colnames(gData)<-rownames(geno)
 
-#Eduardo Covarrubias dramatically changed the sommer package, breaking old formatting/support.  He introduced a pin() function to calculate the heritability,
-#but it requires a strange formatting that necessitates my need to keep track of what V1, V2
-generate_h2_formula <- function(mmer.out, genotype_id_string) {
-    num_var_components <- length(mmer.out$var.comp);
-    genotype_var_idx   <- which(grepl(genotype_id_string, names(mmer.out$var.comp)))
-    h2_denom           <- vector("character",length(mmer.out$var.comp))
-    for( i in 1:length(mmer.out$var.comp) ) {
+#Need to rethink this, as I'm certain I'm calculating the heritability incorrectly in more complicated analyses
+generate_h2_formula <- function(sigma, genotype_id_string) {
+    num_var_components <- nrow(sigma)
+    genotype_var_idx   <- which(grepl(genotype_id_string, rownames(sigma)))
+    h2_denom           <- vector("character",num_var_components)
+    for( i in 1:nrow(sigma) ) {
         h2_denom[i]    <- paste0("V",i)
     }
     h2_string          <- paste0("h2 ~ V",genotype_var_idx,"/(",paste0(h2_denom,collapse=" + "),")")
@@ -161,50 +160,29 @@ generate_h2_formula <- function(mmer.out, genotype_id_string) {
 #and see what differences I can find in heritability of one versus the other.
 #NOTE: Only doing means first, as I noticed that trying to do all data will take a tremendous amount of memory and computing resources on my computer.
 #
-mixed_model_analyze <- function(trait.cfg, pheno, geno, include.idx) {
-    pheno					<- pheno[include.idx,]
-    pheno$accession_name	<- as.character(pheno$accession_name)
-    geno					<- geno[unique(pheno$accession_name),]
-    traits                  <- unlist(strsplit(trait.cfg["mtraits"],","))
-    print(paste0("Running trait(s) \"",paste0(traits,collapse="__"), "\" model analysis."))
+mixed_model_analyze <- function(trait.cfg, pheno, geno) {
+    pheno$id    <- as.factor(pheno$accession_name)
+    geno        <- geno[unique(pheno$accession_name),]
+    trait       <- trait.cfg$trait
+    A           <- A.mat(geno)
 
-    ETA.A <- list()
-    if( !is.empty(trait.cfg["covars"]) ) {
-        covars <- unlist(strsplit(trait.cfg["covars"], ","))
-        for( covar in covars ) {
-            #The following only generates the correct matrix if years are converted to factors first.
-            #Run the following when you need to model on covariates
-            pheno[,covar] <- as.factor(pheno[,covar])
-            model.expr <- paste0('Zc <- model.matrix(~',covar,'-1,pheno); colnames(Zc) <- gsub(covar,"",colnames(Zc))')
-            eval(parse(text=model.expr))
-            covar.levels <- levels(pheno[,covar])
-            Kc <- diag(length(covar.levels))
-            colnames(Kc) <- covar.levels
-            rownames(Kc) <- covar.levels
-            ETA.A[[covar]] <- list(Z=Zc,K=Kc)
-        }
-    }
-
-    #Random genotype effects incidence matrix (per sommer documentation)
-    Zg                     <- model.matrix(~accession_name-1,pheno); colnames(Zg) <- gsub("accession_name","",colnames(Zg))
-    A                      <- A.mat(geno)
-    ETA.A$accession_name   <- list(Z=Zg,K=A)
-
-    mmer.expr <- "mmer(Y=pheno[,traits],Z=ETA.A"
+    print(paste0("Running trait \"", trait, "\" model analysis."))
+    mmer.expr <- paste0(c("mmer(fixed=", trait.cfg$fixed, ", random=", trait.cfg$random, ", rcov=", trait.cfg$rcov, ", data=pheno"), collapse="")
     if( !is.empty(trait.cfg["mmer_args"]) ) {
         mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
     }
     mmer.expr <- paste0(mmer.expr,")")
-    repo <- eval(parse(text=mmer.expr))
-    return(repo)
+    print(mmer.expr)
+    ans <- eval(parse(text=mmer.expr))
+    return(ans)
 }
 
-generate_cross_file <- function(trait.cfg, traits, blups, gData, superMap.df, file.path) {
+generate_cross_file <- function(trait.cfg, blups, gData, superMap.df, file.path) {
     print(paste0("Population Analysis Set: ", trait.cfg["model"]))
     #First make sure to use individuals only in common in the blups data and in the marker data
-    geno.intersect<-intersect(rownames(blups),rownames(gData))
-    y<-as.data.frame(blups[geno.intersect,traits]) #Convert to data.frame to deal with issues in setting colnames in univariate analysis (blups aren't a data.frame in this case)
-    colnames(y)<-traits
+    geno.intersect<-intersect(names(blups),rownames(gData))
+    y<-as.data.frame(blups[geno.intersect]) #Convert to data.frame to deal with issues in setting colnames in univariate analysis (blups aren't a data.frame in this case)
+    colnames(y)<-trait.cfg$trait
     gData.sub <- gData[geno.intersect,]
 
     #Second, we are only interested in markers in common with the consensus map
@@ -236,43 +214,32 @@ generate_cross_file <- function(trait.cfg, traits, blups, gData, superMap.df, fi
 }
 
 #Read in the model trait configuration file to determine how to model traits.
-traits.df <- as.matrix(read.csv(file=paste0(workflow,"/configs/model-traits.cfg.csv")))
-#So as not to repeat the following for each trait, calculate the indices/year only once
-intersect.geno.pheno <- intersect(unique(pheno.means.df[,"accession_name"]), rownames(geno.num))
-include.idx.base     <- (pheno.means.df$accession_name %in% intersect.geno.pheno)
-include.idx.l        <- vector("list")
-for( year in unique(pheno.means.df$year) ) {
-    include.idx.l[[as.character(year)]]   <- which( (year == pheno.means.df$year) & include.idx.base )
-}
+traits.df <- read.csv(file=paste0(workflow,"/configs/model-traits.cfg.csv"))
 for( i in 1:length(traits.df[,1]) ) {
+    pheno.filtered.df    <- pheno.means.df %>% filter(accession_name %in% rownames(geno.num))
     trait.cfg <- traits.df[i,]
-    #Make a trait folder if it doesn't exist and add output files, such as blups, heritability, and cross files to it.
-    traits           <- unlist(strsplit(trait.cfg["mtraits"],","))
-    trait.names      <- paste0(traits,collapse="__")
-    trait_subfolder  <- paste0(c(trait.cfg["model"],trait.names),collapse="--")
-    trait_subfolder_fpath <- file.path(paste0(workflow,"/traits"), trait_subfolder)
-    dir.create(trait_subfolder_fpath, showWarnings = FALSE)
-    if( is.na(trait.cfg["year.subset"]) ) {
-        include.idx <- which(include.idx.base)
-    } else {
-        include.idx <- include.idx.l[[as.character(trait.cfg["year.subset"])]]
+    if ( trait_is_unmasked(trait.cfg) ) {
+        #Make a trait folder if it doesn't exist and add output files, such as blups, heritability, and cross files to it.
+        trait            <- trait.cfg$trait
+        trait_subfolder  <- paste0(c(trait.cfg$model,trait),collapse="--")
+        trait_subfolder_fpath <- file.path(paste0(workflow,"/traits"), trait_subfolder)
+        dir.create(trait_subfolder_fpath, showWarnings = FALSE)
+        if( !is.empty(trait.cfg$filter) ) {
+            pheno.filtered.df <- eval(parse(text=paste0("pheno.filtered.df %>% filter(", trait.cfg$filter, ")")))
+        }
+
+        ans <- mixed_model_analyze(trait.cfg, pheno.filtered.df, geno.num)
+        saveRDS(ans, file=paste0(trait_subfolder_fpath,"/mmer.rds"), compress=TRUE)
+        blups   <- ans$U[["u:id"]][[trait]]
+        vcov    <- data.frame(unlist(ans$sigma))
+        rownames(vcov) <- gsub("u:(.+$)", "\\1", rownames(vcov), fixed=FALSE)
+        colnames(vcov) <- c("variance")
+        write.csv(vcov,file=paste0(trait_subfolder_fpath,"/vcov.csv"))
+        #TODO: Save vcov
+        h2_str  <- generate_h2_formula(vcov, "id")
+        h2      <- eval(parse(text=paste0("pin(ans, ", h2_str, ")")))
+        write.csv(h2,file=paste0(trait_subfolder_fpath,"/h2.csv"))
+        #TODO: Save h2
+        generate_cross_file(trait.cfg, blups, gData, superMap.df, trait_subfolder_fpath) 
     }
-    repo <- mixed_model_analyze(trait.cfg, pheno.means.df, geno.num, include.idx) 
-    saveRDS(repo, file=paste0(trait_subfolder_fpath,"/mmer.rds"), compress=TRUE)
-    blups   <- repo$u.hat$accession_name
-    vcov    <- repo$var.comp
-    write.csv(vcov,file=paste0(trait_subfolder_fpath,"/vcov.csv"))
-    #TODO: Save vcov
-    if( length(traits) > 1 ) {
-        #Not sure why the sommer package pin() function doesn't allow me to look at h2 for a multivariate regression output,
-        # but in this case just use my former function (doesn't include SE estimates).
-        h2      <- (diag(length(traits))*(vcov$accession_name/Reduce('+',vcov))) %*% rep(1,length(traits))
-    } else {
-        colnames(blups) <- traits
-        h2_str  <- generate_h2_formula(repo, "accession_name")
-        h2      <- eval(parse(text=paste0("pin(repo, ", h2_str, ")")))
-    }
-    write.csv(h2,file=paste0(trait_subfolder_fpath,"/h2.csv"))
-    #TODO: Save h2
-    generate_cross_file(trait.cfg, traits, blups, gData, superMap.df, trait_subfolder_fpath) 
 }

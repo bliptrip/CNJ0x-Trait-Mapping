@@ -1,0 +1,12 @@
+#!/bin/sh
+#Note: This is to be run from within HTCondor cluster node (not submit server!)
+
+tar -xzf R{R_VERSION}.tar.gz
+export PATH=$PWD/R/bin:$PATH
+export RHOME=$PWD/R
+mkdir packages
+export R_LIBS=$PWD/packages
+
+#Run the following script to install package dependencies
+Rscript --vanilla packagedeps.chtc.R
+tar -czf packages-R{R_VERSION}.tar.gz packages/

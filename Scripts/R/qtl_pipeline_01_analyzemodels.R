@@ -34,7 +34,7 @@ library(tidyverse)
 # 7) Are the years significantly different for the three years?  What about pairwise comparisons of years?
 
 
-readModelsCB  <- function(trait.cfg, trait.names, traits, trait.path, models.l) {
+readModelsCB  <- function(trait.cfg, trait.path, models.l) {
     model.map.l         <- models.l$model_map 
     model.collated.df   <- models.l$model_collated_table
     model               <- readRDS(file=paste0(trait.path,"/mmer.rds"))
@@ -44,7 +44,7 @@ readModelsCB  <- function(trait.cfg, trait.names, traits, trait.path, models.l) 
     if( "year" %in% names(model$var.comp) ) {
         year_var        <- model$var.comp$year
     }
-    append.pointer(model.collated.df, c(trait.cfg$model, trait.cfg$mtraits, model_idx, model$var.comp$accession_name, year_var, model$var.comp$units))
+    append.pointer(model.collated.df, c(trait.cfg$model, trait.cfg$trait, model_idx, model$var.comp$accession_name, year_var, model$var.comp$units))
     #Interesting components of model
     # $var.comp[$year, accession_name, ...]
     # $u.hat - Estimated BLUPs for RE covariates (years & genotypic values)
@@ -60,7 +60,7 @@ readModelsCB  <- function(trait.cfg, trait.names, traits, trait.path, models.l) 
 }
 
 model.map.l.p       <- newPointer(list())
-model.collated.df   <- data.frame(model=character(),mtraits=character(),model_idx=integer(), bv_var=numeric(), year_var=numeric(), res_var=numeric(), stringsAsFactors=FALSE)
+model.collated.df   <- data.frame(model=character(),traits=character(),model_idx=integer(), bv_var=numeric(), year_var=numeric(), res_var=numeric(), stringsAsFactors=FALSE)
 model.collated.df.p <- newPointer(model.collated.df)
 loopThruTraits(workflow, readModelsCB, list(model_map=model.map.l.p, model_collated_table=model.collated.df.p))
 

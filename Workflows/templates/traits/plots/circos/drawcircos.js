@@ -34,16 +34,16 @@ var get_current_config = function(config,callback) {
 }
 
 var show_lod_profs = function(datum, index, nodes, event) {
-    var mclass = 'lines-'+datum.method+'--'+datum.model+'--'+datum.mtraits+'--'+datum.trait;
+    var mclass = 'lines-'+datum.method+'--'+datum.model+'--'+datum.trait;
     //Hide other lodprofiles that are displaying in the current trait
-    d3.selectAll("*[class^='lines-'][class$='"+datum.mtraits+"--"+datum.trait+"']")
+    d3.selectAll("*[class^='lines-'][class$='"+datum.trait+"']")
         .attr('visibility', 'hidden');
     d3.selectAll("*[class='"+mclass+"']")
         .attr('visibility', 'show');
 }
 
 var hide_lod_profs = function(datum, index, nodes, event) {
-    var mclass = 'lines-'+datum[0].method+'--'+datum[0].model+'--'+datum[0].mtraits+'--'+datum[0].trait;
+    var mclass = 'lines-'+datum[0].method+'--'+datum[0].model+'--'+datum[0].trait;
     d3.selectAll("*[class='"+mclass+"']")
         .attr('visibility', 'hidden');
 }
@@ -80,7 +80,6 @@ var inject_scatter = function(error, data)
                                                      position: +d.position_consensus*1000,
                                                      value: +d.model_idx,  
                                                      model: d.model,
-                                                     mtraits: d.mtraits,
                                                      trait: d.trait,
                                                      color: d.color,
                                                      stroke_color: d.stroke_color,
@@ -93,8 +92,8 @@ var inject_scatter = function(error, data)
                                                      class: d.class
                                              });
                                      });
-        mtraits_trait = "scatter-scanone-consensus--" + scatter_trait_data[0].mtraits + "--" + scatter_trait_data[0].trait;
-        circosScatter.scatter(mtraits_trait, scatter_trait_data, scatter_config);
+        trait = "scatter-scanone-consensus--" + scatter_trait_data[0].trait;
+        circosScatter.scatter(trait, scatter_trait_data, scatter_config);
         scatter_trait_data = trait_data
                                      .filter(function(d) { return((d.method == "scanone") || (d.method == "fakeqtl")); })
                                      .map(function(d) {
@@ -104,7 +103,6 @@ var inject_scatter = function(error, data)
                                                      position: +d.position*1000,
                                                      value: +d.model_idx,  
                                                      model: d.model,
-                                                     mtraits: d.mtraits,
                                                      trait: d.trait,
                                                      color: d.color,
                                                      stroke_color: d.stroke_color,
@@ -117,8 +115,8 @@ var inject_scatter = function(error, data)
                                                      class: d.class
                                              });
                                      });
-        mtraits_trait = "scatter-scanone-normal--" + scatter_trait_data[0].mtraits + "--" + scatter_trait_data[0].trait;
-        circosScatter.scatter(mtraits_trait, scatter_trait_data, scatter_config);
+        trait = "scatter-scanone-normal--" + scatter_trait_data[0].trait;
+        circosScatter.scatter(trait, scatter_trait_data, scatter_config);
         //stepwiseqtl results
         scatter_trait_data = trait_data
                                      .filter(function(d) { return((d.method == "stepwiseqtl") || (d.method == "fakeqtl")); })
@@ -129,7 +127,6 @@ var inject_scatter = function(error, data)
                                                      position: +d.position_consensus*1000,
                                                      value: +d.model_idx,  
                                                      model: d.model,
-                                                     mtraits: d.mtraits,
                                                      trait: d.trait,
                                                      color: d.color,
                                                      stroke_color: d.stroke_color,
@@ -142,8 +139,8 @@ var inject_scatter = function(error, data)
                                                      class: d.class
                                              });
                                      });
-        mtraits_trait = "scatter-stepwiseqtl-consensus--" + scatter_trait_data[0].mtraits + "--" + scatter_trait_data[0].trait;
-        circosScatter.scatter(mtraits_trait, scatter_trait_data, scatter_config);
+        trait = "scatter-stepwiseqtl-consensus--" + scatter_trait_data[0].trait;
+        circosScatter.scatter(trait, scatter_trait_data, scatter_config);
         scatter_trait_data = trait_data
                                      .filter(function(d) { return((d.method == "stepwiseqtl") || (d.method == "fakeqtl")); })
                                      .map(function(d) {
@@ -153,7 +150,6 @@ var inject_scatter = function(error, data)
                                                      position: +d.position*1000,
                                                      value: +d.model_idx,  
                                                      model: d.model,
-                                                     mtraits: d.mtraits,
                                                      trait: d.trait,
                                                      color: d.color,
                                                      stroke_color: d.stroke_color,
@@ -166,8 +162,8 @@ var inject_scatter = function(error, data)
                                                      class: d.class
                                              });
                                      });
-        mtraits_trait = "scatter-stepwiseqtl-normal--" + scatter_trait_data[0].mtraits + "--" + scatter_trait_data[0].trait;
-        circosScatter.scatter(mtraits_trait, scatter_trait_data, scatter_config);
+        trait = "scatter-stepwiseqtl-normal--" + scatter_trait_data[0].trait;
+        circosScatter.scatter(trait, scatter_trait_data, scatter_config);
         stack_configs     = data[(bin_size*i)+2];
         for( j = 0; j < stack_configs.length; j++ ) {
             //scanone normal
@@ -183,7 +179,6 @@ var inject_scatter = function(error, data)
                         start: (+d.position - (+d.interval/2))*1000,
                         end: (+d.position + (+d.interval/2))*1000,
                         model: d.model,
-                        mtraits: d.mtraits,
                         trait: d.trait,
                         color: d.color,
                         stroke_color: d.stroke_color,
@@ -193,8 +188,8 @@ var inject_scatter = function(error, data)
                     });
                 });
             if( stack_trait_data.length > 0 ) {
-                mtraits_trait = "stacks-scanone-normal--"+stack_trait_data[0].model+"--"+ stack_trait_data[0].mtraits+"--"+stack_trait_data[0].trait;
-                circosScatter.stack(mtraits_trait, stack_trait_data, stack_configs[j]);
+                trait = "stacks-scanone-normal--"+stack_trait_data[0].model+"--" + stack_trait_data[0].trait;
+                circosScatter.stack(trait, stack_trait_data, stack_configs[j]);
             } else {
                 console.log("Non-zero stack_trait_data length.")
             }
@@ -211,7 +206,6 @@ var inject_scatter = function(error, data)
                         start: (+d.position_consensus - (+d.interval/2))*1000,
                         end: (+d.position_consensus + (+d.interval/2))*1000,
                         model: d.model,
-                        mtraits: d.mtraits,
                         trait: d.trait,
                         color: d.color,
                         stroke_color: d.stroke_color,
@@ -222,8 +216,8 @@ var inject_scatter = function(error, data)
                     });
                 });
             if( stack_trait_data.length > 0 ) {
-                mtraits_trait = "stacks-scanone-consensus--"+stack_trait_data[0].model+"--"+ stack_trait_data[0].mtraits+"--"+stack_trait_data[0].trait;
-                circosScatter.stack(mtraits_trait, stack_trait_data, stack_configs[j]);
+                trait = "stacks-scanone-consensus--" + stack_trait_data[0].model + "--" + stack_trait_data[0].trait;
+                circosScatter.stack(trait, stack_trait_data, stack_configs[j]);
             } else {
                 console.log("Non-zero stack_trait_data length.")
             }
@@ -240,7 +234,6 @@ var inject_scatter = function(error, data)
                         start: (+d.position - (+d.interval/2))*1000,
                         end: (+d.position + (+d.interval/2))*1000,
                         model: d.model,
-                        mtraits: d.mtraits,
                         trait: d.trait,
                         color: d.color,
                         stroke_color: d.stroke_color,
@@ -250,8 +243,8 @@ var inject_scatter = function(error, data)
                     });
                 });
             if( stack_trait_data.length > 0 ) {
-                mtraits_trait = "stacks-stepwiseqtl-normal--"+stack_trait_data[0].model+"--"+ stack_trait_data[0].mtraits+"--"+stack_trait_data[0].trait;
-                circosScatter.stack(mtraits_trait, stack_trait_data, stack_configs[j]);
+                trait = "stacks-stepwiseqtl-normal--"+stack_trait_data[0].model+"--"+ stack_trait_data[0].trait;
+                circosScatter.stack(trait, stack_trait_data, stack_configs[j]);
             } else {
                 console.log("Non-zero stack_trait_data length.")
             }
@@ -268,7 +261,6 @@ var inject_scatter = function(error, data)
                         start: (+d.position_consensus - (+d.interval/2))*1000,
                         end: (+d.position_consensus + (+d.interval/2))*1000,
                         model: d.model,
-                        mtraits: d.mtraits,
                         trait: d.trait,
                         color: d.color,
                         stroke_color: d.stroke_color,
@@ -279,8 +271,8 @@ var inject_scatter = function(error, data)
                     });
                 });
             if( stack_trait_data.length > 0 ) {
-                mtraits_trait = "stacks-stepwiseqtl-consensus--"+stack_trait_data[0].model+"--"+ stack_trait_data[0].mtraits+"--"+stack_trait_data[0].trait;
-                circosScatter.stack(mtraits_trait, stack_trait_data, stack_configs[j]);
+                trait = "stacks-stepwiseqtl-consensus--"+stack_trait_data[0].model+"--" + stack_trait_data[0].trait;
+                circosScatter.stack(trait, stack_trait_data, stack_configs[j]);
             } else {
                 console.log("Non-zero stack_trait_data length.")
             }
@@ -306,7 +298,6 @@ var inject_line = function(error, data)
                         position: +d.position*1000,
                         value: +d.lod,
                         model: d.model,
-                        mtraits: d.mtraits,
                         trait: d.trait
                     });
                 });
@@ -318,8 +309,8 @@ var inject_line = function(error, data)
             lod_config.backgrounds[0].end = lod_config.max;
             //Have 4 horizontal axes per dataset
             lod_config.axes[0].spacing = lod_config.max/4;
-            mtraits_trait = "lines-scanone--"+model+"--"+lod_trait_data[0].mtraits+"--"+lod_trait_data[0].trait;
-            circosScatter.line(mtraits_trait, lod_trait_data, lod_config);
+            trait = "lines-scanone--"+model+"--"+lod_trait_data[0].trait;
+            circosScatter.line(trait, lod_trait_data, lod_config);
             //stepwiseqtl
             lod_trait_data = lod_data[model]
                 .filter(function(d) { return(d.method == "stepwiseqtl"); })
@@ -331,7 +322,6 @@ var inject_line = function(error, data)
                         position: +d.position*1000,
                         value: +d.lod,
                         model: d.model,
-                        mtraits: d.mtraits,
                         trait: d.trait
                     });
                 });
@@ -343,8 +333,8 @@ var inject_line = function(error, data)
             lod_config.backgrounds[0].end = lod_config.max;
             //Have 4 horizontal axes per dataset
             lod_config.axes[0].spacing = lod_config.max/4;
-            mtraits_trait = "lines-stepwiseqtl--"+model+"--"+lod_trait_data[0].mtraits+"--"+lod_trait_data[0].trait;
-            circosScatter.line(mtraits_trait, lod_trait_data, lod_config);
+            trait = "lines-stepwiseqtl--"+model+"--"+lod_trait_data[0].trait;
+            circosScatter.line(trait, lod_trait_data, lod_config);
         }
     }
     circosScatter.render();
@@ -459,7 +449,7 @@ var drawCircos = function (error, karyotypes, layout, trait_files, lod_files, sc
 
 
 
-var generate_new_circos = function (container="#scatterChart", folder_prefix="./", width="1024", height="1024", opacity=0.75, highlight_opacity=1.0, bubble_scale=15) {
+var generate_new_circos = function (container="#scatterChart", folder_prefix="", width="1024", height="1024", opacity=0.75, highlight_opacity=1.0, bubble_scale=15) {
     circosScatter = new Circos({
         container: container,
         width: width,

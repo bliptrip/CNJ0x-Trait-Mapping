@@ -117,21 +117,17 @@ circosfile2path <- function(filename) {
 }
 
 #Function for looping through all unmasked traits in the configs/model-traits.cfg.csv file.
-loopThruTraits <- function(workflow, loopFunCallback, loopArgs=NUL) {
+loopThruTraits <- function(workflow, loopFunCallback, loopArgs=NULL) {
         #Loop over all mmers, trait groups, subgroups, and perform makeqtl() and fitqtl().
         traits.df <- read.csv(file=paste0(workflow,"/configs/model-traits.cfg.csv"),header=T,stringsAsFactors=F)
         for( i in 1:length(traits.df[,1]) ) {
             trait.cfg       <- traits.df[i,]
             if ( trait_is_unmasked(trait.cfg) ) {
-                    model                    <- as.character(trait.cfg$model)
-                    year                     <- as.numeric(trait.cfg$year)
-                    traits                   <- unlist(strsplit(trait.cfg$mtraits,","))
-                    trait.names              <- paste0(traits,collapse="__")
-                    trait_subfolder          <- paste0(c(trait.cfg$model,trait.names),collapse="--")
+                    model <- trait.cfg$model
+                    trait <- trait.cfg$trait
+                    trait_subfolder          <- paste0(c(model,trait),collapse="--")
                     trait_subfolder_fpath    <- file.path(paste0(workflow,"/traits"), trait_subfolder)
-                    #Read in the model result file
-                    traits  <- unlist(strsplit(trait.cfg$mtraits,","))
-                    loopFunCallback(trait.cfg, trait.names, traits, trait_subfolder_fpath, loopArgs)
+                    loopFunCallback(trait.cfg, trait_subfolder_fpath, loopArgs)
             }
         }
 }
