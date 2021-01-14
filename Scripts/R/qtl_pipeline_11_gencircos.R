@@ -202,10 +202,12 @@ append_fake_data <- function(group, key) {
 									qtl_lod=rep(0,df.nrows), qtl_pvalue=rep(0,df.nrows),
                                     marker_variance=rep(0,df.nrows), model_variance=rep(0,df.nrows), interval=rep(0,df.nrows), position_consensus=rep(-1,df.nrows),
                                     class=rep("", df.nrows), model_idx=models_idx.v, color=rep("rgb(0,0,0)",df.nrows), stroke_color=rep("rgb(0,0,0)",df.nrows), 
-                                    model_cols=rep("rgb(0,0,0)",df.nrows))
+                                    model_cols=rep("rgb(0,0,0)",df.nrows), trait=rep(mkey, df.nrows))
     qtl_file         <- paste0(mkey, "__circos_qtl_file.csv")
     append.pointer(qtl_files.p, circosfile2path(qtl_file))
-	combined.df		 <- rbind(data.frame(group),fakedata.df)
+	group.df		 <- data.frame(group)
+	group.df$trait	 <- mkey
+	combined.df		 <- rbind(group.df,fakedata.df)
     write.csv(combined.df, file=paste0(workflow,"/configs/circos/",qtl_file), row.names=F)
     models           <- as.vector(unique(group$model))
 	lodprofile_file	 <- exportLODProfiles(models, mkey)
