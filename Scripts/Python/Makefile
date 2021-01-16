@@ -2,9 +2,16 @@
 
 .PHONY: compile collate fill_accession subset find_raw_differences find_differences find_differences_2011 find_differences_2012 copy_fixes_2011 copy_fixes_2012 diff_spreadsheets_2011 diff_spreadsheets_2012
 
+DEBUGP= 
+ifneq ($(DEBUG),)
+		DEBUGP=python3 -m pdb
+endif
+
 DATA_DIR=../../Data/phenotypic\ data
 RAW_DIR=RawData
 DERIVED_DIR=DerivedData
+BERRY_TEMPLATE_IFOLDER ?= $(DATA_DIR)/$(RAW_DIR)/berry_templates
+BERRY_TEMPLATE_OFOLDER ?= $(DATA_DIR)/$(DERIVED_DIR)/berry_templates
 
 compile: collate fill_accession
 
@@ -42,3 +49,7 @@ diff_spreadsheets_2012:
 
 find_raw_differences:
 		./diff_all_spreadsheets.sh ../../Data/phenotypic\ data RawData orig
+
+berry_normalize:
+		mkdir -p $(BERRY_TEMPLATE_OFOLDER)
+		$(DEBUGP) ./berry_templates_normalize.py -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_oblong_binary.png -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_oval_binary.png -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_pyriform_binary.png -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_round_binary.png -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_spindle_binary.png -o $(BERRY_TEMPLATE_OFOLDER)
