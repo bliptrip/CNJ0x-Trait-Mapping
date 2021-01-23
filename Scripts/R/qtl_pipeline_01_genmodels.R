@@ -86,7 +86,9 @@ geno.amat[geno.scaffolds.idx,][bd.i] <- "kk"
 geno.num <- atcg1234(t(geno.amat))$M
 
 #Read in the phenotype file
-pheno.means.df<-read.csv(file=pheno_dpath2fpath(pheno_file))
+pheno.means.df <-read.csv(file=pheno_dpath2fpath(pheno_file))
+pheno.means.df$rowf <- as.factor(pheno.means.df$row) #Needed for modeling row effects
+pheno.means.df$columnf <- as.factor(pheno.means.df$column) #Needed for modeling column effects
 
 generate_bin_id <- function(LG, position) {
     return(paste0("bin_",LG,"@",position,"cM"))
