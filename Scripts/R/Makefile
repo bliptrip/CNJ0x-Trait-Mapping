@@ -27,6 +27,9 @@ genmodels:
 genh2plot:
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_02_genh2plots.R
 
+genblupplots:
+		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_03_genBLUPplots.R
+
 #Rbuild tars up the packages necessary for installing an R-build and then transferring to submit server.  Untar Rpackage.tgz, submit an interactive session using
 #condor_submit -i Rpackage.sub
 #Comment-out any packages you don't want to install if they're already in the tarball.
