@@ -53,3 +53,13 @@ find_raw_differences:
 berry_normalize:
 		mkdir -p $(BERRY_TEMPLATE_OFOLDER)
 		$(DEBUGP) ./berry_templates_normalize.py -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_oblong_binary.png -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_oval_binary.png -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_pyriform_binary.png -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_round_binary.png -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_spindle_binary.png -o $(BERRY_TEMPLATE_OFOLDER)
+
+berry_chimera:
+		$(DEBUGP) ./berry_chimera.py -p $(BERRY_TEMPLATE_OFOLDER) -o $(BERRY_TEMPLATE_OFOLDER)/chimera.png "round" "round" "round" "oblong" "oval"
+
+berry_chimera_downsample:
+		$(DEBUGP) ./berry_chimera_downsample.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oblong_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oblong_binary.small.png
+		$(DEBUGP) ./berry_chimera_downsample.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_round_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_round_binary.small.png
+		$(DEBUGP) ./berry_chimera_downsample.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_binary.small.png
+		$(DEBUGP) ./berry_chimera_downsample.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_spindle_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_spindle_binary.small.png
+		$(DEBUGP) ./berry_chimera_downsample.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_pyriform_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_pyriform_binary.small.png
