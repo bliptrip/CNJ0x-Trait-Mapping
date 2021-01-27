@@ -64,23 +64,32 @@ var inject_scatter = function(error, data)
 {
     bin_size = 3; //Specifies the number of indices per 'bin' of data
     for( i = 0; i < (data.length/bin_size); i++ ) {
-        trait_data = data[bin_size*i];
-        models     = trait_data
-                        .map( (d) => ({'model_idx': d.model_idx, 'model': d.model}) )
-                        .sort( (a,b) => {
-                            if(a.model_idx > b.model_idx) {
-                                return(1);
-                            } else if(a.model_idx < b.model_idx) {
-                                return(-1);
-                            } else {
-                                return(0);
-                            }
+        const trait_data = data[bin_size*i];
+        var   models = [];
+        const map = new Map(); //For tracking distinct elements
+        for (const d of trait_data) {
+                if(!map.has(d.model)){
+                        map.set(d.model, true);    // Only add if not already added
+                        models.push({
+                                        model: d.model,
+                                        model_idx: d.model_idx
+                                   });
+                }
+        }
+        models = models.sort( (a,b) => {
+                                if(a.model_idx > b.model_idx) {
+                                        return(1);
+                                } else if(a.model_idx < b.model_idx) {
+                                        return(-1);
+                                } else {
+                                        return(0);
+                                }
                         });
         model_names = models.map( d => d.model );
         scatter_config     = data[(bin_size*i)+1];
         scatter_config.trackLabelConf.label = circos_trait2traitname[trait_data[0].trait]
         scatter_config.axes.map( (a,i) => {
-            var b = ...a;
+            var b = {...a};
             b.axisLabelConf.label = model_names[i];
             return(b);
         });
@@ -102,7 +111,7 @@ var inject_scatter = function(error, data)
                                                      stroke_color: d.stroke_color,
                                                      model_color: d.model_color,
                                                      nearest_marker: d.nearest_marker,
-													 variance: d.marker_variance,
+                                                     variance: d.marker_variance,
                                                      size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
                                                      lod: +d.qtl_lod,
                                                      pval: +d.qtl_pvalue,
@@ -125,7 +134,7 @@ var inject_scatter = function(error, data)
                                                      stroke_color: d.stroke_color,
                                                      model_color: d.model_color,
                                                      nearest_marker: d.nearest_marker,
-													 variance: d.marker_variance,
+                                                     variance: d.marker_variance,
                                                      size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
                                                      lod: +d.qtl_lod,
                                                      pval: +d.qtl_pvalue,
@@ -149,7 +158,7 @@ var inject_scatter = function(error, data)
                                                      stroke_color: d.stroke_color,
                                                      model_color: d.model_color,
                                                      nearest_marker: d.nearest_marker,
-													 variance: d.marker_variance,
+                                                     variance: d.marker_variance,
                                                      size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
                                                      lod: +d.qtl_lod,
                                                      pval: +d.qtl_pvalue,
@@ -172,7 +181,7 @@ var inject_scatter = function(error, data)
                                                      stroke_color: d.stroke_color,
                                                      model_color: d.model_color,
                                                      nearest_marker: d.nearest_marker,
-													 variance: d.marker_variance,
+                                                     variance: d.marker_variance,
                                                      size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
                                                      lod: +d.qtl_lod,
                                                      pval: +d.qtl_pvalue,
@@ -182,8 +191,8 @@ var inject_scatter = function(error, data)
         trait = "scatter-stepwiseqtl-normal--" + scatter_trait_data[0].trait;
         circosScatter.scatter(trait, scatter_trait_data, scatter_config);
         stack_configs     = data[(bin_size*i)+2];
-        stack_configs     stack_configs.map( (s,i) => {
-            var sc = ...s;
+        stack_configs     = stack_configs.map( (s,i) => {
+            var sc = {...s};
             sc.trackLabelConf.label = model_names[i];
             return(sc);
         });
@@ -415,16 +424,16 @@ var gen_scatter_stroke_color = function(d) {
 }
 
 var gen_scatter_tooltip = function(d) {
-		var variance = Math.round(d.variance, 1);
-		var position = Math.round(d.position/1000.0, 1);
-		return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+d.model+"<br />Pos: "+position.toString()+"cM<br />Var: "+variance.toString()+"%<br />"+d.nearest_marker);
+        var variance = Math.round(d.variance, 1);
+        var position = Math.round(d.position/1000.0, 1);
+        return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+d.model+"<br />Pos: "+position.toString()+"cM<br />Var: "+variance.toString()+"%<br />"+d.nearest_marker);
 }
 
 var gen_stack_tooltip = function(d) {
-		var start = Math.round(d.start/1000.0, 1);
-		var end = Math.round(d.end/1000.0, 1);
-		var range = Math.round((d.end-d.start)/1000.0, 1);
-		return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+d.model+"<br />Start-End: "+start.toString()+"-"+end.toString()+"cM<br />Range: "+range.toString()+"cM");
+        var start = Math.round(d.start/1000.0, 1);
+        var end = Math.round(d.end/1000.0, 1);
+        var range = Math.round((d.end-d.start)/1000.0, 1);
+        return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+d.model+"<br />Start-End: "+start.toString()+"-"+end.toString()+"cM<br />Range: "+range.toString()+"cM");
 }
 
 
