@@ -1,4 +1,5 @@
 {
+    "trackLabelConf": { "label": "", "class": "scatter-track-label" },
     "innerRadius": 0.50,
     "outerRadius": 0.75,
     "color": "rgb(0,0,0)",
@@ -11,6 +12,7 @@
     "opacity": 0.75,
     "axes": [
     {
+        "axisLabelConf": { "label": "", "clas": "scatter-axis-label" },
         "spacing": 1,
         "start": 1,
         "thickness": 1,

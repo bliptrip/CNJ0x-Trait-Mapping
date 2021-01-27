@@ -1,13 +1,14 @@
 {
+    "trackLabelConf": { "label": "", "class": "line-track-label" },
     "innerRadius": 0.50,
     "outerRadius": 0.75,
     "color": "rgb(0,0,0)",
     "strokeColor": "black",
     "strokeWidth": 0,
     "direction": "out",
-	"fill": "false",
-	"fillColor": "white",
-	"maxGap": 1000000,
+    "fill": "false",
+    "fillColor": "white",
+    "maxGap": 1000000,
     "opacity": 0.75,
     "min": 0,
     "max": 1,
@@ -19,12 +20,13 @@
         "color": "rgb(0,0,0)",
         "opacity": 1
     }],
-	"axes": [
-	{
-		"color": "black",
-		"thickness": 2,
-		"opacity": 0.75,
-		"spacing": 5
-	}],
+    "axes": [
+    {
+        "axisLabelConf": { "label": "", "class": "line-axis-label" },
+        "color": "black",
+        "thickness": 2,
+        "opacity": 0.75,
+        "spacing": 5
+    }],
     "tooltipContent": null
 }

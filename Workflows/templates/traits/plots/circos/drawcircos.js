@@ -420,7 +420,7 @@ var drawCircos = function (error, karyotypes, layout, trait_files, lod_files, sc
         layout
     );
   for( i = 0; i < circos_trait_config.length; i++ ) {
-    circos_trait2traitname[circos_trait_config[i].trait] = circos_trait_config[i].trait_name;
+    circos_trait2traitname[circos_trait_config[i].trait] = circos_trait_config[i].label;
   }
   var q = d3.queue();
   for( i = 0; i < trait_files.length; i++ ) {
@@ -469,6 +469,6 @@ var generate_new_circos = function (container="#scatterChart", folder_prefix="",
     .defer(d3.json, folder_prefix+'configs/circos/scatter.configs.json')
     .defer(d3.json, folder_prefix+'configs/circos/stack.configs.json')
     .defer(d3.json, folder_prefix+'configs/circos/line.configs.json')
-    .defer(d3.csv,  folder_prefix+'configs/circos/circos-traits.default.cfg.csv')
+    .defer(d3.csv,  folder_prefix+'configs/model-traits.cfg.csv')
     .await(drawCircos);
 }

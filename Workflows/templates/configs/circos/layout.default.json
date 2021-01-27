@@ -1,4 +1,5 @@
 {
+    "trackLabelBlockId": "vm0",
     "innerRadius": 485,
     "outerRadius": 490,
     "cornerRadius": 5,
@@ -12,7 +13,7 @@
         "position": "center",
         "display": true,
         "size": 24,
-        "color": "#fff",
+        "color": "rgb(50,50,50)",
         "radialOffset": 10
     }
 }
