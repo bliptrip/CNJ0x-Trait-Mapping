@@ -65,10 +65,27 @@ var inject_scatter = function(error, data)
     bin_size = 3; //Specifies the number of indices per 'bin' of data
     for( i = 0; i < (data.length/bin_size); i++ ) {
         trait_data = data[bin_size*i];
+        models     = trait_data
+                        .map( (d) => ({'model_idx': d.model_idx, 'model': d.model}) )
+                        .sort( (a,b) => {
+                            if(a.model_idx > b.model_idx) {
+                                return(1);
+                            } else if(a.model_idx < b.model_idx) {
+                                return(-1);
+                            } else {
+                                return(0);
+                            }
+                        });
+        model_names = models.map( d => d.model );
         scatter_config     = data[(bin_size*i)+1];
+        scatter_config.trackLabelConf.label = circos_trait2traitname[trait_data[0].trait]
+        scatter_config.axes.map( (a,i) => {
+            var b = ...a;
+            b.axisLabelConf.label = model_names[i];
+            return(b);
+        });
         scatter_config.events = {
             'click.showlodprofs': show_lod_profs
-
         };
         //scanone results
         scatter_trait_data = trait_data
@@ -165,6 +182,11 @@ var inject_scatter = function(error, data)
         trait = "scatter-stepwiseqtl-normal--" + scatter_trait_data[0].trait;
         circosScatter.scatter(trait, scatter_trait_data, scatter_config);
         stack_configs     = data[(bin_size*i)+2];
+        stack_configs     stack_configs.map( (s,i) => {
+            var sc = ...s;
+            sc.trackLabelConf.label = model_names[i];
+            return(sc);
+        });
         for( j = 0; j < stack_configs.length; j++ ) {
             //scanone normal
             stack_trait_data = trait_data
