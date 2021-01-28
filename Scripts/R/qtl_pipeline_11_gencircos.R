@@ -9,11 +9,11 @@ library(jsonlite)
 
 qtl_type="stepwiseqtl"
 workflow="../../Workflows/1"
-#Which circos traits to render.  This file is in similar format to model-traits.cfg.csv.  All it needs is the following columns: mtraits, trait, mask.
+#Which circos traits to render.  This file is in similar format to model-traits.cfg.csv.  All it needs is the following columns: trait, label, mask.
 #Any mask==TRUE fields means these fields aren't rendered in the plot.
 #
 #Default
-circostraits.cfg="circos-traits.default.cfg.csv"
+circostraits.cfg="model-traits.cfg.csv"
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -24,6 +24,9 @@ if(length(args)==0) {
         eval(parse(text=args[[i]]))
     }
 }
+
+#Specify to the input the traits we care about rendering in the circos plot.
+circostraits.cfg.df <- read.csv(file=paste0(workflow,'/configs/',circostraits.cfg),header=T) %>% filter(is.na(mask) | (mask != "TRUE"))
 
 source('./usefulFunctions.R')
 source(paste0(workflow,"/configs/model.cfg"))
@@ -171,9 +174,6 @@ gen_color <- function(model_idx, trait) {
     return(colors)
 }
 
-#Specify to the input the traits we care about rendering in the circos plot.
-circostraits.cfg.df <- read.csv(file=paste0(workflow,'/configs/circos/',circostraits.cfg),header=T) %>% filter(is.na(mask) | (mask != "TRUE"))
-
 qtl.collated.augmented.df <- qtl.collated.df %>%
                         filter(is.na(chr2) & is.na(position2)) %>% #Filter out only additive components, leaving out pairwise QTL interactions
                         arrange(trait,model) %>% 
@@ -269,9 +269,9 @@ for( i in 1:ntraits ) {
     axis.template       <- scatter.config.json$axes[[1]]
     scatter.config.json$axes <- vector("list", num_models)
     for(j in 1:num_models) {
-        scatter.config.json$axes[[j]]         <- axis.template
-        scatter.config.json$axes[[j]]$start   <- j
-        scatter.config.json$axes[[j]]$color   <- model.cols[j]
+        scatter.config.json$axes[[j]]          <- axis.template
+        scatter.config.json$axes[[j]]$position <- j
+        scatter.config.json$axes[[j]]$color    <- model.cols[j]
     }
     scatter.config.json$backgrounds[[1]]$start <- 0;
     scatter.config.json$backgrounds[[1]]$end   <- num_models+1;
