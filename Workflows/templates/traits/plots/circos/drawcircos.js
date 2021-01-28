@@ -4,6 +4,7 @@ var qtl_bubble_scale_factor       = 15;
 var gfolder_prefix                = "./";
 var circosScatter;
 var circos_trait2traitname = {};
+var circos_model2modelname = {};
 
 var change_scan_type = function(selected_type) {
     //Hide everything
@@ -85,7 +86,7 @@ var inject_scatter = function(error, data)
                                         return(0);
                                 }
                         });
-        model_names = models.map( d => d.model );
+        model_names = models.map( d => circos_model2modelname[d.model] );
         scatter_config     = data[(bin_size*i)+1];
         scatter_config.trackLabelConf.label = circos_trait2traitname[trait_data[0].trait]
         scatter_config.axes.map( (a,i) => {
@@ -191,11 +192,11 @@ var inject_scatter = function(error, data)
         trait = "scatters-stepwiseqtl-normal--" + scatter_trait_data[0].trait;
         circosScatter.scatter(trait, scatter_trait_data, scatter_config);
         stack_configs     = data[(bin_size*i)+2];
-        stack_configs     = stack_configs.map( (s,i) => {
-            var sc = {...s};
-            sc.trackLabelConf.label = model_names[i];
-            return(sc);
-        });
+        //stack_configs     = stack_configs.map( (s,i) => {
+        //   var sc = {...s};
+        //   sc.trackLabelConf.label = circos_model2modelname[model_names[i]];
+        //    return(sc);
+        //});
         for( j = 0; j < stack_configs.length; j++ ) {
             //scanone normal
             stack_trait_data = trait_data
@@ -426,14 +427,14 @@ var gen_scatter_stroke_color = function(d) {
 var gen_scatter_tooltip = function(d) {
         var variance = Math.round(d.variance, 1);
         var position = Math.round(d.position/1000.0, 1);
-        return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+d.model+"<br />Pos: "+position.toString()+"cM<br />Var: "+variance.toString()+"%<br />"+d.nearest_marker);
+        return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+circos_model2modelname[d.model]+"<br />Pos: "+position.toString()+"cM<br />Var: "+variance.toString()+"%<br />"+d.nearest_marker);
 }
 
 var gen_stack_tooltip = function(d) {
         var start = Math.round(d.start/1000.0, 1);
         var end = Math.round(d.end/1000.0, 1);
         var range = Math.round((d.end-d.start)/1000.0, 1);
-        return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+d.model+"<br />Start-End: "+start.toString()+"-"+end.toString()+"cM<br />Range: "+range.toString()+"cM");
+        return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+circos_model2modelname[d.model]+"<br />Start-End: "+start.toString()+"-"+end.toString()+"cM<br />Range: "+range.toString()+"cM");
 }
 
 
@@ -452,6 +453,7 @@ var drawCircos = function (error, karyotypes, layout, trait_files, lod_files, sc
     );
   for( i = 0; i < circos_trait_config.length; i++ ) {
     circos_trait2traitname[circos_trait_config[i].trait] = circos_trait_config[i].label;
+    circos_model2modelname[circos_trait_config[i].model] = circos_trait_config[i].model_label;
   }
   var q = d3.queue();
   for( i = 0; i < trait_files.length; i++ ) {
