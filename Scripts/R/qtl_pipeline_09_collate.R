@@ -140,15 +140,17 @@ collateQtlCB      <- function(trait.cfg, trait.path, loopArgs) {
     #Read in the cross file
     cross <- readRDS(file=paste0(trait.path,'/cross.rds'))
     trait <- trait.cfg$trait
-    trait_subsubfolder_fpath <- file.path(trait.path, trait)
-    #scanone-derived results
-    scan.one.qtl <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scanone.qtl.rds'))
-    scan.one.md  <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scanone.md.rds'))
-    generate_qtl_collate(cross, scan.one.qtl, scan.one.md, "scanone", model, trait, loopArgs)
-    #stepwiseqtl-derived results
-    scan.sw.qtl <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scansw.rds'))
-    scan.sw.md  <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scansw.md.rds'))
-    generate_qtl_collate(cross, scan.sw.qtl, scan.sw.md, "stepwiseqtl", model, trait, loopArgs)
+    if( any(cross$pheno[trait] != 0) ) {
+		trait_subsubfolder_fpath <- file.path(trait.path, trait)
+		#scanone-derived results
+		scan.one.qtl <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scanone.qtl.rds'))
+		scan.one.md  <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scanone.md.rds'))
+		generate_qtl_collate(cross, scan.one.qtl, scan.one.md, "scanone", model, trait, loopArgs)
+		#stepwiseqtl-derived results
+		scan.sw.qtl <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scansw.rds'))
+		scan.sw.md  <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scansw.md.rds'))
+		generate_qtl_collate(cross, scan.sw.qtl, scan.sw.md, "stepwiseqtl", model, trait, loopArgs)
+	}
 }
 
 #Loop through all legitimate traits and build collated qtl file.
