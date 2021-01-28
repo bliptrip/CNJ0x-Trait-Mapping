@@ -12,9 +12,8 @@
     "opacity": 0.75,
     "axes": [
     {
-        "axisLabelConf": { "label": "", "clas": "scatter-axis-label" },
-        "spacing": 1,
-        "start": 1,
+        "axisLabelConf": { "label": "", "class": "scatter-axis-label" },
+        "position": 1,
         "thickness": 1,
         "color": "rgb(0,0,0)",
         "opacity": 1
