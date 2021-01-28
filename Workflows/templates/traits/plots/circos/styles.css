@@ -214,3 +214,20 @@ _:-ms-input-placeholder, :root .demo-graph {
       -ms-flex-align: center;
           align-items: center;
 }
+
+.scatter-track-label {
+  font-size: 18px;
+  font-weight: normal;
+  fill: #7a7d85;
+}
+
+.scatter-axis-label {
+  font-size: 8px;
+  fill: #425078;
+}
+
+.stack-track-label {
+  font-size: 8px;
+  font-style: italic;
+  fill: dimgrey;
+}

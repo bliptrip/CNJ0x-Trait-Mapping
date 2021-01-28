@@ -10,8 +10,8 @@ var change_scan_type = function(selected_type) {
     //Need to hide any old state for the LOD profile lines.
     d3.selectAll("*[class^='lines-']")
         .attr('visibility', 'hidden');
-    //Hide all current scatter-
-    d3.selectAll("*[class^='scatter-']")
+    //Hide all current scatters-
+    d3.selectAll("*[class^='scatters-']")
         .attr('opacity','0')
         .attr('visibility','hidden');
     d3.selectAll("*[class^='stacks-']")
@@ -19,7 +19,7 @@ var change_scan_type = function(selected_type) {
         .attr('visibility','hidden');
 
     //Show what we care about
-    d3.selectAll("*[class^='scatter-"+selected_type+"--']")
+    d3.selectAll("*[class^='scatters-"+selected_type+"--']")
         .attr('opacity','1')
         .attr('visibility','visible');
     d3.selectAll("*[class^='stacks-"+selected_type+"--']")
@@ -118,7 +118,7 @@ var inject_scatter = function(error, data)
                                                      class: d.class
                                              });
                                      });
-        trait = "scatter-scanone-consensus--" + scatter_trait_data[0].trait;
+        trait = "scatters-scanone-consensus--" + scatter_trait_data[0].trait;
         circosScatter.scatter(trait, scatter_trait_data, scatter_config);
         scatter_trait_data = trait_data
                                      .filter(function(d) { return((d.method == "scanone") || (d.method == "fakeqtl")); })
@@ -141,7 +141,7 @@ var inject_scatter = function(error, data)
                                                      class: d.class
                                              });
                                      });
-        trait = "scatter-scanone-normal--" + scatter_trait_data[0].trait;
+        trait = "scatters-scanone-normal--" + scatter_trait_data[0].trait;
         circosScatter.scatter(trait, scatter_trait_data, scatter_config);
         //stepwiseqtl results
         scatter_trait_data = trait_data
@@ -165,7 +165,7 @@ var inject_scatter = function(error, data)
                                                      class: d.class
                                              });
                                      });
-        trait = "scatter-stepwiseqtl-consensus--" + scatter_trait_data[0].trait;
+        trait = "scatters-stepwiseqtl-consensus--" + scatter_trait_data[0].trait;
         circosScatter.scatter(trait, scatter_trait_data, scatter_config);
         scatter_trait_data = trait_data
                                      .filter(function(d) { return((d.method == "stepwiseqtl") || (d.method == "fakeqtl")); })
@@ -188,7 +188,7 @@ var inject_scatter = function(error, data)
                                                      class: d.class
                                              });
                                      });
-        trait = "scatter-stepwiseqtl-normal--" + scatter_trait_data[0].trait;
+        trait = "scatters-stepwiseqtl-normal--" + scatter_trait_data[0].trait;
         circosScatter.scatter(trait, scatter_trait_data, scatter_config);
         stack_configs     = data[(bin_size*i)+2];
         stack_configs     = stack_configs.map( (s,i) => {
@@ -380,7 +380,7 @@ var inject_line = function(error, data)
     d3.selectAll("*[class^='lines-']")
         .attr('opacity','0.8')
         .attr('visibility','hidden');
-    d3.selectAll("*[class^='scatter-']")
+    d3.selectAll("*[class^='scatters-']")
         .attr('opacity','0')
         .attr('visibility','hidden');
     d3.selectAll("*[class^='stacks-']")
