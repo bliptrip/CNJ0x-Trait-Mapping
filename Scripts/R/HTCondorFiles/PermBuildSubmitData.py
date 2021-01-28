@@ -2,6 +2,7 @@
 
 import csv
 import os
+import pandas as pd
 import sys
 import shutil
 import subprocess
@@ -22,44 +23,46 @@ def parse_args():
 
 def generate_submit_data(num_clusters, num_perms, seed, workflow, model, trait, qtlmethod, r_version, template, tarfile):
     masterfold = model + '--' + trait 
-    os.mkdir(masterfold)
-    #Copy the template submit file to this folder
-    subfile = re.sub(r'(.+)\.template\.sub', r'\1.sub', template)
-    subfile = masterfold + '/' + subfile
-    shutil.copy(template, subfile)
-    #Edit the sub file to match configuration settings
-    cmd = "/usr/local/bin/gsed -i -e 's/{R_VERSION}/" + r_version + "/g' " + subfile
-    print(cmd)
-    subprocess.call(cmd, shell=True)
-    cmd = "/usr/local/bin/gsed -E -i -e 's/^(queue[[:space:]]*)[[:digit:]]+/\\1" + str(num_clusters) + "/g' " + subfile
-    print(cmd)
-    subprocess.call(cmd, shell=True)
-    #Copy the appropriate cross.csv into the current folder.
     srcfold = workflow + "/traits/" + masterfold
-    shutil.copy(srcfold + "/cross.csv", masterfold + "/cross.csv")
-    shutil.copy(srcfold + "/cross.rds", masterfold + "/cross.rds")
-    #Loop through the folder and generate subfolders for each process
-    for i in range(0,num_clusters):
-        subfold = masterfold + '/' + str(i)
-        os.mkdir(subfold)
-        seed_fd   = open(subfold + '/input.seed', 'w+')
-        seed_fd.write(str(seed + i))
-        seed_fd.close()
-        nperms_fd = open(subfold + '/input.nperms', 'w+')
-        nperms_fd.write(str(num_perms))
-        nperms_fd.close()
-        model_fd = open(subfold + '/input.model', 'w+')
-        model_fd.write(model)
-        model_fd.close()
-        traitg_fd = open(subfold + '/input.trait', 'w+')
-        traitg_fd.write(trait)
-        traitg_fd.close()
-        qtlmethod_fd = open(subfold + '/input.qtlmethod', 'w+')
-        qtlmethod_fd.write(qtlmethod)
-        qtlmethod_fd.close()
-    subprocess.call("tar -rf %s %s" % (tarfile,masterfold), shell=True)
-    #Now that the master folder has been added to the tarball, remove the folder from current path.
-    shutil.rmtree(masterfold)
+    cross_df = pd.read_csv(srcfold + "/cross.csv")
+    if cross_df[trait].any(skipna = True): #Make sure that there is at least one non-zero BLUP value -- otherwise, mmer failed to estimate BLUPs for this trait
+        os.mkdir(masterfold)
+        #Copy the template submit file to this folder
+        subfile = re.sub(r'(.+)\.template\.sub', r'\1.sub', template)
+        subfile = masterfold + '/' + subfile
+        shutil.copy(template, subfile)
+        #Edit the sub file to match configuration settings
+        cmd = "/usr/local/bin/gsed -i -e 's/{R_VERSION}/" + r_version + "/g' " + subfile
+        print(cmd)
+        subprocess.call(cmd, shell=True)
+        cmd = "/usr/local/bin/gsed -E -i -e 's/^(queue[[:space:]]*)[[:digit:]]+/\\1" + str(num_clusters) + "/g' " + subfile
+        print(cmd)
+        subprocess.call(cmd, shell=True)
+        #Copy the appropriate cross.csv into the current folder.
+        shutil.copy(srcfold + "/cross.csv", masterfold + "/cross.csv")
+        shutil.copy(srcfold + "/cross.rds", masterfold + "/cross.rds")
+        #Loop through the folder and generate subfolders for each process
+        for i in range(0,num_clusters):
+            subfold = masterfold + '/' + str(i)
+            os.mkdir(subfold)
+            seed_fd   = open(subfold + '/input.seed', 'w+')
+            seed_fd.write(str(seed + i))
+            seed_fd.close()
+            nperms_fd = open(subfold + '/input.nperms', 'w+')
+            nperms_fd.write(str(num_perms))
+            nperms_fd.close()
+            model_fd = open(subfold + '/input.model', 'w+')
+            model_fd.write(model)
+            model_fd.close()
+            traitg_fd = open(subfold + '/input.trait', 'w+')
+            traitg_fd.write(trait)
+            traitg_fd.close()
+            qtlmethod_fd = open(subfold + '/input.qtlmethod', 'w+')
+            qtlmethod_fd.write(qtlmethod)
+            qtlmethod_fd.close()
+        subprocess.call("tar -rf %s %s" % (tarfile,masterfold), shell=True)
+        #Now that the master folder has been added to the tarball, remove the folder from current path.
+        shutil.rmtree(masterfold)
 
 
 if __name__ == '__main__':
