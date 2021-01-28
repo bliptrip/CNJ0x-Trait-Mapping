@@ -1,5 +1,10 @@
 #Makefile for building/packaging data & scripts for HTCondor submission
 
+DEBUGP= 
+ifneq ($(DEBUG),)
+		DEBUGP=python3 -m pdb
+endif
+
 USERNAME ?= maule2
 SUBMIT_SERVER ?= submit-1.chtc.wisc.edu
 include $(WORKFLOW)/configs/perms.mk
@@ -26,7 +31,7 @@ Rdownload:
 PermBuild:
 		#Untar the R-package and only extract binaries for transferring to each cluster so as to reduce size of package.
 		tar -cf qtl_pipeline_02_runperms.tar ../qtl_pipeline_02_runperms.R qtl_pipeline_02_runperms.sh qtl_pipeline_02_runperms.all.sh packages-R$(R_VERSION).tar.gz
-		./PermBuildSubmitData.py --total_perms_per_trait $(TOTAL_PERMS_PER_TRAIT) --num_cluster_per_trait $(NUM_CLUSTERS_PER_TRAIT) -s $(START_SEED) -w "$(WORKFLOW)" -r $(R_VERSION) --template qtl_pipeline_02_runperms.template.sub --tarfile qtl_pipeline_02_runperms.tar 
+		$(DEBUGP) ./PermBuildSubmitData.py --total_perms_per_trait $(TOTAL_PERMS_PER_TRAIT) --num_cluster_per_trait $(NUM_CLUSTERS_PER_TRAIT) -s $(START_SEED) -w "$(WORKFLOW)" -r $(R_VERSION) --template qtl_pipeline_02_runperms.template.sub --tarfile qtl_pipeline_02_runperms.tar 
 		gzip -f -9 qtl_pipeline_02_runperms.tar 
 		scp qtl_pipeline_02_runperms.tar.gz $(USERNAME)@$(SUBMIT_SERVER):~/projects/
 
@@ -47,7 +52,7 @@ PullPerms:
 Perm2DBuild:
 		#Untar the R-package and only extract binaries for transferring to each cluster so as to reduce size of package.
 		tar -cf qtl_pipeline_05_runperms2D.tar ../qtl_pipeline_05_runperms2D.R qtl_pipeline_05_runperms2D.sh qtl_pipeline_05_runperms2D.all.sh packages-R$(R_VERSION).tar.gz
-		./PermBuildSubmitData.py --total_perms_per_trait $(TOTAL_PERMS_PER_TRAIT) --num_cluster_per_trait $(NUM_CLUSTERS_PER_TRAIT) -s $(START_SEED) -w "$(WORKFLOW)" -r $(R_VERSION) --template qtl_pipeline_05_runperms2D.template.sub --tarfile qtl_pipeline_05_runperms2D.tar
+		$(DEBUGP) ./PermBuildSubmitData.py --total_perms_per_trait $(TOTAL_PERMS_PER_TRAIT) --num_cluster_per_trait $(NUM_CLUSTERS_PER_TRAIT) -s $(START_SEED) -w "$(WORKFLOW)" -r $(R_VERSION) --template qtl_pipeline_05_runperms2D.template.sub --tarfile qtl_pipeline_05_runperms2D.tar
 		gzip -f -9 qtl_pipeline_05_runperms2D.tar 
 		scp qtl_pipeline_05_runperms2D.tar.gz $(USERNAME)@$(SUBMIT_SERVER):~/
 
