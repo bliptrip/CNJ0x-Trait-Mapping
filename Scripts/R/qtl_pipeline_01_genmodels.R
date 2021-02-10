@@ -10,6 +10,8 @@
 source('./usefulFunctions.R')
 
 workflow <- "../../Workflows/1"
+P1_Name <- "Mullica_Queen"
+P2_Name <- "Crimson_Queen"
 
 #In case we override the workflow on the command-line
 args = commandArgs(trailingOnly=TRUE)
@@ -61,27 +63,43 @@ source(paste0(workflow,"/configs/model.cfg"))
 #Begin assessing the data - Only assess population 2 first (CNJ02*)
 
 #Read in the marker maps
-geno<-read.table(geno_rpath2fpath(geno_file),header=T,sep=',')  
+geno<-read.csv(geno_rpath2fpath(geno_file),header=T)
 rownames(geno)<-geno$X
-geno<-geno[,-c(1:6)] #Remove the marker name, segregation pattern, phase, classification, position, and lg fields -- only keep the genotype calls
+
+generateParentalMarker <- function(segregations,parent) {
+	subexpr <- paste0("gsub('<([ablmn]{2})x([cdlnp]{2})>','",'\\\\',parent,"',segregations,fixed=FALSE)")
+	return(eval(parse(text=subexpr)))
+}
+
+#Calculate and add-in the parental markers for calculating relationship matrix and generating parental BLUP values
+geno.p <- geno
+geno.p[,P1_Name] = generateParentalMarker(geno.p$Segregation,parent=1)
+geno.p[,P2_Name] = generateParentalMarker(geno.p$Segregation,parent=2)
+rownames(geno.p) <- geno.p$X
+
+geno <- geno.p %>% select(-c('X','Segregation','Phase','Classification','Position','LG'))
 #geno.num is input to sommer's A.mat() function in order to calculate the realized additive matrix, aiding in calculation of breeding values (BLUPS)
 #
 #
 
 #Make a copy of geno for passing to atcg1234() and ultimately A.mat()
-#The goal is to convert ab x cd bi-allelic SNPs to an hk x hk form, thus allowing atcg1234() to do its work.
+#NOTE: I'm removing this b/c I think I did this in error -- The goal is to convert ab x cd bi-allelic SNPs to an hk x hk form, thus allowing atcg1234() to do its work.
 geno.amat <- as.matrix(geno)
+
 #Always filter scaffolds here, as this section is for calculating the Additive relationship matrix for calculating BLUPS, which is distinct
 #from the encoding for the R/qtl cross file.
-geno.scaffolds.idx <- which(grepl("^scaffold_", rownames(geno.amat), ignore.case=T))
-ac.i <- which(geno.amat[geno.scaffolds.idx,] == "ac")
-bc.i <- which(geno.amat[geno.scaffolds.idx,] == "bc")
-ad.i <- which(geno.amat[geno.scaffolds.idx,] == "ad")
-bd.i <- which(geno.amat[geno.scaffolds.idx,] == "bd")
-geno.amat[geno.scaffolds.idx,][ac.i] <- "hh"
-geno.amat[geno.scaffolds.idx,][bc.i] <- "hk"
-geno.amat[geno.scaffolds.idx,][ad.i] <- "hk"
-geno.amat[geno.scaffolds.idx,][bd.i] <- "kk"
+#geno.scaffolds.idx <- which(grepl("^scaffold_", rownames(geno.amat), ignore.case=T))
+#Not sure I can really convert ab x cd segregation patterns into hk-style segregation - although I'm confused, as I thought GBS outputs are biallelic!
+#The reason I doubt myself in converting abxcd to hkxhk is b/c you can't map hk x hk segregation-type markers -- you don't know which parent the h or k came from, so you can't definitively
+#know in child if it is a recombination event or not
+#ac.i <- which(geno.amat[geno.scaffolds.idx,] == "ac")
+#bc.i <- which(geno.amat[geno.scaffolds.idx,] == "bc")
+#ad.i <- which(geno.amat[geno.scaffolds.idx,] == "ad")
+#bd.i <- which(geno.amat[geno.scaffolds.idx,] == "bd")
+#geno.amat[geno.scaffolds.idx,][ac.i] <- "hh"
+#geno.amat[geno.scaffolds.idx,][bc.i] <- "hk"
+#geno.amat[geno.scaffolds.idx,][ad.i] <- "hk"
+#geno.amat[geno.scaffolds.idx,][bd.i] <- "kk"
 
 geno.num <- atcg1234(t(geno.amat))$M
 
@@ -89,6 +107,7 @@ geno.num <- atcg1234(t(geno.amat))$M
 pheno.means.df <-read.csv(file=pheno_dpath2fpath(pheno_file))
 pheno.means.df$rowf <- as.factor(pheno.means.df$row) #Needed for modeling row effects
 pheno.means.df$columnf <- as.factor(pheno.means.df$column) #Needed for modeling column effects
+pheno.means.df$year <- as.factor(pheno.means.df$year) #Needed for modeling column effects
 
 generate_bin_id <- function(LG, position) {
     return(paste0("bin_",LG,"@",position,"cM"))
@@ -117,33 +136,36 @@ saveRDS(superMap.bin.df, file=geno_rpath2fpath(paste0(geno_consensus_file,".rds"
 
 #The following is necessary to convert the mapqtl codes in a four-way cross to those that are defined
 #according to the R/qtl read.cross() specifications.
-matrixK<-matrix(NA,nrow=nrow(geno),ncol=ncol(geno))
-g<-which(geno=='ac')
+#Remove parents, as they should not be in the cross file
+geno.no.p <- geno %>% select(-c(P1_Name,P2_Name))
+rownames(geno.no.p) <- rownames(geno)
+matrixK<-matrix(NA,nrow=nrow(geno.no.p),ncol=ncol(geno.no.p))
+g<-which(geno.no.p=='ac')
 matrixK[g]<-1
-g<-which(geno=='ad')
+g<-which(geno.no.p=='ad')
 matrixK[g]<-3  
-g<-which(geno=='bc')
+g<-which(geno.no.p=='bc')
 matrixK[g]<-2
-g<-which(geno=='bd')
+g<-which(geno.no.p=='bd')
 matrixK[g]<-4
-g<-which(geno=='ll')
+g<-which(geno.no.p=='ll')
 matrixK[g]<-5
-g<-which(geno=='lm')
+g<-which(geno.no.p=='lm')
 matrixK[g]<-6
-g<-which(geno=='nn')
+g<-which(geno.no.p=='nn')
 matrixK[g]<-7
-g<-which(geno=='np')
+g<-which(geno.no.p=='np')
 matrixK[g]<-8
-g<-which(geno=='hh')
+g<-which(geno.no.p=='hh')
 matrixK[g]<-1
-g<-which(geno=='hk')
+g<-which(geno.no.p=='hk')
 matrixK[g]<-10
-g<-which(geno=='kk')
+g<-which(geno.no.p=='kk')
 matrixK[g]<-4
 
 gData<-t(matrixK)
-rownames(gData)<-colnames(geno)
-colnames(gData)<-rownames(geno)
+rownames(gData)<-colnames(geno.no.p)
+colnames(gData)<-rownames(geno.no.p)
 
 #Need to rethink this, as I'm certain I'm calculating the heritability incorrectly in more complicated analyses
 generate_h2_formula <- function(sigma, genotype_id_string) {
@@ -176,6 +198,7 @@ mixed_model_analyze <- function(trait.cfg, pheno, geno) {
     mmer.expr <- paste0(mmer.expr,")")
     print(mmer.expr)
     ans <- eval(parse(text=mmer.expr))
+    ans$A.mat <- A #Store the additive relationship matrix so it does not need to be calculated later when doing a drop1 style anova to compare two models.
     return(ans)
 }
 
@@ -229,18 +252,27 @@ for( i in 1:length(traits.df[,1]) ) {
         if( !is.empty(trait.cfg$filter) ) {
             pheno.filtered.df <- eval(parse(text=paste0("pheno.filtered.df %>% filter(", trait.cfg$filter, ")")))
         }
-
+        random <- as.formula(trait.cfg$random)
+        yuyur <- strsplit(as.character(random[2]), split = "[+-]")[[1]]
+        randomtermss <- apply(data.frame(yuyur),1,function(x) {
+            strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
+        })
+        rcov <- as.formula(trait.cfg$rcov)
+        yuyuu <- strsplit(as.character(rcov[2]), split = "[+-]")[[1]]
+        rcovtermss <- apply(data.frame(yuyuu),1,function(x) {
+            strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
+        })
         ans <- mixed_model_analyze(trait.cfg, pheno.filtered.df, geno.num)
+        ans.sum <- summary(ans)
         saveRDS(ans, file=paste0(trait_subfolder_fpath,"/mmer.rds"), compress=TRUE)
         blups   <- ans$U[["u:id"]][[trait]]
-        vcov    <- data.frame(unlist(ans$sigma))
-        rownames(vcov) <- gsub("u:(.+$)", "\\1", rownames(vcov), fixed=FALSE)
-        colnames(vcov) <- c("variance")
+        vcov    <- ans.sum$varcomp
+        rownames(vcov) <- c(randomtermss,rcovtermss)
         write.csv(vcov,file=paste0(trait_subfolder_fpath,"/vcov.csv"))
         #TODO: Save vcov
-        h2_str  <- generate_h2_formula(vcov, "id")
-        h2      <- eval(parse(text=paste0("pin(ans, ", h2_str, ")")))
-        write.csv(h2,file=paste0(trait_subfolder_fpath,"/h2.csv"))
+        #h2_str  <- generate_h2_formula(vcov, "id")
+        #h2      <- eval(parse(text=paste0("pin(ans, ", h2_str, ")")))
+        #write.csv(h2,file=paste0(trait_subfolder_fpath,"/h2.csv"))
         #TODO: Save h2
         generate_cross_file(trait.cfg, blups, gData, superMap.df, trait_subfolder_fpath) 
     }
