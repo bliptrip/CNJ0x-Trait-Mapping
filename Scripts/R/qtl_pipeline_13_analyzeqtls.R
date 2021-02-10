@@ -1,14 +1,9 @@
 #!/usr/bin/env RScript
 
-#This is a QTL pipeline script given to me by Luis, but I've adapted to work with the Vorsa upright datasets from 2011-2014
-#
-#NOTE: This particular script generates the correlation plots derived from means of two Vorsa populations along with the correlations of 
-# both populations combined..
-
 # loading libraries
 source('./usefulFunctions.R')
 
-workflow <- "../../Workflows/5"
+workflow <- "../../Workflows/1"
 
 #In case we override the workflow on the command-line
 args = commandArgs(trailingOnly=TRUE)
