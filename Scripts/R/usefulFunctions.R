@@ -116,7 +116,45 @@ circosfile2path <- function(filename) {
 		return(paste0("configs/circos/",filename))
 }
 
+
+model_to_name <- function(trait.cfg.tb,model,trait) {
+    model_names <- vector(mode="character", length=length(model))
+    for( i in 1:length(model) ) {
+        fstring <- paste0("trait.cfg.tb %>% filter((model == \"",model[i],"\") & (trait == \"",trait[i],"\"))")
+        mt <- eval(parse(text=fstring))
+        model_names[i] <- mt$model_label[1]
+    }
+    return(model_names)
+}
+
+trait_to_name <- function(trait.cfg.tb,model,trait) {
+    trait_names <- vector(mode="character", length=length(model))
+    for( i in 1:length(model) ) {
+        fstring <- paste0("trait.cfg.tb %>% filter((model == \"",model[i],"\") & (trait == \"",trait[i],"\"))")
+        mt <- eval(parse(text=fstring))
+        trait_names[i] <- mt$label[1]
+    }
+    return(trait_names)
+}
+
+siginfo <- function(x){
+    y="NS"
+    if(!is.na(x)) {
+        if(x >= 0 & x < 0.001){y="***"}
+        else if(x >= 0.001 & x < 0.01){y="**"}
+        else if(x >= 0.01 & x < 0.05){y="*"}
+        else if(x >= 0.05 & x < 0.1){y="."}
+    }
+    return(y)
+}
+
+round.digits <- function(values,digits) {
+	rvalue <- gsub("NA", "", format(round(values,digits=digits),nsmall=digits))
+}
+									
 #Function for looping through all unmasked traits in the configs/model-traits.cfg.csv file.
+
+
 loopThruTraits <- function(workflow, loopFunCallback, loopArgs=NULL) {
         #Loop over all mmers, trait groups, subgroups, and perform makeqtl() and fitqtl().
         traits.df <- read.csv(file=paste0(workflow,"/configs/model-traits.cfg.csv"),header=T,stringsAsFactors=F)
