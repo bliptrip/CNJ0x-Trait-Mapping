@@ -1,9 +1,9 @@
 #This is a QTL pipeline script given to me by Luis, but I've adapted to work with the Vorsa upright datasets from 2011-2014
 #
 #NOTE: This particular script runs on my local computer instead of the other version which is meant to be run on the UW HTCondor system.
-library(qtl)
-library(dplyr)
 library(jsonlite)
+library(qtl)
+library(tidyverse)
 
 # loading libraries
 source('./usefulFunctions.R')
@@ -61,6 +61,17 @@ generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, trait, lo
 
     qtl.model.terms  <- deconstruct_qtl_formula(formula(qtl))
     qtl.num          <- length(qtl.model.terms)
+    #Now add in anova p-values for genotype effects (BLUPs), and if applicable, for GxE
+    anova.df <- read.csv(file=paste0(workflow,'/traits/',model,'--',trait,'/anova.csv'), header=TRUE, row.names=1)
+    GLRpvalue    <- anova.df['vs(id, Gu = A)','PrChisq']
+    GZRpvalue    <- anova.df['vs(id, Gu = A)','PrNorm']
+    if( model == "all-years" ) {
+        GxYLRpvalue <- anova.df['id:year','PrChisq']
+        GxYZRpvalue <- anova.df['id:year','PrNorm']
+    } else {
+        GxYLRpvalue <- NA
+        GxYZRpvalue <- NA
+    }
     for (qtl.model.term in qtl.model.terms) {
         #Initialize some of the entries to NA for each step.
         mychr2        <- NA
@@ -99,6 +110,8 @@ generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, trait, lo
             #Convert Means/SEs to list so that the toJSON function will include the name of each effect (associative array)
             m.effects$Means   <- as.list(m.effects$Means)
             m.effects$SEs     <- as.list(m.effects$SEs)
+
+
         } else { #pairwise effect
             qtl_idx2      <- which(qtl$altname == qtl.model.term.v[2])
             mychr2        <- as.numeric(qtl$chr[qtl_idx2])
@@ -123,7 +136,7 @@ generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, trait, lo
             m.effects$SEs     <- data.frame(m.effects$SEs)
         }
         #TODO: Fill in interaction qtls
-        append.pointer(collated.df.p, c(method, model, trait, mychr, mypos, mychr2, mypos2, mymarker, qtl.lod, qtl.var, qtl.p, qtl_model.var, qtl_lodint))
+        append.pointer(collated.df.p, c(method, model, trait, mychr, mypos, mychr2, mypos2, mymarker, qtl.lod, qtl.var, qtl.p, qtl_model.var, qtl_lodint, GLRpvalue, GxYLRpvalue, GZRpvalue, GxYZRpvalue))
         append.pointer(effects.l.p, m.effects)
     }
 }
@@ -131,26 +144,29 @@ generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, trait, lo
 
 #Generate a single dataframe with qtl information in it, and save to a csv file.
 #index into qtl.collated.df
-qtl.collated.df   <- data.frame(method=character(),model=character(),trait=character(),chr=numeric(),position=numeric(),chr2=numeric(),position2=numeric(),nearest.marker=numeric(),qtl.lod=numeric(),marker.variance=numeric(),qtl.pvalue=numeric(),model.variance=numeric(),interval=numeric(),stringsAsFactors=FALSE)
+qtl.collated.df   <- data.frame(method=character(),model=character(),trait=character(),chr=numeric(),position=numeric(),chr2=numeric(),position2=numeric(),nearest.marker=numeric(),qtl.lod=numeric(),marker.variance=numeric(),qtl.pvalue=numeric(),model.variance=numeric(),interval=numeric(),GLRpvalue=numeric(),GxYLRpvalue=numeric(),GZRpvalue=numeric(),GxYZRpvalue=numeric(),stringsAsFactors=FALSE)
 qtl.collated.df.p <- newPointer(qtl.collated.df)
 qtl.effects.l.p   <- newPointer(list())
 
 collateQtlCB      <- function(trait.cfg, trait.path, loopArgs) {
     model <- as.character(trait.cfg$model)
     #Read in the cross file
-    cross <- readRDS(file=paste0(trait.path,'/cross.rds'))
-    trait <- trait.cfg$trait
-    if( any(cross$pheno[trait] != 0) ) {
-		trait_subsubfolder_fpath <- file.path(trait.path, trait)
-		#scanone-derived results
-		scan.one.qtl <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scanone.qtl.rds'))
-		scan.one.md  <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scanone.md.rds'))
-		generate_qtl_collate(cross, scan.one.qtl, scan.one.md, "scanone", model, trait, loopArgs)
-		#stepwiseqtl-derived results
-		scan.sw.qtl <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scansw.rds'))
-		scan.sw.md  <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scansw.md.rds'))
-		generate_qtl_collate(cross, scan.sw.qtl, scan.sw.md, "stepwiseqtl", model, trait, loopArgs)
-	}
+    cross_path = paste0(trait.path,'/cross.rds')
+    if( file.exists(cross_path) ) {
+        cross <- readRDS(file=cross_path)
+        trait <- trait.cfg$trait
+        if( any(cross$pheno[trait] != 0) ) {
+            trait_subsubfolder_fpath <- file.path(trait.path, trait)
+            #scanone-derived results
+            scan.one.qtl <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scanone.qtl.rds'))
+            scan.one.md  <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scanone.md.rds'))
+            generate_qtl_collate(cross, scan.one.qtl, scan.one.md, "scanone", model, trait, loopArgs)
+            #stepwiseqtl-derived results
+            scan.sw.qtl <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scansw.rds'))
+            scan.sw.md  <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scansw.md.rds'))
+            generate_qtl_collate(cross, scan.sw.qtl, scan.sw.md, "stepwiseqtl", model, trait, loopArgs)
+        }
+    }
 }
 
 #Loop through all legitimate traits and build collated qtl file.
