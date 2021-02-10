@@ -35,16 +35,17 @@ library(tidyverse)
 
 
 readModelsCB  <- function(trait.cfg, trait.path, models.l) {
+    trait               <- trait.cfg$trait
     model.map.l         <- models.l$model_map 
     model.collated.df   <- models.l$model_collated_table
     model               <- readRDS(file=paste0(trait.path,"/mmer.rds"))
+    print(paste0("Calculating pvalues for Trait: ",trait.cfg$trait,"Model: ",trait.cfg$model))
     append.pointer(model.map.l, model)
     model_idx           <- length(model.map.l$value)
-    year_var            <- NA
-    if( "year" %in% names(model$var.comp) ) {
-        year_var        <- model$var.comp$year
-    }
-    append.pointer(model.collated.df, c(trait.cfg$model, trait.cfg$trait, model_idx, model$var.comp$accession_name, year_var, model$var.comp$units))
+    var.comp <- summary(model)$varcomp
+    var.i <- grep("u:id", rownames(var.comp)) #Return variance component with genotype identifier
+    units.i <- grep("units", rownames(var.comp))
+    append.pointer(model.collated.df, c(trait.cfg$model, trait.cfg$trait, model_idx, var.comp$VarComp[var.i], var.comp$VarComp[units.i]))
     #Interesting components of model
     # $var.comp[$year, accession_name, ...]
     # $u.hat - Estimated BLUPs for RE covariates (years & genotypic values)
@@ -57,10 +58,102 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
     # $ZETA - the original Z-matrices specified for RE (year & genotypic values)
     #AMNOTE: Why is genomic relationship matrix of individual w/ itself not 1?  It looks like this might be intrinsic to the way additive relationship matrices
     # are calculated (XX'/c).
+    
+    
+    #Use a 'drop1' type approach to determine significance of model terms
+    #Get our A matrix, since it will be necessary.
+    A <- model$A.mat
+    #Gather fixed terms
+    fixed <- as.formula(trait.cfg$fixed)
+    yuyuf <- strsplit(as.character(fixed[3]), split = "[+-]")[[1]]
+    response <- strsplit(as.character(fixed[2]), split = "[+]")[[1]]
+    fixedtermss <- apply(data.frame(yuyuf),1,function(x) {
+        strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
+    })
+    fixedtermss <- fixedtermss[which(fixedtermss != "-1")]
+    fixedtermss <- fixedtermss[which(fixedtermss != "1")]
+    #Gather random terms
+    random <- as.formula(trait.cfg$random)
+    yuyur <- strsplit(as.character(random[2]), split = "[+-]")[[1]]
+    randomtermss <- apply(data.frame(yuyur),1,function(x) {
+        strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
+    })
+    randomtermss    <- randomtermss[which(randomtermss != "-1")]
+    randomtermss    <- randomtermss[which(randomtermss != "1")]
+    rcov <- as.formula(trait.cfg$rcov)
+    yuyuu <- strsplit(as.character(rcov[2]), split = "[+-]")[[1]]
+    rcovtermss <- apply(data.frame(yuyuu),1,function(x) {
+        strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
+    })
+    allterms          <- c(fixedtermss,randomtermss,rcovtermss)
+    allterms.size     <- length(allterms)
+    anova.combined    <- data.frame(Chisq=character(allterms.size),
+                                ChiDf=character(allterms.size),
+                                PrChisq=numeric(allterms.size),
+                                PrChisqInfo=character(allterms.size),
+                                Zratio=numeric(allterms.size),
+                                PrNorm=numeric(allterms.size),
+                                PrNormInfo=character(allterms.size)
+                                )
+    rownames(anova.combined) <- as.character(allterms)
+    #Now for each fixed term, drop it from model and calculate prob under assumption of chisqr distro for likelihood ratio
+    i = 1
+    for (j in seq_along(fixedtermss)) {
+        usef <- setdiff(fixedtermss,fixedtermss[i])
+        if( length(usef) > 0 ) {
+            fixedf <- paste(response,"~ ",paste(usef,collapse = " + "))
+        } else {
+            fixedf <- paste(response,"~ 1")
+        }
+        mmer.expr <- paste0(c("mmer(fixed=", fixedf, ", random=", trait.cfg$random, ", rcov=", trait.cfg$rcov, ", data=model$dataOriginal"), collapse="")
+        if( !is.empty(trait.cfg["mmer_args"]) ) {
+                mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
+        }
+        mmer.expr <- paste0(mmer.expr,")")
+        print(mmer.expr)
+        model.drop1 <- try(eval(parse(text=mmer.expr)))
+        if( length(model.drop1) > 0 ) {
+            anova.cols    <- c("Chisq", "ChiDf", "PrChisq")
+            anova.drop1 <- anova(model, model.drop1)[2,anova.cols]
+            anova.combined[i,anova.cols] = anova.drop1 
+            i = i + 1
+        }
+    }    
+    #Now for each random term, drop it from model and calculate prob under assumption of chisqr distro for likelihood ratio
+    k = 1
+    for (j in seq_along(randomtermss)) {
+        usef <- setdiff(randomtermss,randomtermss[k])
+        randomf <- paste("~",paste(usef,collapse = " + "))
+        mmer.expr <- paste0(c("mmer(fixed=", trait.cfg$fixed, ", random=", randomf, ", rcov=", trait.cfg$rcov, ", data=model$dataOriginal"), collapse="")
+        if( !is.empty(trait.cfg["mmer_args"]) ) {
+                mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
+        }
+        mmer.expr <- paste0(mmer.expr,")")
+        print(mmer.expr)
+        model.drop1 <- try(eval(parse(text=mmer.expr)))
+        if( length(model.drop1) > 0 ) {
+            anova.cols    <- c("Chisq", "ChiDf", "PrChisq", "PrChisqInfo")
+            anova.drop1 <- anova(model, model.drop1)[2,]
+            prchisq <- strsplit(anova.drop1$PrChisq, split = " ")[[1]]
+            anova.drop1$PrChisq <- as.numeric(prchisq[1])
+            anova.drop1$PrChisqInfo <- prchisq[2]
+            anova.combined[k+(i-1),anova.cols] = anova.drop1[,anova.cols]
+            k = k + 1
+        }
+    }    
+    vcov <- read.csv(file=paste0(trait.path,'/vcov.csv'), row.names=1)
+    vcov$PrNorm <- pnorm(abs(vcov$Zratio),lower.tail=FALSE)
+    vcov$PrNormInfo <- unlist(map(vcov$PrNorm,siginfo))
+    rtermss   <- c(randomtermss,rcovtermss)
+    vcov.cols <- c("Zratio","PrNorm","PrNormInfo")
+    anova.combined[rtermss,vcov.cols] <- vcov[rtermss,vcov.cols]
+    #Where applicable, add Zratio values for random effects (as found in vcov matrix) and pnorm values for these
+    saveRDS(anova.combined, file=paste0(trait.path,"/anova.rds"), compress=TRUE)
+    write.csv(anova.combined, file=paste0(trait.path,"/anova.csv"), row.names=TRUE)
 }
 
 model.map.l.p       <- newPointer(list())
-model.collated.df   <- data.frame(model=character(),traits=character(),model_idx=integer(), bv_var=numeric(), year_var=numeric(), res_var=numeric(), stringsAsFactors=FALSE)
+model.collated.df   <- data.frame(model=character(),traits=character(),model_idx=integer(), bv_var=numeric(), res_var=numeric(), stringsAsFactors=FALSE)
 model.collated.df.p <- newPointer(model.collated.df)
 loopThruTraits(workflow, readModelsCB, list(model_map=model.map.l.p, model_collated_table=model.collated.df.p))
 
