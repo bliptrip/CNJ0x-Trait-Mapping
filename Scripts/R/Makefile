@@ -24,6 +24,9 @@ plotcors:
 genmodels:
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_genmodels.R
 
+genanalyses:
+		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_analyzemodels.R
+
 genh2plot:
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_02_genh2plots.R
 
@@ -85,6 +88,10 @@ FitQTL:
 CollateQTL:
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_09_collate.R
 
+#Generate QTL table
+GenQTLTable:
+		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_10_01_genQTLtables.R
+
 #Collate all QTL info into one file
 GenConsensus:
 		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_type="$(CIRCOS_QTL_TYPE)"' qtl_pipeline_10_genconsensus.R
@@ -104,6 +111,11 @@ GenCircosSandbox:
 		cp -r ../../Workflows/templates/traits/plots/circos/fonts $(SANDBOX)/
 		cp -r $(WORKFLOW)/configs $(SANDBOX)/
 		cd $(SANDBOX) && npm install
+
+LaunchCircosSandbox:
+		cd $(SANDBOX) && npm run -t start &
+		sleep 5
+		cd $(SANDBOX) && npm run -t launch
 
 #Merge H2
 MergeH2:
