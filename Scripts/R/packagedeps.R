@@ -36,4 +36,5 @@ install.packages(c("factoextra"), repos = "http://mirror.las.iastate.edu/CRAN/",
 install.packages(c("kableExtra"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("formattable"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("ggfittext"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+install.packages(c("cowplot"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 
