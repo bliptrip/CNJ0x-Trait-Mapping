@@ -35,29 +35,9 @@ consensusMapWithGenes.filtered.tb <- consensusMapWithGenes.tb %>%
                                         mutate(blast1 = gsub("0", "",blast1)) %>%
                                         mutate(blast2 = gsub("0", "",blast2))
 
-model_to_name <- function(model,trait) {
-    model_names <- vector(mode="character", length=length(model))
-    for( i in 1:length(model) ) {
-        fstring <- paste0("trait.cfg.tb %>% filter((model == \"",model[i],"\") & (trait == \"",trait[i],"\"))")
-        mt <- eval(parse(text=fstring))
-        model_names[i] <- mt$model_label[1]
-    }
-    return(model_names)
-}
-
-trait_to_name <- function(model,trait) {
-    trait_names <- vector(mode="character", length=length(model))
-    for( i in 1:length(model) ) {
-        fstring <- paste0("trait.cfg.tb %>% filter((model == \"",model[i],"\") & (trait == \"",trait[i],"\"))")
-        mt <- eval(parse(text=fstring))
-        trait_names[i] <- mt$label[1]
-    }
-    return(trait_names)
-}
-
 qtl.collated.filtered.tb <- qtl.collated.tb %>%
                                 filter(method == qtl_method) %>%
-                                mutate(marker = gsub(".+cM_(.+)", "\\1",nearest.marker), model_name = model_to_name(model,trait), trait_name = trait_to_name(model,trait)) %>%
+                                mutate(marker = gsub(".+cM_(.+)", "\\1",nearest.marker), model_name = model_to_name(trait.cfg.tb,model,trait), trait_name = trait_to_name(trait.cfg.tb,model,trait)) %>%
                                 left_join(consensusMapWithGenes.filtered.tb, by="marker") %>%
                                 arrange(trait,model,desc(marker.variance)) %>%
                                 mutate(marker.variance=percent(marker.variance/100), 
