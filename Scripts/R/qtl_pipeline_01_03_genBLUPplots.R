@@ -186,16 +186,16 @@ gs <- model.collated.long.tb %>%
 							plot.margin = ggplot2::unit(c(1,1,1,1),"cm")))
 						
 p1 <- (gs %>% filter(trait == "Berry Length"))$plot[[1]] + ylab("Value")
-p2 <- (gs %>% filter(trait == "Berry Width"))$plot[[1]]
-p3 <- (gs %>% filter(trait == "Berry Weight"))$plot[[1]]
-p4 <- (gs %>% filter(trait == "Total Berry Weight"))$plot[[1]] + guides(fill=guide_legend(title="Type of Value"))
-p5 <- (gs %>% filter(trait == "Number of Berries"))$plot[[1]] + ylab("Value")
-p6 <- (gs %>% filter(trait == "Number of Pedicels"))$plot[[1]]
-p7 <- (gs %>% filter(trait == "Number of Seeds"))$plot[[1]]
+p2 <- (gs %>% filter(trait == "Berry Weight"))$plot[[1]]
+p3 <- (gs %>% filter(trait == "Berry Width"))$plot[[1]] + guides(fill=guide_legend(title="Type of Value"))
+p4 <- (gs %>% filter(trait == "Total Berry Weight"))$plot[[1]]
+p5 <- (gs %>% filter(trait == "Number of Pedicels"))$plot[[1]] + ylab("Value")
+p6 <- (gs %>% filter(trait == "Number of Berries"))$plot[[1]]
+p7 <- (gs %>% filter(trait == "Number of Seeds"))$plot[[1]] + guides(fill=guide_legend(title="Type of Value"))
 
-pg <- plot_grid(p1,p2,p3,p4,p5,p6,p7,nrow=2,ncol=4,rel_widths=c(1,1,1,1.3))
+pg <- plot_grid(p1,p2,p3,NULL,p4,NULL,p5,p6,p7,nrow=3,ncol=3,rel_widths=c(1,1,1.25))
 
-png(filename=paste0(workflow,'/traits/plots/blups_collated.boxplot.plotgrid.png'), width=3840, height=2534, bg="white")
+png(filename=paste0(workflow,'/traits/plots/blups_collated.boxplot.plotgrid.png'), width=2560, height=3840, bg="white")
 pg
 dev.off()
 
@@ -301,9 +301,9 @@ model.collated.blup_summary.tb %>%
 	row_spec(row=which(model.collated.blup_summary.tb$trait != ""), extra_css = "border-top: 1px solid #ddd") %>%
 	add_header_above(c("", "", "F1 Progeny"=6, "Parents"=3)) %>%
 	kable_paper("striped", full_width=FALSE) %>%
-	add_footnote(c("Significance codes for Genotype:Year Effects\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant", 
+	add_footnote(c("Significance codes for Genotype:Year Effects\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n", 
 				   "Signficance codes for Genotype Effects",
-				   "F1 progeny genotype with minimum trait BLUP value.  Genotype identifier is shortened for visibility.  Translation is g<num> == CNJ02_1_<num>.  eg: g77 == CNJ02_1_77",
+				   "F1 progeny genotype with minimum trait BLUP value.  Genotype identifier is shortened for visibility.  Translation is g<num> => CNJ02_1_<num>.  eg: g77 => CNJ02_1_77",
 				   "F1 progeny genotype with minimum trait BLUP value.  Genotype identifier is same format as for minimum genotype.",
 				   "Maternal Mullica Queen trait BLUP value",
 				   "Paternal Crimson Queen trait BLUP value"))
