@@ -12,11 +12,9 @@ library(Hmisc) #For rcorr -- does pairwise correlations with p-value stats inclu
 library(RColorBrewer)
 library(corrplot)
 library(GGally)
-library(ggplot2)
 library(ggthemes)
 library(lattice)
 library(plotly)
-library(tidyverse)
 
 cnjpop.pheno.means.df <- read.csv(file=pheno_dpath2fpath("Data-combined-collated.means.csv"))
 cnjpop.pheno.p1.means.df <- read.csv(file=pheno_dpath2fpath("Data-combined-collated.cnj04.means.csv"))
@@ -38,14 +36,14 @@ cnjpop.pheno.p2.means.df <- read.csv(file=pheno_dpath2fpath("Data-combined-colla
 # NOTE: The column specified by year.col should be a factor.
 #
 split_by_year <- function(pheno.df, year.col, vars.col, by) {
-    genos <- unique(pheno.df[,by])
-    split.pheno.df   <- data.frame(genos)
-    colnames(split.pheno.df) <- c(by)
-    for( var in vars.col ) {
-        for( year in unique((pheno.df[,year.col])) ) {
-            single_year.idx <- which(pheno.df[,year.col] == year) 
-            newvar <- paste0(var,"y",substr(year,3,4))
-            single_year.df <- pheno.df[single_year.idx,c(by,var)]
+genos <- unique(pheno.df[,by])
+split.pheno.df   <- data.frame(genos)
+colnames(split.pheno.df) <- c(by)
+for( var in vars.col ) {
+    for( year in unique((pheno.df[,year.col])) ) {
+        single_year.idx <- which(pheno.df[,year.col] == year) 
+        newvar <- paste0(var,"y",substr(year,3,4))
+        single_year.df <- pheno.df[single_year.idx,c(by,var)]
             colnames(single_year.df) <- c(by,newvar)
             split.pheno.df <- merge(split.pheno.df,single_year.df,by=by)
         }
@@ -61,10 +59,6 @@ colnames(cnjpop.pheno.means.df) <- rename_traits(colnames(cnjpop.pheno.means.df)
 colnames(cnjpop.pheno.p1.means.df) <- rename_traits(colnames(cnjpop.pheno.p1.means.df), trait.abbrev.map.df)
 colnames(cnjpop.pheno.p2.means.df) <- rename_traits(colnames(cnjpop.pheno.p2.means.df), trait.abbrev.map.df)
 focal.cols <- rename_traits(focal.cols, trait.abbrev.map.df)
-
-#Pull out only the progeny
-cnjpop.pheno.p1.progeny.means.df <- cnjpop.pheno.p1.means.df %>% filter(grepl("CNJ0.*", accession_name))
-cnjpop.pheno.p2.progeny.means.df <- cnjpop.pheno.p2.means.df %>% filter(grepl("CNJ0.*", accession_name))
 
 #Do a combined population assessment
 cnjpop.pheno.combined.means.cor.mat <- rcorr(as.matrix(cnjpop.pheno.means.df[,focal.cols]), type="pearson")
@@ -84,11 +78,8 @@ cnjpop.pheno.p1.means.cor.split.mat <- rcorr(as.matrix(cnjpop.pheno.p1.means.spl
 #cnjpop.pheno.p1.means.cor.split.mat <- read.csvw("CNJ04_phenotype_correlations_by_year.csv")
 
 
-cnjpop.pheno.p2.means.sub.df <- cnjpop.pheno.p2.progeny.means.df[,focal.cols]
-cnjpop.pheno.p2.means.split.df <- cnjpop.pheno.p2.progeny.means.df %>% 
-                                    pivot_longer(!c(year,accession_name,accession,row,column),names_to="trait",values_to="values") %>%
-                                    mutate(year=gsub("20([0-9]{2})","\\1",year,fixed=FALSE)) %>%
-                                    pivot_wider(names_from=c("trait","year"),values_from="values",names_sep="")
+cnjpop.pheno.p2.means.sub.df <- cnjpop.pheno.p2.means.df[,focal.cols]
+cnjpop.pheno.p2.means.split.df <- split_by_year(cnjpop.pheno.p2.means.df, year.col="year", vars.col=focal.cols, by="accession_name")
 cnjpop.pheno.p2.means.cor.split.mat <- rcorr(as.matrix(cnjpop.pheno.p2.means.split.df[,-1]), type="pearson")
 #write.csvw(cnjpop.pheno.p2.means.cor.split.mat, "CNJ02_phenotype_correlations_by_year.csv")
 #cnjpop.pheno.p2.means.cor.split.mat <- read.csvw("CNJ02_phenotype_correlations_by_year.csv", row.names=1)
@@ -106,63 +97,22 @@ dev.off()
 #Use ggplot and plotly to develop interactive graphs of phenotypes, correlations b/w trait phenotypes, and heritabilities of traits.  It would also be interesting to generate
 #correlations b/w trait BLUPs, but will forget about that for now.
 #Plot correlations as a raster heatmap
-s.df <- cnjpop.pheno.p2.means.split.df %>% select(!c(accession_name,accession,row,column))
-s.df <- s.df %>% select(sort(colnames(s.df)))
-g <- ggcorr(s.df, label=FALSE, geom="circle", layout.exp=1, hjust=.90, min_size=1, max_size=24, size=12, legend.size=18, label_color='black') +
+g <- ggcorr(cnjpop.pheno.p2.means.split.df, label=FALSE, geom="circle", hjust=0.575, min_size=1, max_size=8, size=3, label_color=white) +
          theme(
-            text = element_text(color="black"),
-            axis.text.x = element_text(color="black"),
+            text = element_text(color="white"),
+            axis.text.x = element_text(color="white"),
             panel.background = element_rect(fill = "transparent") # bg of the panel
             , plot.background = element_rect(fill = "transparent") # bg of the plot
             , panel.grid.major = element_blank() # get rid of major grid
             , panel.grid.minor = element_blank() # get rid of minor grid
             , legend.background = element_rect(fill = "transparent") # get rid of legend bg
             , legend.box.background = element_rect(fill = "transparent") # get rid of legend panel bg
-            , legend.box.margin = margin(2,1,1,2)
          )
-ggsave(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait_year.corr.png"), plot=g, device="png", bg="transparent")
-
-#Plot correlations for all years
-s.df <- cnjpop.pheno.p2.progeny.means.df %>% select(!c(accession_name,accession,year,row,column))
-s.df <- s.df %>% select(sort(colnames(s.df)))
-g <- ggcorr(s.df, label=TRUE, geom="circle", layout.exp=1, hjust=.90, min_size=1, max_size=32, size=16, legend.size=18, label_color='black') +
-         theme(
-            text = element_text(color="black"),
-            axis.text.x = element_text(color="black"),
-            panel.background = element_rect(fill = "transparent") # bg of the panel
-            , plot.background = element_rect(fill = "transparent") # bg of the plot
-            , panel.grid.major = element_blank() # get rid of major grid
-            , panel.grid.minor = element_blank() # get rid of minor grid
-            , legend.background = element_rect(fill = "transparent") # get rid of legend bg
-            , legend.box.background = element_rect(fill = "transparent") # get rid of legend panel bg
-            , legend.box.margin = margin(2,1,1,2)
-         )
+png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait_year.corr.png"), width=1365, height=1024, units='px', bg="transparent")
 ggsave(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait.corr.png"), plot=g, device="png", bg="transparent")
 #png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait_year.corr.png"), width=1280, height=1024, units='px', bg="transparent")
 #g
 #dev.off()
-
-#Generate traditional trait histograms using ggplot, and facet by trait and for each trait, within year
-g <- cnjpop.pheno.p2.progeny.means.df %>%
-        pivot_longer(!c(year,accession_name,accession,row,column),names_to="trait",values_to="values") %>%
-        ggplot(aes(x=values,group=factor(year),fill=factor(year))) +
-        geom_density(alpha=0.5) +
-        facet_grid(cols=vars(trait), scales="free_x") +
-        guides(fill=guide_legend(title="Year")) +
-        xlab("Trait Values") +
-        ylab("Density") +
-        theme(	axis.text.x = element_text(face="bold", size=16, angle = 60, hjust = 1),
-                axis.text.y = element_text(face="bold", size=16),
-                strip.text  = element_text(face="bold", size=18),
-                legend.title = element_text(fac="bold", size=16),
-                legend.text = element_text(fac="bold", size=12),
-                legend.key.size = ggplot2::unit(1,"cm"),
-                axis.title  = element_text(face="bold",size=24),
-                plot.title   = element_text(face="bold",size=26, hjust=0.5),
-                plot.subtitle = element_text(size=48, hjust = 0.5),
-                plot.margin = ggplot2::unit(c(1,1,1,1),"cm"))
-
-ggsave(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait_year.density.png"), dpi=600, width=30, height=20, units="cm", plot=g, device="png", bg="transparent")
 
 #Also try using the corrplot package.
 #Trait by year association
@@ -181,10 +131,10 @@ dev.off()
 
 
 #All traits
-g <- ggcorr(cnjpop.pheno.p2.means.sub.df, label=FALSE, geom="circle", hjust=0.575, min_size=1, max_size=24, size=5, label_color=black) +
+g <- ggcorr(cnjpop.pheno.p2.means.sub.df, label=FALSE, geom="circle", hjust=0.575, min_size=1, max_size=16, size=5, label_color=white) +
          theme(
-            text = element_text(color="black"),
-            axis.text.x = element_text(color="black"),
+            text = element_text(color="white"),
+            axis.text.x = element_text(color="white"),
             panel.background = element_rect(fill = "transparent") # bg of the panel
             , plot.background = element_rect(fill = "transparent") # bg of the plot
             , panel.grid.major = element_blank() # get rid of major grid
