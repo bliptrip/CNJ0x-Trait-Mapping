@@ -200,7 +200,9 @@ append_fake_data <- function(group, key) {
     fakedata.df   <- data.frame(method=rep("fakeqtl",df.nrows), model=models.v, chr=chr.v, position=rep(-1,df.nrows),
                                     chr2=rep(NA,df.nrows), position2=rep(NA,df.nrows), nearest_marker=rep(paste0("marker--fake--trait--",mkey),df.nrows), 
 									qtl_lod=rep(0,df.nrows), qtl_pvalue=rep(0,df.nrows),
-                                    marker_variance=rep(0,df.nrows), model_variance=rep(0,df.nrows), interval=rep(0,df.nrows), position_consensus=rep(-1,df.nrows),
+                                    marker_variance=rep(0,df.nrows), model_variance=rep(0,df.nrows), interval=rep(0,df.nrows), 
+									GLRpvalue=rep(0,df.nrows),GxYLRpvalue=rep(0,df.nrows),GZRpvalue=rep(0,df.nrows),GxYZRpvalue=rep(0,df.nrows),
+									position_consensus=rep(-1,df.nrows),
                                     class=rep("", df.nrows), model_idx=models_idx.v, color=rep("rgb(0,0,0)",df.nrows), stroke_color=rep("rgb(0,0,0)",df.nrows), 
                                     model_cols=rep("rgb(0,0,0)",df.nrows), trait=rep(mkey, df.nrows))
     qtl_file         <- paste0(mkey, "__circos_qtl_file.csv")
@@ -304,3 +306,6 @@ for( i in 1:ntraits ) {
 write_json(scatter.configs.json, file.path(workflow,'/configs/circos/scatter.configs.json'), simplifyVector=TRUE, auto_unbox=TRUE, pretty=TRUE)
 write_json(stack.configs.json, file.path(workflow,'/configs/circos/stack.configs.json'), simplifyVector=TRUE, auto_unbox=TRUE, pretty=TRUE)
 write_json(line.configs.json, file.path(workflow,'/configs/circos/line.configs.json'), simplifyVector=TRUE, auto_unbox=TRUE, pretty=TRUE)
+
+#Save image for reloading later if desired
+save.image(".RData.11_gencircos")
