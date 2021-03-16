@@ -12,7 +12,6 @@ library(tidyverse)
 
 #Defaults
 workflow="../../Workflows/1"
-qtl_method   <- "stepwiseqtl" #Which method to filter
 num_top_qtls <- 2 #Number of the top QTLs to calculate effect sizes for
 
 args = commandArgs(trailingOnly=TRUE)
@@ -24,6 +23,7 @@ if(length(args)==0) {
         eval(parse(text=args[[i]]))
     }
 }
+num_top_qtls <- as.numeric(num_top_qtls) #Convert to numeric
 
 source('./usefulFunctions.R')
 source(paste0(workflow,"/configs/model.cfg"))
@@ -31,7 +31,7 @@ trait.cfg.tb    <- read_csv(file=paste0(workflow,'/configs/model-traits.cfg.csv'
 
 extract_effects <- function(method, model, trait, chr, position) {
     #print(paste0("method = ",method, ", model = ", model, "trait = ", trait))
-    qtl.mname <- paste0(chr,'@',format(round(as.numeric(position),digits=1), nsmall=1))
+    qtl.mname <- paste0(chr,'@',round.digits(position,1))
     cross <- readRDS(file=paste0(workflow,'/traits/',model,'--',trait,'/cross.rds'))
     qtl   <- readRDS(file=paste0(workflow,'/traits/',model,'--',trait,'/',trait,'/', ifelse(method == 'scanone', 'scanone.qtl', 'scansw'), '.rds'))
     effects <- effectplot(cross, pheno.col=trait, mname1=qtl.mname, draw=FALSE)
@@ -92,7 +92,12 @@ generate_collated_effects <- function(qtl.collated.tb,num_top_qtls) {
 }
 
 qtl.tb  <- read_csv(file=paste0(workflow,'/traits/qtl_collated.csv'), col_names=TRUE) %>%
-                    filter(is.na(chr2) & is.na(position2)) #Remove interaction effects for now
+                    filter(is.na(chr2) & is.na(position2)) %>% #Remove interaction effects for now
+                    group_by(trait) %>%
+                    mutate(GxYLRpvalue = rep(min(GxYLRpvalue,na.rm=TRUE),length(GxYLRpvalue))) %>%
+                    mutate(GxYZRpvalue = rep(min(GxYZRpvalue,na.rm=TRUE),length(GxYZRpvalue))) %>%
+                    ungroup()
+
 effs.tb <- generate_collated_effects(qtl.tb, num_top_qtls)
 saveRDS(effs.tb,file=paste0(workflow,'/traits/effects_collated.rds'), compress=TRUE)
 #Write a csv file without the grouped blups
@@ -127,7 +132,7 @@ effs.filtered1.tb <- effs.1.tb %>%
                                                       panel.grid = element_line(color="darkgray",size=0.25,linetype=3),
                                                       panel.background = element_rect(fill="transparent"),
                                                       plot.background = element_rect(fill="transparent"))) %>%
-                            mutate(plot_filename = paste0(normalizePath(paste0(workflow,'/traits/',model,'--',trait,'/',trait),mustWork=TRUE), '/effects_plot.blups.chr',chr,'_',format(round(as.numeric(position),digits=2),nsmall=2),'cm.',method,'.png')) %>%
+                            mutate(plot_filename = paste0(normalizePath(paste0(workflow,'/traits/',model,'--',trait,'/',trait),mustWork=TRUE), '/effects_plot.blups.chr',chr,'_',round.digits(position,2),'cm.',method,'.png')) %>%
                             group_walk(~ {
                                             print(paste0("Saving ",.x$plot_filename))
                                             #png(filename=.x$plot_filename, width=640, height=320, bg="white")
@@ -152,7 +157,7 @@ effs.filtered2.tb <- effs.2.tb %>%
                                                 geom_blank(aes(y=min_effect.value)) +
                                                 geom_blank(aes(y=max_effect.value)) +
                                                 geom_col(alpha=0.5) +
-                                                geom_bar_text(aes(label=format(round(effect.value,digits=2), nsmall=2)),angle=25) +
+                                                geom_bar_text(aes(label=round.digits(effect.value,2)),angle=25) +
                                                 geom_hline(mapping=aes(yintercept=0),color="grey30",linetype="dashed") +
                                                 coord_flip() +
                                                 guides(fill = 'none') +
@@ -165,7 +170,7 @@ effs.filtered2.tb <- effs.2.tb %>%
                                                       panel.grid = element_line(color="darkgray",size=0.25,linetype=3),
                                                       panel.background = element_rect(fill="transparent"),
                                                       plot.background = element_rect(fill="transparent"))) %>%
-                            mutate(plot_mpieffects_filename = paste0(normalizePath(paste0(workflow,'/traits/',model,'--',trait,'/',trait), mustWork=TRUE),'/effects_plot.mpieffects.chr',chr,'_',format(round(as.numeric(position),digits=2),nsmall=2),'cm.',method,'.png')) %>%
+                            mutate(plot_mpieffects_filename = paste0(normalizePath(paste0(workflow,'/traits/',model,'--',trait,'/',trait), mustWork=TRUE),'/effects_plot.mpieffects.chr',chr,'_',round.digits(position,2),'cm.',method,'.png')) %>%
                             group_walk(~ {
                                             print(paste0("Saving ",.x$plot_mpieffects_filename))
                                             ggsave(filename=.x$plot_mpieffects_filename, plot = .x$plot[[1]], device="png", bg="transparent", dpi=300, width=10, height=5, units="cm")
@@ -174,7 +179,7 @@ effs.filtered2.tb <- effs.2.tb %>%
 #Replace GxY interaction significance values with those for a trait's 'all-year' model.
 qtl.tb  <- qtl.tb %>%
                         select(-chr2,-position2) %>%
-                        group_by(method,trait) %>%
+                        group_by(trait) %>%
                         mutate(GxYLRpvalue = rep(min(GxYLRpvalue,na.rm=TRUE),length(GxYLRpvalue))) %>%
                         mutate(GxYZRpvalue = rep(min(GxYZRpvalue,na.rm=TRUE),length(GxYZRpvalue))) %>%
                         ungroup()
@@ -187,11 +192,13 @@ effs.complete.tb <-  qtl.tb %>%
                         mutate(marker = gsub(".+cM_(.+)", "\\1",nearest.marker), 
                                trait_name = trait_to_name(trait.cfg.tb,model,trait), 
                                model_name = model_to_name(trait.cfg.tb,model,trait),
-                               marker.variance=percent(marker.variance/100))  %>%
+                               marker.variance=percent(marker.variance/100),
+                               model.variance=percent(model.variance/100))  %>%
                         mutate(trait_repeat=(trait_name == c("",trait_name[-length(trait_name)])),
                                model_repeat=(model_name == c("",model_name[-length(model_name)]))) %>%
-                        mutate(trait_name = paste0(trait_name,unlist(map(GxYLRpvalue,siginfo))),  #Append significance string info to names for statistically informative table
-                               model_name = paste0(model_name,unlist(map(GLRpvalue,siginfo))))
+                        mutate(trait_name = paste0(trait_name,"$^{",unlist(map(GxYLRpvalue,siginfo)),"}$"),  #Append significance string info to names for statistically informative table
+                               model_name = paste0(model_name,"$^{",unlist(map(GLRpvalue,siginfo)),"}$"),
+                               qtl.lod = paste0(round.digits(qtl.lod,2),"$^{",unlist(map(qtl.pvalue,siginfo)),"}$"))
                             
 
 generate_table <- function(tb, meths) {
@@ -199,45 +206,48 @@ generate_table <- function(tb, meths) {
             filter(method %in% meths) %>%
             mutate(trait_name = ifelse(trait_repeat, "", cell_spec(trait_name, "html", bold=TRUE)),
                    model_name = ifelse(model_repeat, "", cell_spec(model_name, "html", bold=TRUE)),
+                   model.variance = ifelse(model_repeat, "", color_bar("lightgreen")(model.variance)),
                    marker = ifelse(is.na(marker)," ",marker),
-                   position = paste0(format(round(as.numeric(position),digits=2),nsmall=2)," \u00b1 ",format(round(as.numeric(interval)/2,digits=2),nsmall=2)),
+                   position = paste0(round.digits(position,2),"\u00b1",round.digits(interval/2,2)),
                    marker.variance = color_bar("lightblue")(marker.variance)) %>%
-            select(method,trait_name,model_name,chr,position,marker.variance,marker,trait_repeat,model_repeat,plot_filename,plot_mpieffects_filename)
-    colnames(tb) <- c("method", "Trait<sup>a</sup>", "Model<sup>b</sup>", "Linkage Group", "Marker Location \u00b1 1.5LOD (cM)", "Variance Explained by QTL", "Nearest Marker",  "trait_repeat", "model_repeat", "plot_filename", "plot_mpieffects_filename")
+            select(method,trait_name,model_name,model.variance,chr,position,qtl.lod,marker.variance,marker,trait_repeat,model_repeat,plot_filename,plot_mpieffects_filename)
+    colnames(tb) <- c("method", "Trait[note]", "Model[note]", "Model Variance[note]", "Linkage Group", "Marker Location[note]", "pLOD[note]", "Variance Explained by QTL", "Nearest Marker", "trait_repeat", "model_repeat", "plot_filename", "plot_mpieffects_filename")
     tb %>%
-        select(-method,-trait_repeat,-model_repeat,-plot_filename,-plot_mpieffects_filename) %>%
-        mutate('Effect Size Boxplots<sup>c</sup>'="") %>%
-        mutate('Effect Difference Plots<sup>d</sup>'="") %>%
-        kable("html", align='llrlrlcc', escape = FALSE) %>%
+        select(!c(method,trait_repeat,model_repeat,plot_filename,plot_mpieffects_filename)) %>%
+        mutate('Effect Size Boxplots[note]'="") %>%
+        mutate('Effect Difference Plots[note]'="") %>%
+        kable("html", table.attr="id=\"kableTable\"", align='lllrrrllcc', escape = FALSE) %>%
         kable_paper("striped", full_width=FALSE) %>%
-        column_spec(3, width = "1cm") %>%
-        column_spec(4, width = "2.5cm") %>%
-        column_spec(5, width = "3cm") %>%
-        column_spec(7, image=spec_image(tb$plot_filename,1280,320)) %>%
-        column_spec(8, image=spec_image(tb$plot_mpieffects_filename,640,320))
+        column_spec(4, width = "1cm") %>%
+        column_spec(5, width = "2.5cm") %>%
+        column_spec(9, image=spec_image(tb$plot_filename,1280,320)) %>%
+        column_spec(10, image=spec_image(tb$plot_mpieffects_filename,640,320)) %>%
+        add_footnote(c(paste0("All QTLs in table derived from running R/qtl package function ",meths,"().\n","Significance codes for model genotype$*$year effects appended to trait:\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n"), 
+                       "Significance codes for model genotype effects appended to model",
+                       "Variance of model with all significant QTLs fitted.",
+                       "QTL location \u00b1 1.5pLOD interval (cM)",
+                       "Penalized LOD Score w/ significance codes for QTL appended",
+                       "Boxplots of nearest marker BLUPs grouped by genotypes.  Haplotypes A and B are from Mullica Queen (MQ), and haplotypes C and D are from Crimson Queen (CQ).",
+                       "Effect differences for mean QTL effect size estimates for each progeny genotype.  A.-B. is the maternal effect, calculated as (AC+AD)-(BC+BD).  .C-.D is the paternal effect, calculated as (AC + BC) – (AD + BD).  Int is the interaction effect, calculated as (AC + BD)-(AD+BC) (Sewell et al., 2002)."))
 }
 
 #Table for all traits
-ktable <- generate_table(effs.complete.tb,"scanone")
-print(ktable)
-#ktable %>%
-#    save_kable(paste0(workflow,'/traits/effectplots.scanone.pdf'))
-ktable <- generate_table(effs.complete.tb,"stepwiseqtl")
-print(ktable)
-#ktable %>%
-.    save_kable(paste0(workflow,'/traits/effectplots.stepwiseqtl'))
+ktable.one <- generate_table(effs.complete.tb,"scanone")
+print(ktable.one)
+cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/effectplots.scanone.png'),mustWork=TRUE),"'"))
 
+ktable.sw <- generate_table(effs.complete.tb,"stepwiseqtl")
+print(ktable.sw)
+cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/effectplots.stepwiseqtl.png'),mustWork=TRUE),"'"))
+
+#Break out into more meaninful nuggets
 #Table per trait
 effs.complete.tb %>%
     group_by(method,trait) %>%
     group_walk( ~ {
-                   if( $.y$trait == "total_berry_weight" ) {
-                        ktbl <- generate_table(cbind(.y,.x),.y$method)
-                        print(ktbl)
-                        #ktbl %>%
-                        #    save_kable(paste0(workflow,'/traits/effectplots.',.y$trait,'.',.y$method,'.pdf'))
-                   }
+                    ktbl <- generate_table(cbind(.y,.x),.y$method)
+                    print(ktbl)
                   } )
 
 
-#Don't apply same process on consensus files, since the 'consensus' offset doesn't correspond to an actual QTL
+save.image(".RData.12_geneffects")

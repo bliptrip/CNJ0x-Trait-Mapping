@@ -12,6 +12,10 @@ export SCANTWO_MERGE ?= $(SCAN_DIR)/runperms2D/cnjpop.scantwo.p2.rds
 #Set the following to "scanone" or "stepwiseqtl" depending on what dataset you want to use for generating the circos plot.
 export CIRCOS_QTL_TYPE ?= stepwiseqtl
 
+#Set the following for configuring the BLUPs summary table in target GenQTLTable: NUM_TOP configures how many of the top-ranked QTLs to display per trait:model combination
+QTL_METHOD ?= stepwiseqtl
+NUM_TOP ?= 2
+
 install:
 		R CMD BATCH packagedeps.R
 
@@ -31,6 +35,8 @@ genh2plot:
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_02_genh2plots.R
 
 genblupplots:
+		touch "$(WORKFLOW)/traits/blups.summary.table.png"
+		touch "$(WORKFLOW)/traits/raw.summary.table.png"
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_03_genBLUPplots.R
 
 #Rbuild tars up the packages necessary for installing an R-build and then transferring to submit server.  Untar Rpackage.tgz, submit an interactive session using
@@ -90,7 +96,8 @@ CollateQTL:
 
 #Generate QTL table
 GenQTLTable:
-		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_10_01_genQTLtables.R
+		touch "$(WORKFLOW)/traits/qtl_collated.$(QTL_METHOD).png"
+		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_method="$(QTL_METHOD)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_10_01_genQTLtables.R
 
 #Collate all QTL info into one file
 GenConsensus:
@@ -99,6 +106,12 @@ GenConsensus:
 #Generate Circos Plot
 GenCircos:
 		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_type="$(CIRCOS_QTL_TYPE)"' qtl_pipeline_11_gencircos.R
+
+#Generate QTL table
+GenEffects:
+		touch "$(WORKFLOW)/traits/effectplots.scanone.png"
+		touch "$(WORKFLOW)/traits/effectplots.stepwiseqtl.png"
+		R CMD BATCH '--args workflow="$(WORKFLOW)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_12_geneffects.R
 
 #Copy all circos files and their dependencies to a 'sandbox' folder where all the necessary files are available for rendering the circos plots from a web browser
 #NOTE: Must specify SANDBOX on command-line to give destination directory to copy to.
