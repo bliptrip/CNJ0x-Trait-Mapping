@@ -1,15 +1,16 @@
 #year_var=numeric(), This is a QTL pipeline script given to me by Luis, but I've adapted to work with the Vorsa upright datasets from 2011-2014
 #!/usr/bin/env RScript
 
-#This is a QTL pipeline script given to me by Luis, but I've adapted to work with the Vorsa upright datasets from 2011-2014
+#Analyzes previously fitted models by generating anova tables using a drop1 term likelihood ratio approach to determine significance of an effect,
+#and based on whether g:y interaction effects are significant or not (where applicable), chooses a better model and generates relevant cross
+#files for r/qtl using selected model BLUPs.
 #
-#NOTE: This particular run permutations script will be run on CHTC cluster - thus, it needs to be invoked as an RScripts
 
 
 # loading libraries
 source('./usefulFunctions.R')
 
-workflow <- "../../Workflows/5"
+workflow <- "../../Workflows/1"
 
 #In case we override the workflow on the command-line
 args = commandArgs(trailingOnly=TRUE)
@@ -20,8 +21,12 @@ if(length(args)!=0) {
 }
 
 library(ggplot2)
+library(qtl)
+library(rlist)
 library(sommer)
 library(tidyverse)
+
+source(paste0(workflow,'/configs/model.cfg'))
 
 #Loop through previously generated models and gather summary stats on them, plot residuals, etc.  Consider comparing across years and also for all-years.
 #Things to assess/plot:
@@ -87,15 +92,13 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
     })
     allterms          <- c(fixedtermss,randomtermss,rcovtermss)
     allterms.size     <- length(allterms)
-    anova.combined    <- data.frame(Chisq=character(allterms.size),
-                                ChiDf=character(allterms.size),
-                                PrChisq=numeric(allterms.size),
-                                PrChisqInfo=character(allterms.size),
-                                Zratio=numeric(allterms.size),
-                                PrNorm=numeric(allterms.size),
-                                PrNormInfo=character(allterms.size)
-                                )
-    rownames(anova.combined) <- as.character(allterms)
+    anova.combined    <- tibble(dropterm=character(allterms.size), #Term that is dropped from the model
+								Chisq=character(allterms.size),
+								ChiDf=character(allterms.size),
+								PrChisq=numeric(allterms.size),
+								PrChisqInfo=character(allterms.size))
+	anova.models	  <- list('full'=model)
+    #rownames(anova.combined) <- as.character(allterms)
     #Now for each fixed term, drop it from model and calculate prob under assumption of chisqr distro for likelihood ratio
     i = 1
     for (j in seq_along(fixedtermss)) {
@@ -112,10 +115,15 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
         mmer.expr <- paste0(mmer.expr,")")
         print(mmer.expr)
         model.drop1 <- try(eval(parse(text=mmer.expr)))
-        if( length(model.drop1) > 0 ) {
-            anova.cols    <- c("Chisq", "ChiDf", "PrChisq")
-            anova.drop1 <- anova(model, model.drop1)[2,anova.cols]
-            anova.combined[i,anova.cols] = anova.drop1 
+        if( length(model.drop1) > 1 ) {
+            anova.cols    <- c("Chisq", "ChiDf", "PrChisq", "PrChisqInfo")
+            anova.drop1 <- anova(model, model.drop1)[2,]
+            prchisq <- strsplit(anova.drop1$PrChisq, split = " ")[[1]]
+            anova.drop1$PrChisq <- as.numeric(prchisq[1])
+            anova.drop1$PrChisqInfo <- prchisq[2]
+            anova.combined[i,anova.cols] = anova.drop1[,anova.cols]
+			anova.combined[i,"dropterm"] = fixedtermss[i]
+			anova.models <- eval(parse(text=paste0("list.append(anova.models,'",fixedtermss[i],"'=model.drop1)")))
             i = i + 1
         }
     }    
@@ -131,24 +139,31 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
         mmer.expr <- paste0(mmer.expr,")")
         print(mmer.expr)
         model.drop1 <- try(eval(parse(text=mmer.expr)))
-        if( length(model.drop1) > 0 ) {
+        if( length(model.drop1) > 1 ) {
             anova.cols    <- c("Chisq", "ChiDf", "PrChisq", "PrChisqInfo")
             anova.drop1 <- anova(model, model.drop1)[2,]
             prchisq <- strsplit(anova.drop1$PrChisq, split = " ")[[1]]
             anova.drop1$PrChisq <- as.numeric(prchisq[1])
             anova.drop1$PrChisqInfo <- prchisq[2]
             anova.combined[k+(i-1),anova.cols] = anova.drop1[,anova.cols]
+			anova.combined[k+(i-1),"dropterm"] = randomtermss[k]
+			anova.models <- eval(parse(text=paste0("list.append(anova.models,'",randomtermss[k],"'=model.drop1)")))
             k = k + 1
         }
     }    
     vcov <- read.csv(file=paste0(trait.path,'/vcov.csv'), row.names=1)
     vcov$PrNorm <- pnorm(abs(vcov$Zratio),lower.tail=FALSE)
     vcov$PrNormInfo <- unlist(map(vcov$PrNorm,siginfo))
-    rtermss   <- c(randomtermss,rcovtermss)
-    vcov.cols <- c("Zratio","PrNorm","PrNormInfo")
-    anova.combined[rtermss,vcov.cols] <- vcov[rtermss,vcov.cols]
+	vcov$dropterm <- rownames(vcov)
+	vcov <- as_tibble(vcov)
+    vcov.cols <- c("dropterm","Zratio","PrNorm","PrNormInfo")
+	anova.combined <- anova.combined %>%
+						filter(dropterm != "") %>%
+						mutate(PrChisqInfo = ifelse(is.na(PrChisqInfo),"NS",PrChisqInfo)) %>%
+						left_join(vcov %>% select(vcov.cols), by="dropterm")
     #Where applicable, add Zratio values for random effects (as found in vcov matrix) and pnorm values for these
     saveRDS(anova.combined, file=paste0(trait.path,"/anova.rds"), compress=TRUE)
+	saveRDS(anova.models, file=paste0(trait.path,"/anova.models.drop1.rds"), compress=TRUE)
     write.csv(anova.combined, file=paste0(trait.path,"/anova.csv"), row.names=TRUE)
 }
 
@@ -157,10 +172,60 @@ model.collated.df   <- data.frame(model=character(),traits=character(),model_idx
 model.collated.df.p <- newPointer(model.collated.df)
 loopThruTraits(workflow, readModelsCB, list(model_map=model.map.l.p, model_collated_table=model.collated.df.p))
 
+#Now that we've generated anova tables, choose the optimal model for all-years based on significance values of any g:y effects -- if not significant, then choose
+#the model without this effect, as I've found that sommer's mmer() function will give invalid g:y variance values (negative values) under some situations, and if I remove
+#this from the modeling term, the variance terms look more reasonable
+#Use the selected model to generate relevant cross file for QTL analysis and BLUP plot generation/etc.
+selectModelCB <- function(trait.cfg, trait.path, selectedModels) {
+	trait		  <- trait.cfg$trait
+	model_label	  <- trait.cfg$model
+	anova.drop1.selectedmodel.label <- NA
+	if( model_label == 'all-years' ) { #Interaction effects only apply for 'all-years' model - year-by-year model doesn't have an interaction effect
+		anova.file <- paste0(trait.path,"/anova.csv")
+		if( file.exists(anova.file) ) {
+			anova.int	<- read_csv(anova.file) %>% filter(dropterm == "id:year") #Filter out row with g:y interaction effects
+			if( anova.int$PrChisq > int_effects_alpha ) { #g:y interaction effect is not significant -- choose model that drops this term
+				anova.drop1.selectedmodel.label <- "id:year"
+			} else {
+				anova.drop1.selectedmodel.label <- "full"
+			}
+		}
+	} else {
+		anova.drop1.selectedmodel.label <- "full" #Always assess the full model when looking within a given year
+	}
+	append.pointer(selectedModels, c(model_label,trait,anova.drop1.selectedmodel.label))
+}
+models.selected.df   <- data.frame(model=character(),trait=character(),selected_model=character())
+models.selected.df.p <- newPointer(models.selected.df)
+loopThruTraits(workflow, selectModelCB, models.selected.df.p)
+models.selected.df <- models.selected.df.p$value
+write.csv(models.selected.df, file=paste0(workflow,"/traits/selectedModels.csv"), row.names=F)
+
+generateCrossFilesCB <- function(trait.cfg,trait.path,args.l) {
+	gData			 <- args.l[[1]]
+	map.df			 <- args.l[[2]]
+	selectedModels	 <- args.l[[3]]
+	trait_name		 <- trait.cfg$trait
+	model_label		 <- trait.cfg$model
+	anova.drop1.selectedmodel.file <- paste0(trait.path,"/anova.models.drop1.rds")
+	selectedmodel.label <- (selectedModels$value %>% filter((trait == trait_name) & (model == model_label)) %>% select(selected_model))[[1]]
+	if( file.exists(anova.drop1.selectedmodel.file) ) {
+		anova.drop1.selectedmodel.l <- readRDS(anova.drop1.selectedmodel.file)
+		model						<- anova.drop1.selectedmodel.l[[selectedmodel.label[[1]]]]
+		blups						<- model$U[["u:id"]][[trait_name]]
+		generate_cross_file(trait.cfg, blups, gData, map.df, trait.path)
+	}
+}
+
+gData.rqtl	      <- readRDS(file=paste0(workflow,"/traits/rqtl.gdata.rds"))
+superMap.df       <- read.csv(geno_rpath2fpath(geno_consensus_file),header=T)[,c("marker","LG","consensus")] %>%
+                        mutate(binID = generate_bin_id(LG,consensus))
+rownames(superMap.df) <- superMap.df$marker
+loopThruTraits(workflow,generateCrossFilesCB,list(gData.rqtl,superMap.df,models.selected.df.p))
+
 #Put the collated model data into a long-format for use by ggplot2
 model.spread.df <- (model.collated.df.p$value) %>%
                         gather(type, var, -c(model, mtraits, model_idx))
-
 model.abbrev.df <- data.frame(rows=c("2011","2012","2013","all-years"), abbrevs=c("11","12","13","AY"), stringsAsFactors=F, row.names="rows")
 model.spread.df$model <- rename_traits(model.spread.df$model, model.abbrev.df)
 model.spread.df$mtraits <- rename_traits(model.spread.df$mtraits, trait.abbrev.map.df)
@@ -177,8 +242,6 @@ generate_h2 <- function(type, var) {
 }
 
 model.h2.df <- model.spread.df %>% summarize(h2=generate_h2(type, var))
-                    
-                    
 
                
 
@@ -264,3 +327,5 @@ p = ggplot(data, aes(x=as.factor(id), y=value, fill=type)) +       # Note that i
         geom_text(data=base_data, aes(x = title, y = -.2, label=group), hjust=c(0.5,0.5,0.5,0.35,0.35,0.35), colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE)
 
 ggsave(filename=paste0(workflow,"/traits/plots/h2_polar_barplot.png"), plot=p, device="png", bg="white", width=33, height=25, units="cm", dpi=300)
+
+save.image(".RData.01_analyzemodels")
