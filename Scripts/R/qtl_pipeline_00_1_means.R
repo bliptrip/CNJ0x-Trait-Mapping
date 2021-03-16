@@ -93,3 +93,5 @@ cnjpop.pheno.p2.means.df <- subset(cnjpop.pheno.p2.means.df, select=-c(populatio
 write.csv(cnjpop.pheno.means.df, file=pheno_dpath2fpath("Data-combined-collated.means.csv"), row.names=FALSE)
 write.csv(cnjpop.pheno.p1.means.df, file=pheno_dpath2fpath("Data-combined-collated.cnj04.means.csv"), row.names=FALSE)
 write.csv(cnjpop.pheno.p2.means.df, file=pheno_dpath2fpath("Data-combined-collated.cnj02.means.csv"), row.names=FALSE)
+
+save.image(".RData.1_means")
