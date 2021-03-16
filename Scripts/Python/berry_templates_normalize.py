@@ -6,25 +6,14 @@
 #
 # Output: Derived binary grayscale image files of all input berry template images, with identical areas, the same center of mass,
 #         and equivalent resolutions.
-# Algorithm overview:
-#  - Connect to SSE's mongodb connection to access it's SseSamples collection under the meteor DB.
-#  - Recurse through folder specified on command-line looking for image files and generate superpixels using SLIC protocol.
-#  - Convert superpixel contours into annotated path objects recognized by SSE and inject into its DB.
 # import the necessary packages
 import argparse
 import cv2
-import datetime
-from glob import *
 import math
 import numpy as np
-import os
 from pathlib import Path
 from shapely.geometry import Polygon
 from shapely.affinity import scale, translate
-from skimage.util import img_as_float
-from skimage import io
-from skimage import measure
-from skimage import filters
 import sys
 
 def convertToPolygon(mask):
