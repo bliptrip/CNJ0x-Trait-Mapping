@@ -166,6 +166,7 @@ matrixK[g]<-4
 gData<-t(matrixK)
 rownames(gData)<-colnames(geno.no.p)
 colnames(gData)<-rownames(geno.no.p)
+saveRDS(gData, file=paste0(workflow,"/traits/rqtl.gdata.rds"), compress=TRUE)
 
 #Need to rethink this, as I'm certain I'm calculating the heritability incorrectly in more complicated analyses
 generate_h2_formula <- function(sigma, genotype_id_string) {
@@ -202,42 +203,6 @@ mixed_model_analyze <- function(trait.cfg, pheno, geno) {
     return(ans)
 }
 
-generate_cross_file <- function(trait.cfg, blups, gData, superMap.df, file.path) {
-    print(paste0("Population Analysis Set: ", trait.cfg["model"]))
-    #First make sure to use individuals only in common in the blups data and in the marker data
-    geno.intersect<-intersect(names(blups),rownames(gData))
-    y<-as.data.frame(blups[geno.intersect]) #Convert to data.frame to deal with issues in setting colnames in univariate analysis (blups aren't a data.frame in this case)
-    colnames(y)<-trait.cfg$trait
-    gData.sub <- gData[geno.intersect,]
-
-    #Second, we are only interested in markers in common with the consensus map
-    geno.intersect.sub<-intersect(colnames(gData.sub),superMap.df$marker)
-    gData.sub<-gData.sub[,geno.intersect.sub]
-    superMap.sub<-superMap.df[geno.intersect.sub,]
-
-    gData.sub<-rbind(superMap.sub$LG,superMap.sub$consensus,gData.sub)
-    colnames(gData.sub)<-superMap.sub$marker
-
-    #Invert the gData.sub, bin the data, re-invert, and then write cross file.
-    gData.inv.sub <- t(gData.sub)
-    colnames(gData.inv.sub) <- c("LG","consensus",colnames(gData.inv.sub)[3:ncol(gData.inv.sub)])
-    #Bin the marker data
-    gData.bin.df  <- condense_map_bins(data.frame(gData.inv.sub))
-    #Subset the genotype marker calls based on the binned results
-    gData.inv.sub <- gData.inv.sub[rownames(gData.bin.df),]
-    gData.sub     <- t(gData.inv.sub)
-
-    gData.sub<-data.frame(rbind('','',y),gData.sub)
-    rownames(gData.sub)[1:2]<-c('chr','pos')
-
-    #Now write the cross file as a csv in the appropriate folder
-    write.csv(gData.sub,file=paste0(file.path,"/cross.csv"),row.names=FALSE)
-    cross <- read.cross(format = "csv", file=paste0(file.path,"/cross.csv"), genotypes = NULL)
-    cross <- jittermap(cross)
-    cross <- calc.genoprob(cross,step=0,map.function="kosambi")
-    saveRDS(cross, file=paste0(file.path,"/cross.rds"), compress=TRUE)
-}
-
 #Read in the model trait configuration file to determine how to model traits.
 traits.df <- read.csv(file=paste0(workflow,"/configs/model-traits.cfg.csv"))
 for( i in 1:length(traits.df[,1]) ) {
@@ -269,11 +234,9 @@ for( i in 1:length(traits.df[,1]) ) {
         vcov    <- ans.sum$varcomp
         rownames(vcov) <- c(randomtermss,rcovtermss)
         write.csv(vcov,file=paste0(trait_subfolder_fpath,"/vcov.csv"))
-        #TODO: Save vcov
-        #h2_str  <- generate_h2_formula(vcov, "id")
-        #h2      <- eval(parse(text=paste0("pin(ans, ", h2_str, ")")))
-        #write.csv(h2,file=paste0(trait_subfolder_fpath,"/h2.csv"))
-        #TODO: Save h2
-        generate_cross_file(trait.cfg, blups, gData, superMap.df, trait_subfolder_fpath) 
+		id.idx	 <- which(grepl("^u:id",rownames(ans.sum$varcomp)))
+		res.idx	 <- which(grepl("^units",rownames(ans.sum$varcomp)))
     }
 }
+
+save.image(".RData.01_genmodeleeffects")

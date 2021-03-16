@@ -37,6 +37,15 @@ GDDATA_FOLDER_PREFIX <- "../../Data/genetic_data/DerivedData"
 PDATA_FOLDER_PREFIX <- "../../Data/phenotypic data/RawData"
 PDDATA_FOLDER_PREFIX <- "../../Data/phenotypic data/DerivedData"
 
+# Returns string without leading white space
+trim.leading <- function (x)  sub("^\\s+", "", x)
+
+# Returns string without trailing white space
+trim.trailing <- function (x) sub("\\s+$", "", x)
+
+# Returns string without leading or trailing white space
+trim <- function (x) gsub("^\\s+|\\s+$", "", x)
+
 #Wrapper functions for readRDS() and writeRDS()
 saveRDSw <- function(object, file, compress=FALSE) {
     saveRDS(object, paste0(DATA_ROBJS_FOLDER_PREFIX,"/",file), compress=compress)
@@ -93,6 +102,43 @@ mtrait_subfolder <- function(trait.cfg) {
     trait.names              <- paste0(traits,collapse="__")
     trait_subfolder          <- paste0(c(trait.cfg$model,trait.names),collapse="--")
     return(trait_subfolder)
+}
+
+
+generate_cross_file <- function(trait.cfg, blups, gData, superMap.df, file.path) {
+    print(paste0("Population Analysis Set: ", trait.cfg["model"]))
+    #First make sure to use individuals only in common in the blups data and in the marker data
+    geno.intersect<-intersect(names(blups),rownames(gData))
+    y<-as.data.frame(blups[geno.intersect]) #Convert to data.frame to deal with issues in setting colnames in univariate analysis (blups aren't a data.frame in this case)
+    colnames(y)<-trait.cfg$trait
+    gData.sub <- gData[geno.intersect,]
+
+    #Second, we are only interested in markers in common with the consensus map
+    geno.intersect.sub<-intersect(colnames(gData.sub),superMap.df$marker)
+    gData.sub<-gData.sub[,geno.intersect.sub]
+    superMap.sub<-superMap.df[geno.intersect.sub,]
+
+    gData.sub<-rbind(superMap.sub$LG,superMap.sub$consensus,gData.sub)
+    colnames(gData.sub)<-superMap.sub$marker
+
+    #Invert the gData.sub, bin the data, re-invert, and then write cross file.
+    gData.inv.sub <- t(gData.sub)
+    colnames(gData.inv.sub) <- c("LG","consensus",colnames(gData.inv.sub)[3:ncol(gData.inv.sub)])
+    #Bin the marker data
+    gData.bin.df  <- condense_map_bins(data.frame(gData.inv.sub))
+    #Subset the genotype marker calls based on the binned results
+    gData.inv.sub <- gData.inv.sub[rownames(gData.bin.df),]
+    gData.sub     <- t(gData.inv.sub)
+
+    gData.sub<-data.frame(rbind('','',y),gData.sub)
+    rownames(gData.sub)[1:2]<-c('chr','pos')
+
+    #Now write the cross file as a csv in the appropriate folder
+    write.csv(gData.sub,file=paste0(file.path,"/cross.csv"),row.names=FALSE)
+    cross <- read.cross(format = "csv", file=paste0(file.path,"/cross.csv"), genotypes = NULL)
+    cross <- jittermap(cross)
+    cross <- calc.genoprob(cross,step=0,map.function="kosambi")
+    saveRDS(cross, file=paste0(file.path,"/cross.rds"), compress=TRUE)
 }
 
 trait.abbrev.map.df <- read.csv(pheno_dpath2fpath("trait_to_abbreviation_map.csv"), header=F, row.names=1, stringsAsFactors=F)
