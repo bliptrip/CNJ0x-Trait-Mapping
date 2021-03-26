@@ -12,11 +12,10 @@ library(tidyverse)
 
 source('./usefulFunctions.R')
 
-#Defaults (can be overridden with command-line invokation
-workflow     <- "../../Workflows/1"
-qtl_method   <- "stepwiseqtl" #Which method to filter
-num_top_qtls <- 2 #Number of top QTLs to show per trait
-
+#Defaults (can be overridden with command-line invocation)
+workflow        <- get0("workflow", ifnotfound="../../Workflows/1")
+qtl_method      <- get0("qtl_method", ifnotfound="stepwiseqtl") #Which method to filter
+num_top_qtls    <- get0("num_top_qtls", ifnotfound=2) #Number of top QTLs to show per trait
 
 #In case we override the workflow on the command-line
 args = commandArgs(trailingOnly=TRUE)
@@ -25,7 +24,7 @@ if(length(args)!=0) {
         eval(parse(text=args[[i]]))
     }
 }
-num_top_qtls <- as.numeric(num_top_qtls) #Convert based on what's passed in on command-line
+num_top_qtls <- as.numeric(num_top_qtls) #Convert to numeric if passed in through command-line
 
 trait.cfg.tb    <- read_csv(file=paste0(workflow,'/configs/model-traits.cfg.csv'), col_names=TRUE)
 qtl.collated.tb <- read_csv(file=paste0(workflow,'/traits/qtl_collated.csv'), col_names=TRUE) %>%

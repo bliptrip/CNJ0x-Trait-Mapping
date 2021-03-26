@@ -1,8 +1,3 @@
-#This is a QTL pipeline script given to me by Luis, but I've adapted to work with the Vorsa upright datasets from 2011-2014
-#
-#NOTE: This particular script runs on my local computer instead of the other version which is meant to be run on the UW HTCondor system.
-#install.packages(c("lme4"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
-
 library(formattable)
 library(ggfittext)
 library(kableExtra)
@@ -11,8 +6,8 @@ library(qtl)
 library(tidyverse)
 
 #Defaults
-workflow="../../Workflows/1"
-num_top_qtls <- 2 #Number of the top QTLs to calculate effect sizes for
+workflow        <- get0("workflow", ifnotfound="../../Workflows/1")
+num_top_qtls    <- get0("num_top_qtls", ifnotfound=2) #Number of top QTLs to show per trait
 
 args = commandArgs(trailingOnly=TRUE)
 

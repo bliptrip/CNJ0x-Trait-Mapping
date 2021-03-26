@@ -7,8 +7,7 @@ library(dplyr)
 library(qtl)
 library(jsonlite)
 
-qtl_type="stepwiseqtl"
-workflow="../../Workflows/1"
+workflow <- get0("workflow", ifnotfound="../../Workflows/1")
 #Which circos traits to render.  This file is in similar format to model-traits.cfg.csv.  All it needs is the following columns: trait, label, mask.
 #Any mask==TRUE fields means these fields aren't rendered in the plot.
 #

@@ -8,7 +8,7 @@
 # loading libraries
 source('./usefulFunctions.R')
 
-workflow <- "../../Workflows/5"
+workflow <- get0("workflow", ifnotfound="../../Workflows/1")
 
 #In case we override the workflow on the command-line
 args = commandArgs(trailingOnly=TRUE)
@@ -27,6 +27,19 @@ library(lattice)
 library(plotly)
 library(tidyverse)
 
+collateH2sCB <- function(trait.cfg, trait.path, h2.collated.df.p) {
+    h2.trait.df <- read.csv(file=paste0(trait.path,"/h2.csv"))
+    append.pointer(h2.collated.df.p, c(trait.cfg$model, trait.cfg$trait, h2.trait.df$Estimate, h2.trait.$SE))
+}
+
+h2.df            <- data.frame(model=character(),trait=character(), h2=numeric(), h2_se=numeric(), stringsAsFactors=FALSE)
+h2.collated.df.p <- newPointer(h2.df)
+loopThruTraits(workflow, collateH2sCB, h2.collated.df.p)
+h2.df            <- h2.collated.df.p$value
+h2.collated.path <- paste0(workflow, "/traits/h2.csv")
+write.csv(h2.df, file=h2.collated.path)
+
+
 decorate_h2_label <- function(model, h2) {
     model_h2            <- vector("character", length(model))
     nul.tf              <- (h2 == 0)
@@ -35,7 +48,7 @@ decorate_h2_label <- function(model, h2) {
     return(model_h2)
 }
 
-h2.df <- read.csv(paste0(workflow, "/traits/h2.csv"), header=T, stringsAsFactors=F)
+h2.df <- read.csv(h2.collated.path, header=T, stringsAsFactors=F)
 h2.df$model <- as.factor(h2.df$model) #Cast to factor to have plots correctly treat as discrete
 h2.df$trait.abbrev <- rename_traits(h2.df$trait, trait.abbrev.map.df)
 h2.df$trait.abbrev <- factor(h2.df$trait.abbrev, levels=c('BL','BW','BM','TBM','NB','NS'))

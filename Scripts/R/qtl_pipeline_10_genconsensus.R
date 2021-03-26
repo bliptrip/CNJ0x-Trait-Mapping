@@ -1,14 +1,10 @@
-#This is a QTL pipeline script given to me by Luis, but I've adapted to work with the Vorsa upright datasets from 2011-2014
-#
-#NOTE: This particular script runs on my local computer instead of the other version which is meant to be run on the UW HTCondor system.
-
 library(dplyr)
 library(factoextra)
 
 # loading libraries
 source('./usefulFunctions.R')
 
-workflow <- "../../Workflows/1"
+workflow <- get0("workflow", ifnotfound="../../Workflows/1")
 
 args = commandArgs(trailingOnly=TRUE)
 

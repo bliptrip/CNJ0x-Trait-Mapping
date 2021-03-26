@@ -20,9 +20,9 @@ library(tidyverse)
 source(paste0(workflow,"/configs/model.cfg"))
 source('./usefulFunctions.R')
 
-workflow <- "../../Workflows/1"
-P1_Name <- "Mullica_Queen"
-P2_Name <- "Crimson_Queen"
+workflow <- get0("workflow", ifnotfound="../../Workflows/1")
+P1_Name <- get0("P1_Name", ifnotfound="Mullica_Queen")
+P2_Name <- get0("P2_Name", ifnotfound="Crimson_Queen")
 
 #In case we override the workflow on the command-line
 args = commandArgs(trailingOnly=TRUE)
@@ -78,7 +78,7 @@ collateBLUPs <- function(trait.cfg, trait.path, args.l) {
             }
         }
         if( model_label == "all-years" ) {
-            pheno <- model$data[,c("id",trait_name)] %>% group_by(id) %>% summarize(mean=mean(.data[[trait_name]]))
+            pheno <- model$data[,c("id",trait_name)] %>% group_by(id) %>% dplyr::summarize(mean=mean(.data[[trait_name]]))
             pheno <- pheno[["mean"]]
         } else {
             pheno <- model$data[[trait_name]]
@@ -163,7 +163,7 @@ model.collated.long.tb <- model.collated.long.tb %>%
 model.collated.long.stats.tb <- model.collated.long.tb %>%
                                     filter(!(id %in% c(P1_Name,P2_Name))) %>%
                                     group_by(model,trait,type,model_type) %>%
-                                    summarize(min=min(value), minZ=min(valueZ), min_geno = gsub("CNJ02_1_([0-9]+)","g\\1",id[which.min(value)]),
+                                    dplyr::summarize(min=min(value), minZ=min(valueZ), min_geno = gsub("CNJ02_1_([0-9]+)","g\\1",id[which.min(value)]),
                                               max=max(value), maxZ=max(valueZ), max_geno = gsub("CNJ02_1_([0-9]+)","g\\1",id[which.max(value)]),
                                               .groups="keep") %>%
                                     filter(min != max) %>%
@@ -174,7 +174,7 @@ model.collated.long.ylims.tb <- model.collated.long.tb %>%
                                     filter(!(id %in% c(P1_Name,P2_Name))) %>%
                                     group_by(trait,type) %>%
                                     filter(min(value)!= max(value)) %>%
-                                    summarize(min=min(value, na.rm=TRUE) - 2.5, minZ=min(valueZ, na.rm=TRUE)-1,
+                                    dplyr::summarize(min=min(value, na.rm=TRUE) - 2.5, minZ=min(valueZ, na.rm=TRUE)-1,
                                               max=max(value, na.rm=TRUE) + 2.5, maxZ=max(valueZ, na.rm=TRUE)+1,
                                               .groups="keep") %>%
                                     gather("limit","value",-c("trait","type"))
@@ -291,16 +291,16 @@ dev.off()
 p1.blup_summary.tb <- model.collated.long.tb %>%
                         filter(id == P1_Name) %>%
                         group_by(model,trait,type) %>%
-                        summarize(MQ = mean(value), MQz = mean(value))
+                        dplyr::summarize(MQ = mean(value), MQz = mean(value))
 
 p2.blup_summary.tb <- model.collated.long.tb %>%
                         filter(id == P2_Name) %>%
                         group_by(model,trait,type) %>%
-                        summarize(CQ = mean(value), CQz = mean(value))
+                        dplyr::summarize(CQ = mean(value), CQz = mean(value))
 model.collated.summary.tb <- model.collated.long.tb %>%
                                     filter(!(id %in% c(P1_Name,P2_Name))) %>%
                                     group_by(model,trait,type) %>%
-                                    summarize(min=min(value), mean=mean(value), sd=sd(value), range=abs(min(value)-max(value)),
+                                    dplyr::summarize(min=min(value), mean=mean(value), sd=sd(value), range=abs(min(value)-max(value)),
                                               minZ=min(valueZ), min_geno = gsub("CNJ02_1_([0-9]+)","g\\1",id[which.min(value)]),
                                               max=max(value), maxZ=max(valueZ), max_geno = gsub("CNJ02_1_([0-9]+)","g\\1",id[which.max(value)]),
                                               GLRpvalue=mean(GLRpvalue),GZRpvalue=mean(GZRpvalue),GxYLRpvalue=mean(GxYLRpvalue),GxYZRpvalue=mean(GxYZRpvalue),
@@ -337,9 +337,9 @@ generateTable <- function(values.collated.tb, type) {
 			mutate(range=round.digits(range,2)) %>%
 			mutate(MQ=round.digits(MQ,2)) %>%
 			mutate(CQ=round.digits(CQ,2)) %>%
-			select(trait,model,vg,vge,ve,h2,min,max,mean,range,min_geno,max_geno,MQ,CQ,'Parent Range') %>%
+			dplyr::select(trait,model,vg,vge,ve,h2,min,max,mean,range,min_geno,max_geno,MQ,CQ,'Parent Range') %>%
 			rename("Trait[note]"=trait,"Model[note]"=model,'$\\sigma_{g}^{2}$[note]'=vg,'$\\sigma_{g \\epsilon}^{2}$[note]'=vge,'$\\sigma_{\\epsilon}^{2}$[note]'=ve,'$h^{2}$[note]'=h2,Min=min,Max=max,"Mean \u00b1 SE"=mean,Range=range,'Min Geno[note]'=min_geno,'Max Geno[note]'=max_geno,'MQ[note]'=MQ,'CQ[note]'=CQ) %>%
-			kable("html", align='llrrrrrrrrccrrr', booktabs=TRUE, escape = FALSE, table.attr="id=\"kableTable\"") %>%
+			kable("html", align='llrrrrrrrrccrrr', booktabs=TRUE, escape = FALSE, table.attr="id=\"kableTable\"", caption=ifelse(type=="raw","Raw Phenotype Statistics for Trait Models", "BLUP Statistics for Trait Models")) %>%
 			row_spec(row=which(values.collated.tb$trait != ""), extra_css = "border-top: 1px solid #ddd") %>%
 			add_header_above(c("", "", "F1 Progeny"=10, "Parents"=3)) %>%
 			kable_paper("striped", full_width=FALSE) %>%
@@ -349,35 +349,22 @@ generateTable <- function(values.collated.tb, type) {
 						"Additive genomic by year interaction effect variance of model.",
 						"Residual variance of model.",
 						"Narrow-sense genomic heritability for trait/model.",
-						"F1 progeny genotype with minimum trait BLUP value.  Genotype identifier is shortened for visibility.  Translation is g<num> => CNJ02_1_<num>.  eg: g77 => CNJ02_1_77",
-						"F1 progeny genotype with minimum trait BLUP value.  Genotype identifier is same format as for minimum genotype.",
-						"Maternal Mullica Queen trait BLUP value - Data only available for years 2012, 2013",
-						"Paternal Crimson Queen trait BLUP value - Data only available for years 2012, 2013"))
-
-	cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/',type,'.summary.table.png'),mustWork=TRUE),"'"))
+						"F1 progeny genotype with minimum trait value.  Genotype identifier is shortened for visibility.  Translation is g<num> => CNJ02_1_<num>.  eg: g77 => CNJ02_1_77",
+						"F1 progeny genotype with maximum trait value.  Genotype identifier is same format as for maximum genotype.",
+						"Maternal Mullica Queen trait value",
+						"Paternal Crimson Queen trait value"))
+  summary.path <- normalizePath(paste0(workflow,'/traits/'), mustWork = TRUE);
+  summary.file <- paste0(summary.path,'/',type,'.summary.table.png')
+	cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",summary.file,"'"))
 	print(tbl)
 }
 
 generateTable(model.collated.raw_summary.tb, "raw")
-generateTable("blups")
 generateTable(model.collated.blup_summary.tb %>% filter(trait %in% c("Berry Length","Berry Width", "Berry Weight")), "blups")
 generateTable(model.collated.blup_summary.tb %>% filter(trait %in% c("Number of Berries", "Total Berry Weight")), "blups")
 
-model.collated.blup_summary.tb %>%
-    select(trait,model,vg,vge,ve,h2,min,max,mean,range,min_geno,max_geno,MQ,CQ,'Parent Range') %>%
-    rename("Trait[note]"=trait,"Model[note]"=model,'$\\sigma_{g}^{2}$'=vg,'$\\sigma_{g \\epsilon}^{2}$'=vge,'$\\sigma_{\\epsilon}^{2}$'=ve,'$h^{2}$'=h2,Min=min,Max=max,"Mean \u00b1 SE"=mean,Range=range,'Min Geno[note]'=min_geno,'Max Geno[note]'=max_geno,'MQ[note]'=MQ,'CQ[note]'=CQ) %>%
-    kable("html", align='llrrrrrrrrccrrr', booktabs=TRUE, escape = FALSE, table.attr="id=\"kableTable\"", caption=ifelse(type=="raw","Raw Phenotype Statistics for Trait Models", "BLUP Statistics for Trait Models")) %>%
-    row_spec(row=which(model.collated.blup_summary.tb$trait != ""), extra_css = "border-top: 1px solid #ddd") %>%
-    add_header_above(c("", "", "F1 Progeny"=10, "Parents"=3)) %>%
-    kable_paper("striped", full_width=FALSE) %>%
-    add_footnote(c("Significance codes for Genotype:Year Effects\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n", 
-                   "Signficance codes for Genotype Effects",
-                   "F1 progeny genotype with minimum trait BLUP value.  Genotype identifier is shortened for visibility.  Translation is g<num> => CNJ02_1_<num>.  eg: g77 => CNJ02_1_77",
-                   "F1 progeny genotype with minimum trait BLUP value.  Genotype identifier is same format as for minimum genotype.",
-                   "Maternal Mullica Queen trait BLUP value - Data only available for years 2012, 2013",
-                   "Paternal Crimson Queen trait BLUP value - Data only available for years 2012, 2013"))
+summary.path <- normalizePath(paste0(workflow,'/traits/'), mustWork = TRUE);
+summary.file <- paste0(summary.path,'/blups.summary.table.png');
+cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",summary.file,"'"))
 
-
-cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/blups.summary.table.png'),mustWork=TRUE),"'"))
-
-save.image(".RData.01_genBLUP")
+save.image(paste0(workflow,"/.RData.01_genBLUP"))

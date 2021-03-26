@@ -9,9 +9,10 @@
 # loading libraries
 source('./usefulFunctions.R')
 
-workflow <- "../../Workflows/1"
-P1_Name <- "Mullica_Queen"
-P2_Name <- "Crimson_Queen"
+
+workflow <- get0("workflow", ifnotfound="../../Workflows/1")
+P1_Name <- get0("P1_Name", ifnotfound="Mullica_Queen")
+P2_Name <- get0("P2_Name", ifnotfound="Crimson_Queen")
 
 #In case we override the workflow on the command-line
 args = commandArgs(trailingOnly=TRUE)
@@ -77,7 +78,7 @@ geno.p[,P1_Name] = generateParentalMarker(geno.p$Segregation,parent=1)
 geno.p[,P2_Name] = generateParentalMarker(geno.p$Segregation,parent=2)
 rownames(geno.p) <- geno.p$X
 
-geno <- geno.p %>% select(-c('X','Segregation','Phase','Classification','Position','LG'))
+geno <- geno.p %>% dplyr::select(-c('X','Segregation','Phase','Classification','Position','LG'))
 #geno.num is input to sommer's A.mat() function in order to calculate the realized additive matrix, aiding in calculation of breeding values (BLUPS)
 #
 #
@@ -137,7 +138,7 @@ saveRDS(superMap.bin.df, file=geno_rpath2fpath(paste0(geno_consensus_file,".rds"
 #The following is necessary to convert the mapqtl codes in a four-way cross to those that are defined
 #according to the R/qtl read.cross() specifications.
 #Remove parents, as they should not be in the cross file
-geno.no.p <- geno %>% select(-c(P1_Name,P2_Name))
+geno.no.p <- geno %>% dplyr::select(-c(P1_Name,P2_Name))
 rownames(geno.no.p) <- rownames(geno)
 matrixK<-matrix(NA,nrow=nrow(geno.no.p),ncol=ncol(geno.no.p))
 g<-which(geno.no.p=='ac')
@@ -239,4 +240,4 @@ for( i in 1:length(traits.df[,1]) ) {
     }
 }
 
-save.image(".RData.01_genmodeleeffects")
+save.image(paste0(workflow,"/.RData.01_genmodeleeffects"))
