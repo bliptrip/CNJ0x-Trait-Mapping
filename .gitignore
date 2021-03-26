@@ -13,3 +13,4 @@ README.html
 .*.sw*
 Scripts/R/HTCondorFiles/Rpackage.install.sh
 Scripts/R/HTCondorFiles/Rpackage.sub
+.Rproj.user
