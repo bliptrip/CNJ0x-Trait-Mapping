@@ -15,7 +15,7 @@ install:
 		R CMD BATCH packagedeps.R
 
 means:
-		R CMD BATCH qtl_pipeline_00_1_means.R 
+		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_00_1_means.R 
 
 plotcors:
 		R CMD BATCH qtl_pipeline_00_2_plotcors.R 
