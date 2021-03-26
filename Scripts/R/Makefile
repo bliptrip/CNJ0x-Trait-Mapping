@@ -6,11 +6,6 @@ HTCONDOR=HTCondorFiles
 
 export WORKFLOW ?= ../../Workflows/1
 export RDS_DIR ?= "../../Data/phenotypic\ data/DerivedData/cleanup_data.R.output/Robjs"
-export SCAN_DIR ?= ../../Analysis
-export SCANONE_MERGE ?= $(SCAN_DIR)/runperms/cnjpop.scanone.p2.rds
-export SCANTWO_MERGE ?= $(SCAN_DIR)/runperms2D/cnjpop.scantwo.p2.rds
-#Set the following to "scanone" or "stepwiseqtl" depending on what dataset you want to use for generating the circos plot.
-export CIRCOS_QTL_TYPE ?= stepwiseqtl
 
 #Set the following for configuring the BLUPs summary table in target GenQTLTable: NUM_TOP configures how many of the top-ranked QTLs to display per trait:model combination
 QTL_METHOD ?= stepwiseqtl
@@ -43,7 +38,7 @@ genblupplots:
 #condor_submit -i Rpackage.sub
 #Comment-out any packages you don't want to install if they're already in the tarball.
 Rbuild:
-		make -C $(HTCONDOR) QTL_DIR=../$(QTL_DIR) RDS_DIR=../$(RDS_DIR) $@
+		make -C $(HTCONDOR) $@
 		
 #Permbuild is meant for building a tarball of necessary scripts/etc. needed for running single-QTL (scanone) permutation test on cluster.
 PermBuild:
@@ -101,11 +96,11 @@ GenQTLTable:
 
 #Collate all QTL info into one file
 GenConsensus:
-		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_type="$(CIRCOS_QTL_TYPE)"' qtl_pipeline_10_genconsensus.R
+		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_pipeline_10_genconsensus.R
 
 #Generate Circos Plot
 GenCircos:
-		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_type="$(CIRCOS_QTL_TYPE)"' qtl_pipeline_11_gencircos.R
+		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_pipeline_11_gencircos.R
 
 #Generate QTL table
 GenEffects:
@@ -129,36 +124,6 @@ LaunchCircosSandbox:
 		cd $(SANDBOX) && npm run -t start &
 		sleep 5
 		cd $(SANDBOX) && npm run -t launch
-
-#Merge H2
-MergeH2:
-		echo "model,mtraits,trait,h2" > $(WORKFLOW)/traits/h2.csv; \
-		IFS=','; for t in $(WORKFLOW)/traits/*--*; do \
-				ft=$$t; \
-				t=$${t##*/}; \
-				model=$${t%--*}; \
-				mtraits=$${t#*--}; \
-				mtraitsb=$$(echo $$mtraits | sed -e 's/__/,/g'); \
-				eval "declare -a mtraitsa=($$(echo $$mtraitsb))"; \
-				numtraits=$${#mtraitsa[*]}; \
-				if [ -f $${ft}/h2.csv ]; then \
-						tail -n +2 $${ft}/h2.csv | while read trait h2; do \
-								if [ "$$h2" != "0" ] && [ "$$h2" != "NA" ]; then \
-										if [ $$numtraits -eq 1 ]; then \
-												echo "$$model,\"$$mtraitsb\",$${mtraitsa[0]},$$h2"; \
-										else \
-												echo "$$model,\"$$mtraitsb\",$${trait//\"},$$h2"; \
-										fi \
-								fi \
-						done >> $(WORKFLOW)/traits/h2.csv; \
-				fi \
-		done
-
-test:
-				IFS=','; tail -n +2 vcov.csv | while read m1 m2 m3 m4 m5 m6 m7; do \
-						echo $$m1; \
-				done; \
-
 
 clean:
 		rm *.Rout
