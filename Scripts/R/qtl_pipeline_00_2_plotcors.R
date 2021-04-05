@@ -90,14 +90,14 @@ cnjpop.pheno.p1.means.stats.df <-  cnjpop.pheno.p1.progeny.means.df %>%
 									pivot_longer(!c(year,accession_name,accession,row,column),names_to="trait",values_to="values") %>%
 									mutate(year = factor(year)) %>%
 									group_by(year,trait) %>%
-									summarize(mean=mean(values),sd=sd(values),max=max(values),min=min(values)) %>%
+									dplyr::summarize(mean=mean(values),sd=sd(values),max=max(values),min=min(values)) %>%
 									ungroup()
 
 cnjpop.pheno.p1.means.stats.df <-  cnjpop.pheno.p1.progeny.means.df %>%
 										mutate(year = factor(year)) %>%
 										pivot_longer(!c(year,accession_name,accession,row,column),names_to="trait",values_to="values") %>%
 										group_by(trait, .add=T) %>%
-										summarize(year="all-years",mean=mean(values),sd=sd(values),max=max(values),min=min(values)) %>%
+										dplyr::summarize(year="all-years",mean=mean(values),sd=sd(values),max=max(values),min=min(values)) %>%
 										ungroup() %>%
 										bind_rows(cnjpop.pheno.p1.means.stats.df) %>%
 										arrange(trait,year)
@@ -108,14 +108,14 @@ cnjpop.pheno.p2.means.stats.df <-  cnjpop.pheno.p2.progeny.means.df %>%
 									pivot_longer(!c(year,accession_name,accession,row,column),names_to="trait",values_to="values") %>%
 									mutate(year = factor(year)) %>%
 									group_by(year,trait) %>%
-									summarize(mean=mean(values),sd=sd(values),max=max(values),min=min(values)) %>%
+									dplyr::summarize(mean=mean(values),sd=sd(values),max=max(values),min=min(values)) %>%
 									ungroup()
 
 cnjpop.pheno.p2.means.stats.df <-  cnjpop.pheno.p2.progeny.means.df %>%
 										mutate(year = factor(year)) %>%
 										pivot_longer(!c(year,accession_name,accession,row,column),names_to="trait",values_to="values") %>%
 										group_by(trait, .add=T) %>%
-										summarize(year="all-years",mean=mean(values),sd=sd(values),max=max(values),min=min(values)) %>%
+										dplyr::summarize(year="all-years",mean=mean(values),sd=sd(values),max=max(values),min=min(values)) %>%
 										ungroup() %>%
 										bind_rows(cnjpop.pheno.p2.means.stats.df) %>%
 										arrange(trait,year)
@@ -145,20 +145,7 @@ dev.off()
 #correlations b/w trait BLUPs, but will forget about that for now.
 #Plot correlations as a raster heatmap
 s.df <- cnjpop.pheno.p2.means.split.df %>% select(!c(accession_name,accession,row,column))
-s.df <- s.df %>% select(sort(colnames(s.df)))
-g <- ggcorr(s.df, label=FALSE, geom="circle", layout.exp=1, hjust=.90, min_size=1, max_size=24, size=12, legend.size=18, label_color='black') +
-         theme(
-            text = element_text(color="black"),
-            axis.text.x = element_text(color="black"),
-            panel.background = element_rect(fill = "transparent") # bg of the panel
-            , plot.background = element_rect(fill = "transparent") # bg of the plot
-            , panel.grid.major = element_blank() # get rid of major grid
-            , panel.grid.minor = element_blank() # get rid of minor grid
-            , legend.background = element_rect(fill = "transparent") # get rid of legend bg
-            , legend.box.background = element_rect(fill = "transparent") # get rid of legend panel bg
-            , legend.box.margin = margin(2,1,1,2)
-         )
-ggsave(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"/p12_phenotypes.trait_year.corr.png"), plot=g, device="png", bg="transparent")
+s
 
 #Plot correlations for all years
 s.df <- cnjpop.pheno.p2.progeny.means.df %>% select(!c(accession_name,accession,year,row,column))
