@@ -22,7 +22,7 @@ Sys.setenv(SANDBOX=params$sandbox)
 ```{r imports, include=FALSE}
 setwd(rRoot)
 library(tidyverse)
-library(ggcorrplot)
+library(corrplot)
 source("usefulFunctions.R")
 ```
 
@@ -58,6 +58,23 @@ source('analyze_remove_outliers.R', echo=TRUE);
 setwd(rRoot);
 source('qtl_pipeline_00_1_means.R');
 ```
+
+## Generate Derivative Phenotypes in Upright Dataset
+
+Generate a mean fruit weight and length/width ratio for the upright datasets.
+
+```{r generate-deriv-phenos, include=TRUE, echo=TRUE}
+setwd(rRoot)
+
+cnjpop.pheno.p1.means.df <- read_csv(pheno_dpath2fpath("Data-combined-collated.cnj04.means.csv"))
+cnjpop.pheno.p2.means.df <- read_csv(pheno_dpath2fpath("Data-combined-collated.cnj02.means.csv"))
+
+
+#Generate MFW and LvW traits for upright data
+cnjpop.pheno.p2.means.df <- cnjpop.pheno.p2.means.df %>% mutate(ULvW = berry_length/berry_width, UMFW = total_berry_weight/num_berries)
+cnjpop.pheno.p1.means.df <- cnjpop.pheno.p1.means.df %>% mutate(ULvW = berry_length/berry_width, UMFW = total_berry_weight/num_berries)
+```
+
 
 ## Merge Upright and Plot Datasets
 
@@ -119,31 +136,39 @@ gencorrplot.mixed <- function(data.tb, filename, width=1280, height=1024, lower=
 ### Read in the merged datasets, abbreviating year and month designators for compact graph display
 
 ```{r plotdata-corrs, include=TRUE, echo=TRUE}
-yetwd(rRoot)
-cnj02.merged.tb <- read_csv(pheno_dpath2fpath("MergedData/CNJ02_PlotData.csv")) %>%
-                    mutate(year = gsub("20([0-9]{2})", "\\1", year)) %>% #Abbreviate the years for compact display of labels
-                    rename_with(~ gsub("_", "", .x, fixed = TRUE), .cols=!c(accession_name)) %>%
-                    rename_with(~ gsub("September", "Sep", .x, fixed = TRUE)) %>%
-                    rename_with(~ gsub("October", "Oct", .x, fixed = TRUE))
-cnj04.merged.tb <- read_csv(pheno_dpath2fpath("MergedData/CNJ04_PlotData.csv")) %>%
-                    mutate(year = gsub("20([0-9]{2})", "\\1", year)) %>% #Abbreviate the years for compact display of labels
-                    rename_with(~ gsub("_", "", .x, fixed = TRUE), .cols=!c(accession_name)) %>%
-                    rename_with(~ gsub("September", "Sep", .x, fixed = TRUE)) %>%
-                    rename_with(~ gsub("October", "Oct", .x, fixed = TRUE))
-cnj02.merged.mmeans.tb <- read_csv(pheno_dpath2fpath("MergedData/CNJ02_PlotData.mmeans.csv")) %>%
+setwd(rRoot)
+cnj02.merged.tb <- read_csv(pheno_dpath2fpath("MergedData/CNJ02_PlotData.csv"))
+cnj02.merged.mmeans.tb <- read_csv(pheno_dpath2fpath("MergedData/CNJ02_PlotData.mmeans.csv"))
+cnj04.merged.tb <- read_csv(pheno_dpath2fpath("MergedData/CNJ04_PlotData.csv"))
+cnj04.merged.mmeans.tb <- read_csv(pheno_dpath2fpath("MergedData/CNJ04_PlotData.mmeans.csv"))
+#Rename columns to shortened names
+traits.tb     <- read_csv(file=paste0(workflow,"/configs/model-traits.cfg.csv"))
+traits        <- unique(traits.tb$trait)
+trait_labels  <- unique(traits.tb$label_short)
+for( i in 1:length(traits) ) {
+  trait <- traits[i]
+  trait_label <- trait_labels[i]
+  cnj02.merged.tb <- cnj02.merged.tb %>% rename_with(~ gsub(trait, trait_label, .x, fixed=TRUE), .cols=trait)
+  cnj02.merged.mmeans.tb <- cnj02.merged.mmeans.tb %>% rename_with(~ gsub(trait, trait_label, .x, fixed=TRUE), .cols=trait)
+  cnj04.merged.tb <- cnj04.merged.tb %>% rename_with(~ gsub(trait, trait_label, .x, fixed=TRUE), .cols=trait)
+  cnj04.merged.mmeans.tb <- cnj04.merged.mmeans.tb %>% rename_with(~ gsub(trait, trait_label, .x, fixed=TRUE), .cols=trait)
+}
+
+cnj02.merged.tb <- cnj02.merged.tb %>% 
+                  mutate(year = gsub("20([0-9]{2})", "\\1", year)) %>% #Abbreviate the years for compact display of labels
+                  rename_with(~ gsub("_", "", .x, fixed = TRUE), .cols=!c(accession_name)) %>%
+                  rename_with(~ gsub("September", "Sep", .x, fixed = TRUE)) %>%
+                  rename_with(~ gsub("October", "Oct", .x, fixed = TRUE))
+
+cnj04.merged.tb <- cnj04.merged.tb %>% 
+                  mutate(year = gsub("20([0-9]{2})", "\\1", year)) %>% #Abbreviate the years for compact display of labels
+                  rename_with(~ gsub("_", "", .x, fixed = TRUE), .cols=!c(accession_name)) %>%
+                  rename_with(~ gsub("September", "Sep", .x, fixed = TRUE)) %>%
+                  rename_with(~ gsub("October", "Oct", .x, fixed = TRUE))
+cnj02.merged.mmeans.tb <- cnj02.merged.mmeans.tb %>%
                             mutate(year = gsub("20([0-9]{2})", "\\1", year)) #Abbreviate the years for compact display of labels
-cnj04.merged.mmeans.tb <- read_csv(pheno_dpath2fpath("MergedData/CNJ04_PlotData.mmeans.csv")) %>%
+cnj04.merged.mmeans.tb <- cnj04.merged.mmeans.tb %>%
                             mutate(year = gsub("20([0-9]{2})", "\\1", year)) #Abbreviate the years for compact display of labels
-
-
-
-
-
-#cnj04_pdata.monthmeans.tb <- cnj04_pdata.tb %>% group_by(year, accession_name) %>% summarise(across(.cols=TY:PAC, mean)) %>% ungroup()
-#cnj04_pdata.monthmeans.wider.tb <- pivot_wider(cnj04_pdata.monthmeans.tb, names_from=year, values_from=TY:PAC)
-#cnj04_pdata.monthmeans.corr.tb <- cor(cnj04_pdata.monthmeans.wider.tb %>% select(!accession_name), use="pairwise.complete.obs")
-#cnj04_pdata.means.tb <- cnj04_pdata.tb %>% group_by(accession_name) %>% summarise(across(.cols=TY:PAC, mean)) %>% ungroup()
-#cnj04_pdata.means.corr.tb <- cor(cnj04_pdata.means.tb %>% select(!accession_name), use="pairwise.complete.obs")
 ```
 
 ### Generate Plots of Correlation Matrices Across All Traits, Across Years
@@ -152,7 +177,7 @@ cnj04.merged.mmeans.tb <- read_csv(pheno_dpath2fpath("MergedData/CNJ04_PlotData.
 ```{r plotdata-corrs, include=TRUE, echo=TRUE}
 setwd(rRoot)
 cnj02.alltraits.pw.tb <- cnj02.merged.mmeans.tb %>% 
-                                  pivot_longer(cols=BL:PAC, names_to='trait', values_to='value') %>% 
+                                  pivot_longer(cols=UBL:PAC, names_to='trait', values_to='value') %>% 
                                   pivot_wider(names_from=year, values_from=value)
 gencorrplot(cnj02.alltraits.pw.tb %>% select(!c(accession_name, accession, row, column, trait)), filename=paste0(workflow,"/traits/plots/corrplot.cnj02.alltraits.png"), method="number", tl.pos= "d", cl.pos = "n")
 View(cnj02.alltraits.pw.tb)
@@ -160,7 +185,7 @@ View(cnj02.alltraits.pw.tb)
 cnj04.alltraits.pw.tb <- cnj04.merged.mmeans.tb %>% 
                                   filter(year != '13') %>% #Filter out 2013, as data does not overlap with other datasets
                                   mutate(year = paste0("y",year)) %>%
-                                  pivot_longer(cols=BL:PAC, names_to='trait', values_to='value') %>% 
+                                  pivot_longer(cols=UBL:PAC, names_to='trait', values_to='value') %>% 
                                   pivot_wider(names_from=year, values_from=value)
 View(cnj04.alltraits.pw.tb)
 setwd(rRoot)
@@ -170,22 +195,23 @@ gencorrplot(cnj04.alltraits.pw.tb %>% select(!c(accession_name, accession, row, 
 
 ```{r include=TRUE, warning=FALSE, echo=FALSE}
 setwd(rRoot)
-cnj02.merged.wider.tb <- pivot_wider(cnj02.merged.tb, names_from=c(year), values_from=BL:PACOct, names_sep="")
+cnj02.merged.wider.tb <- pivot_wider(cnj02.merged.tb, names_from=c(year), values_from=UBL:PACOct, names_sep="")
+View(cnj02.merged.wider.tb)
 gencorrplot(cnj02.merged.wider.tb %>% select(!c(accession_name, accession, row, column)), filename=paste0(workflow,"/traits/plots/corrplot.cnj02.ym.png"), width=2560, height=2048, tl.srt=45, tl.cex=2, cl.cex=2)
 
-cnj04.merged.wider.tb <- pivot_wider(cnj04.merged.tb %>% filter(year != 13), names_from=c(year), values_from=BL:PACOct, names_sep="") #Filter out 2013 b/c it is only represented for parents of plot dataset -- no equivalent in other data
+cnj04.merged.wider.tb <- pivot_wider(cnj04.merged.tb %>% filter(year != 13), names_from=c(year), values_from=UBL:PACOct, names_sep="") #Filter out 2013 b/c it is only represented for parents of plot dataset -- no equivalent in other data
 gencorrplot(cnj04.merged.wider.tb %>% select(!c(accession_name, accession, row, column)), filename=paste0(workflow,"/traits/plots/corrplot.cnj04.ym.png"), width=2560, height=2048, tl.srt=45, tl.cex=2, cl.cex=2)
 ```
 ### Generate Correlation Matrices Across Years
 
 ```{r include=TRUE, warning=FALSE, echo=FALSE}
 setwd(rRoot)
-cnj02.merged.mmeans.wider.tb <- pivot_wider(cnj02.merged.mmeans.tb, names_from=c(year), values_from=BL:PAC, names_sep="")
+cnj02.merged.mmeans.wider.tb <- pivot_wider(cnj02.merged.mmeans.tb, names_from=c(year), values_from=UBL:PAC, names_sep="")
 gencorrplot(cnj02.merged.mmeans.wider.tb %>% select(!c(accession_name, accession, row, column)), filename=paste0(workflow,"/traits/plots/corrplot.cnj02.y.png"), width=2048, height=2200, tl.srt=45, tl.cex=1.8, cl.cex=1.8)
 
 cnj04.merged.mmeans.wider.tb <- cnj04.merged.mmeans.tb %>% 
                                 filter(year != '13') %>%
-                                pivot_wider(names_from=c(year), values_from=BL:PAC, names_sep="")
+                                pivot_wider(names_from=c(year), values_from=UBL:PAC, names_sep="")
 gencorrplot(cnj04.merged.mmeans.wider.tb %>% select(!c(accession_name, accession, row, column)), filename=paste0(workflow,"/traits/plots/corrplot.cnj04.y.png"), width=2048, height=2200, tl.srt=45, tl.cex=1.8, cl.cex=1.8)
 ```
 ### Generate Correlation Matrices With Traits Averaged Across Months and Years
@@ -195,24 +221,15 @@ setwd(rRoot)
 
 cnj02.merged.means.tb <- cnj02.merged.mmeans.tb %>%
                           group_by(accession_name, row, column) %>%
-                          summarise(across(.cols=BL:PAC, mean)) %>%
+                          summarise(across(.cols=UBL:PAC, mean)) %>%
                           ungroup()
 gencorrplot.mixed(cnj02.merged.means.tb %>% select(!c(accession_name, row, column)), filename=paste0(workflow,"/traits/plots/corrplot.cnj02.png"), width=2048, height=2048, tl.cex=3, cl.cex=2, number.cex=2.5)
 
 cnj04.merged.means.tb <- cnj04.merged.mmeans.tb %>%
                           group_by(accession_name, row, column) %>%
-                          summarise(across(.cols=BL:PAC, mean)) %>%
+                          summarise(across(.cols=UBL:PAC, mean)) %>%
                           ungroup()
 gencorrplot.mixed(cnj04.merged.means.tb %>% select(!c(accession_name, row, column)), filename=paste0(workflow,"/traits/plots/corrplot.cnj04.png"), width=2048, height=2048, tl.cex=3, cl.cex=2, number.cex=2.5)
-```
-
-------------------------------------------------------------------------
-
-## Assess trait distributions and plot trait correlations.
-
-```{r plot-corrs}
-setwd(rRoot);
-source('qtl_pipeline_00_2_plotcors.R', echo=FALSE);
 ```
 
 ------------------------------------------------------------------------

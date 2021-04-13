@@ -1,6 +1,7 @@
 # This file contains code to analyze and remove statistical outliers in the Vorsa upright datasets
 
 #Only install the following packages when running for the first time
+install.packages(c("car"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("pryr"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("openxlsx","RColorBrewer"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("lm"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
@@ -233,12 +234,16 @@ plot_phenotype_hists <- function(dataset, outliers.idx, phenotype, graph.cols) {
 }
 
 plot_phenotype <- function(lm, phenotype, graph.cols) {
+    png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"p3_",phenotype,"_simple_regression.png"), bg="transparent", width=1024, height=1024, units='px')
     oldpar <- par(oma=c(0,0,3,0), mfrow=c(2,2))
     plot(lm)
+    dev.off()
     lm.outliers <- outlierTest(lm)
     lm.outliers.idx <- as.numeric(names(lm.outliers$rstudent))
+    png(filename=paste0(DATA_PLOTS_FOLDER_PREFIX,"p3_",phenotype,"_hists.png"), bg="transparent", width=1024, height=1024, units='px')
     par(oma=c(0,0,3,0), mfrow=c(2,1))
     plot_phenotype_hists(cnjpop.df, lm.outliers.idx, phenotype, graph.cols)
+    dev.off()
     par(oldpar)
     return(lm.outliers.idx)
 }
@@ -249,35 +254,46 @@ graph.cols <- colorRampPalette(c(rgb(1/4,1,0,1/4),rgb(0,0,1,1/4)),alpha=T)(2)
 #Consider doing regressions to find outliers
 berry_weight.lm <- lm(formula=berry_weight~population+year+accession,data=cnjpop.df)
 berry_weight.anova <- anova(berry_weight.lm)
-quartzw(file="p3_1_berry_weight_simple_regression.pdf", "Simple regression plot for berry weight.")
 berry_weight.lm.outliers.idx <- plot_phenotype(berry_weight.lm, "berry_weight", graph.cols)
-dev.off()
 #Show which entries are outliers for cross-referencing in excel file.
 cnjpop.df[berry_weight.lm.outliers.idx,]
 
 berry_length.lm <- lm(formula=berry_length~population+year+accession,data=cnjpop.df)
 berry_length.anova <- anova(berry_length.lm)
-quartzw(file="p3_2_berry_length_simple_regression.pdf", "Simple regression plot for berry length.")
 berry_length.lm.outliers.idx <- plot_phenotype(berry_length.lm, "berry_length", graph.cols)
-dev.off()
 #Show which entries are outliers for cross-referencing in excel file.
 cnjpop.df[berry_length.lm.outliers.idx,]
 
 berry_width.lm <- lm(formula=berry_width~population+year+accession,data=cnjpop.df)
 berry_width.anova <- anova(berry_width.lm)
-quartzw(file="p3_3_berry_width_simple_regression.pdf", "Simple regression plot for berry width.")
 berry_width.lm.outliers.idx <- plot_phenotype(berry_width.lm, "berry_width", graph.cols)
-dev.off()
 #Show which entries are outliers for cross-referencing in excel file.
 cnjpop.df[berry_width.lm.outliers.idx,]
 
 num_seeds.lm <- lm(formula=num_seeds~population+year+accession,data=cnjpop.df)
 num_seeds.anova <- anova(num_seeds.lm)
-quartzw(file="p3_4_num_seeds_simple_regression.pdf", "Simple regression plot for number of seeds.")
 num_seeds.lm.outliers.idx <- plot_phenotype(num_seeds.lm, "num_seeds", graph.cols)
-dev.off()
 #Show which entries are outliers for cross-referencing in excel file.
 cnjpop.df[num_seeds.lm.outliers.idx,]
+
+cnjpop.df$upright_length <- as.numeric(cnjpop.df$upright_length)
+upright_length.lm <- lm(formula=upright_length~population+year+accession,data=cnjpop.df)
+upright_length.anova <- anova(upright_length.lm)
+upright_length.lm.outliers.idx <- plot_phenotype(upright_length.lm, "upright_length", graph.cols)
+cnjpop.df[upright_length.lm.outliers.idx,]
+
+cnjpop.df$secondary_growth <- as.numeric(cnjpop.df$secondary_growth)
+secondary_growth.lm <- lm(formula=secondary_growth~population+year+accession,data=cnjpop.df)
+secondary_growth.anova <- anova(secondary_growth.lm)
+secondary_growth.lm.outliers.idx <- plot_phenotype(secondary_growth.lm, "secondary_growth", graph.cols)
+cnjpop.df[secondary_growth.lm.outliers.idx,]
+
+cnjpop.df$dry_wt_leaves <- as.numeric(cnjpop.df$dry_wt_leaves)
+dry_wt_leaves.lm <- lm(formula=dry_wt_leaves~population+year+accession,data=cnjpop.df)
+dry_wt_leaves.anova <- anova(dry_wt_leaves.lm)
+dry_wt_leaves.lm.outliers.idx <- plot_phenotype(dry_wt_leaves.lm, "dry_wt_leaves", graph.cols)
+cnjpop.df[dry_wt_leaves.lm.outliers.idx,]
+View(cnjpop.df)
 
 #Now consider throwing out weight outliers (they seem to be wildly off) and num_seeds outliers.
 cnjpop.df[c(berry_weight.lm.outliers.idx, num_seeds.lm.outliers.idx),c("berry_weight", "num_seeds")] <- NA

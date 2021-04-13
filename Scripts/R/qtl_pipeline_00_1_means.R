@@ -12,6 +12,9 @@ library(dplyr)
 #Read the phenotypic data in that was output by analyze_remove_outliers.R
 
 cnjpop.pheno.df <- readRDSw('cnjpop.noout.df.rds')
+cnjpop.pheno.df$upright_length = as.numeric(cnjpop.pheno.df$upright_length)
+cnjpop.pheno.df$secondary_growth = as.numeric(cnjpop.pheno.df$secondary_growth)
+cnjpop.pheno.df$dry_wt_leaves = as.numeric(cnjpop.pheno.df$dry_wt_leaves)
 
 workflow <- get0("workflow", ifnotfound="../../Workflows/1")
 
@@ -42,6 +45,12 @@ cnjpop.pheno.df$berry_weight[cnjpop.pheno.df.length_width_weight.zeros.idx] <- N
 cnjpop.pheno.df[cnjpop.pheno.df.length_width_weight.zeros.idx,]
 cnjpop.pheno.df.num_seeds.zeros.idx <- which(cnjpop.pheno.df$num_seeds == 0)
 cnjpop.pheno.df$num_seeds[cnjpop.pheno.df.num_seeds.zeros.idx] <- NA
+cnjpop.pheno.df.upright_length.zeros.idx <- which(cnjpop.pheno.df$upright_length == 0)
+cnjpop.pheno.df$upright_length[cnjpop.pheno.df.upright_length.zeros.idx] <- NA
+cnjpop.pheno.df.secondary_growth.zeros.idx <- which(cnjpop.pheno.df$secondary_growth == 0)
+cnjpop.pheno.df$secondary_growth[cnjpop.pheno.df.secondary_growth.zeros.idx] <- NA
+cnjpop.pheno.df.dry_wt_leaves.zeros.idx <- which(cnjpop.pheno.df$dry_wt_leaves == 0)
+cnjpop.pheno.df$dry_wt_leaves[cnjpop.pheno.df.dry_wt_leaves.zeros.idx] <- NA
 #Add row/column designators to indicate the location                            
 cnjpop.pheno.df <- cnjpop.pheno.df %>%
                       mutate(row=extract_row(accession),
@@ -57,7 +66,10 @@ cnjpop.pheno.means.df <- cnjpop.pheno.df %>%
                                       num_seeds=mean(num_seeds, na.rm=T),
                                       num_peds=mean(num_peds, na.rm=T),
                                       num_berries=mean(num_berries, na.rm=T),
-                                      total_berry_weight=mean(total_berry_weight, na.rm=T))
+                                      total_berry_weight=mean(total_berry_weight, na.rm=T),
+                                      upright_length=mean(upright_length, na.rm=T),
+                                      secondary_growth=mean(secondary_growth, na.rm=T),
+                                      dry_wt_leaves=mean(dry_wt_leaves, na.rm=T))
 
 #Filter out parents for comparing parental values to children values
 #cnjpop.pheno.parents.df <- cnjpop.pheno.df %>% filter(!grepl("CNJ0.*", cnjpop.pheno.df$accession_name))
