@@ -1,10 +1,22 @@
 var qtl_bubble_opacity            = 0.75;
 var qtl_bubble_highlight_opacity  = 1.0;
 var qtl_bubble_scale_factor       = 15;
-var gfolder_prefix                = "./";
 var circosScatter;
 var circos_trait2traitname = {};
+var circos_trait2traitshort = {};
 var circos_model2modelname = {};
+var gkaryotypes;
+var glayout;
+var gtrait_files;
+var glod_files;
+var gcircos_trait_config;
+var gscatter_defaults;
+var gstack_defaults;
+var gline_defaults;
+var blipColors = d3.scaleSequential(d3.interpolateTurbo);
+var axesColors = d3.scaleSequential(d3.interpolateGreys);
+
+const seq = (start, stop, step) => Array.from({ length: (stop - start) / step + 1}, (_, i) => start + (i * step));
 
 var change_scan_type = function(selected_type) {
     //Hide everything
@@ -61,447 +73,357 @@ var unhighlight_markers = function(datum, index, nodes, event) {
         .attr('opacity', qtl_bubble_opacity);
 }
 
-var inject_scatter = function(error, data)
-{
-    bin_size = 3; //Specifies the number of indices per 'bin' of data
-    for( i = 0; i < (data.length/bin_size); i++ ) {
-        const trait_data = data[bin_size*i];
-        var   models = [];
-        const map = new Map(); //For tracking distinct elements
-        for (const d of trait_data) {
-                if(!map.has(d.model)){
-                        map.set(d.model, true);    // Only add if not already added
-                        models.push({
-                                        model: d.model,
-                                        model_idx: d.model_idx
-                                   });
+const inject_scatters = (linkage_groups, qtls, traits, trait_idx, models, config, method, consensus) => {
+  var trait = traits[trait_idx];
+  var scatter_trait_data = qtls.filter( d => (d.trait === trait) )
+                                .filter( d => (models.includes(d.model)) )
+                                .filter( d => ((d.method === method) || (d.method === "fakeqtl")) )
+                                .map( d => ({   ...d,
+                                                block_id: "vm"+d.chr,
+                                                color: blipColors(((trait_idx * models.length) + models.indexOf(d.model))/(traits.length * models.length)),
+                                                position: +(consensus === "consensus" ? d.position_consensus : d.position) * 1000,
+                                                value: models.indexOf(d.model),
+                                                size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
+                                                lod: +d.qtl_lod,
+                                                pval: +d.qtl_pvalue,
+                                                class: d.class
+                                          }) )
+                                .filter( d => (linkage_groups.includes(d.block_id)) );
+  var trait_class = "scatters-" + method + "-" + consensus + "--" + trait;
+  circosScatter.scatter(trait_class, scatter_trait_data, config);
+};
+
+const inject_stacks = (linkage_groups, qtls, traits, trait_idx, models, config, method, consensus) => {
+    var trait = traits[trait_idx];
+    for( var i = 0; i < models.length; i++ ) {
+        //scanone normal
+        var stack_trait_data = qtls.filter( d => (d.trait === trait) )
+                                    .filter( d => (d.model === models[i]) )
+                                    .filter( d => ((d.method === "scanone") || (d.method === "fakeqtl")) )
+                                    .map( d => ({ ...d,
+                                                    block_id: "vm" + d.chr,
+                                                    color: blipColors(((trait_idx * models.length) + models.indexOf(d.model))/(traits.length * models.length)),
+                                                    start: (+(consensus === "consensus" ? d.position_consensus : d.position) - (+d.interval/2))*1000,
+                                                    end: (+(consensus === "consensus" ? d.position_consensus : d.position) + (+d.interval/2))*1000
+                                                }))
+                                    .filter( d => (linkage_groups.includes(d.block_id)) );
+        if( stack_trait_data.length > 0 ) {
+            var trait_class = "stacks-"+method+"-"+consensus+"--"+models[i]+"--"+trait;
+            circosScatter.stack(trait_class, stack_trait_data, config[i]);
+        } else {
+            console.log("Non-zero stack_trait_data length.")
+        }
+    }
+};
+
+const inject_lods = (linkage_groups, trait, models, config, method) => {
+    var lconfig = {...config}; //Make a copy
+    for( var i = 0; i < models.length; i++ ) {
+        var model = models[i];
+        if( model in glods[trait] ) {
+            var lods_trait_model = glods[trait][model];
+            if( method in lods_trait_model ) {
+                var lods_method = lods_trait_model[method];
+                for( var j = 0; j < linkage_groups.length; j++ ) {
+                    var lg = linkage_groups[j];
+                    if( lg in lods_method ) {
+                        var lod_trait_data = [];
+                        var lods = lods_method[lg];
+                        lods.forEach( d => {
+                            lod_trait_data.push( {
+                                method: method,
+                                block_id: lg,
+                                position: +d.position*1000,
+                                value: +d.lod,
+                                model: model,
+                                trait: trait
+                            });
+                        } );
+                        //Edit the Lconfig  max lod values, axes spacing, etc.
+                        var max_lod = lod_trait_data.reduce( (a,b) => (a.value > b.value ? a : b) ).value;
+                        lconfig.max = max_lod + max_lod/10; // Add 10% to top
+                        lconfig.backgrounds[0].end = lconfig.max;
+                        lconfig.axes[0].spacing = lconfig.max/(models.length);
+                        var trait_class = "lines-"+method+"--"+model+"--"+trait;
+                        circosScatter.line(trait_class, lod_trait_data, lconfig);
+                    }
                 }
-        }
-        models = models.sort( (a,b) => {
-                                if(a.model_idx > b.model_idx) {
-                                        return(1);
-                                } else if(a.model_idx < b.model_idx) {
-                                        return(-1);
-                                } else {
-                                        return(0);
-                                }
-                        });
-        model_names = models.map( d => circos_model2modelname[d.model] );
-        scatter_config     = data[(bin_size*i)+1];
-        scatter_config.trackLabelConf.label = circos_trait2traitname[trait_data[0].trait]
-        scatter_config.axes.map( (a,i) => {
-            var b = {...a};
-            b.axisLabelConf.label = model_names[i];
-            return(b);
-        });
-        scatter_config.events = {
-            'click.showlodprofs': show_lod_profs
-        };
-        //scanone results
-        scatter_trait_data = trait_data
-                                     .filter(function(d) { return((d.method == "scanone") || (d.method == "fakeqtl")); })
-                                     .map(function(d) {
-                                             return({
-                                                     method: d.method,
-                                                     block_id: "vm"+d.chr,
-                                                     position: +d.position_consensus*1000,
-                                                     value: +d.model_idx,  
-                                                     model: d.model,
-                                                     trait: d.trait,
-                                                     color: d.color,
-                                                     stroke_color: d.stroke_color,
-                                                     model_color: d.model_color,
-                                                     nearest_marker: d.nearest_marker,
-                                                     variance: d.marker_variance,
-                                                     size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
-                                                     lod: +d.qtl_lod,
-                                                     pval: +d.qtl_pvalue,
-                                                     class: d.class
-                                             });
-                                     });
-        trait = "scatters-scanone-consensus--" + scatter_trait_data[0].trait;
-        circosScatter.scatter(trait, scatter_trait_data, scatter_config);
-        scatter_trait_data = trait_data
-                                     .filter(function(d) { return((d.method == "scanone") || (d.method == "fakeqtl")); })
-                                     .map(function(d) {
-                                             return({
-                                                     method: d.method,
-                                                     block_id: "vm"+d.chr,
-                                                     position: +d.position*1000,
-                                                     value: +d.model_idx,  
-                                                     model: d.model,
-                                                     trait: d.trait,
-                                                     color: d.color,
-                                                     stroke_color: d.stroke_color,
-                                                     model_color: d.model_color,
-                                                     nearest_marker: d.nearest_marker,
-                                                     variance: d.marker_variance,
-                                                     size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
-                                                     lod: +d.qtl_lod,
-                                                     pval: +d.qtl_pvalue,
-                                                     class: d.class
-                                             });
-                                     });
-        trait = "scatters-scanone-normal--" + scatter_trait_data[0].trait;
-        circosScatter.scatter(trait, scatter_trait_data, scatter_config);
-        //stepwiseqtl results
-        scatter_trait_data = trait_data
-                                     .filter(function(d) { return((d.method == "stepwiseqtl") || (d.method == "fakeqtl")); })
-                                     .map(function(d) {
-                                             return({
-                                                     method: d.method,
-                                                     block_id: "vm"+d.chr,
-                                                     position: +d.position_consensus*1000,
-                                                     value: +d.model_idx,  
-                                                     model: d.model,
-                                                     trait: d.trait,
-                                                     color: d.color,
-                                                     stroke_color: d.stroke_color,
-                                                     model_color: d.model_color,
-                                                     nearest_marker: d.nearest_marker,
-                                                     variance: d.marker_variance,
-                                                     size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
-                                                     lod: +d.qtl_lod,
-                                                     pval: +d.qtl_pvalue,
-                                                     class: d.class
-                                             });
-                                     });
-        trait = "scatters-stepwiseqtl-consensus--" + scatter_trait_data[0].trait;
-        circosScatter.scatter(trait, scatter_trait_data, scatter_config);
-        scatter_trait_data = trait_data
-                                     .filter(function(d) { return((d.method == "stepwiseqtl") || (d.method == "fakeqtl")); })
-                                     .map(function(d) {
-                                             return({
-                                                     method: d.method,
-                                                     block_id: "vm"+d.chr,
-                                                     position: +d.position*1000,
-                                                     value: +d.model_idx,  
-                                                     model: d.model,
-                                                     trait: d.trait,
-                                                     color: d.color,
-                                                     stroke_color: d.stroke_color,
-                                                     model_color: d.model_color,
-                                                     nearest_marker: d.nearest_marker,
-                                                     variance: d.marker_variance,
-                                                     size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
-                                                     lod: +d.qtl_lod,
-                                                     pval: +d.qtl_pvalue,
-                                                     class: d.class
-                                             });
-                                     });
-        trait = "scatters-stepwiseqtl-normal--" + scatter_trait_data[0].trait;
-        circosScatter.scatter(trait, scatter_trait_data, scatter_config);
-        stack_configs     = data[(bin_size*i)+2];
-        //stack_configs     = stack_configs.map( (s,i) => {
-        //   var sc = {...s};
-        //   sc.trackLabelConf.label = circos_model2modelname[model_names[i]];
-        //    return(sc);
-        //});
-        for( j = 0; j < stack_configs.length; j++ ) {
-            //scanone normal
-            stack_trait_data = trait_data
-                .filter(function(d) 
-                { 
-                    var match = (+d.model_idx == (j+1)) && ((d.method == "scanone") || (d.method == "fakeqtl"));
-                    return(match);
-                })
-                .map(function(d) {
-                    return({
-                        block_id: "vm"+d.chr,
-                        start: (+d.position - (+d.interval/2))*1000,
-                        end: (+d.position + (+d.interval/2))*1000,
-                        model: d.model,
-                        trait: d.trait,
-                        color: d.color,
-                        stroke_color: d.stroke_color,
-                        model_color: d.model_color,
-                        nearest_marker: d.nearest_marker,
-                        class: d.class
-                    });
-                });
-            if( stack_trait_data.length > 0 ) {
-                trait = "stacks-scanone-normal--"+stack_trait_data[0].model+"--" + stack_trait_data[0].trait;
-                circosScatter.stack(trait, stack_trait_data, stack_configs[j]);
-            } else {
-                console.log("Non-zero stack_trait_data length.")
-            }
-            //scanone consensus 
-            stack_trait_data = trait_data
-                .filter(function(d) 
-                { 
-                    var match = (+d.model_idx == (j+1)) && ((d.method == "scanone") || (d.method == "fakeqtl"));
-                    return(match);
-                })
-                .map(function(d) {
-                    return({
-                        block_id: "vm"+d.chr,
-                        start: (+d.position_consensus - (+d.interval/2))*1000,
-                        end: (+d.position_consensus + (+d.interval/2))*1000,
-                        model: d.model,
-                        trait: d.trait,
-                        color: d.color,
-                        stroke_color: d.stroke_color,
-                        model_color: d.model_color,
-                        nearest_marker: d.nearest_marker,
-                        mposition: +d.position_consensus,
-                        class: d.class
-                    });
-                });
-            if( stack_trait_data.length > 0 ) {
-                trait = "stacks-scanone-consensus--" + stack_trait_data[0].model + "--" + stack_trait_data[0].trait;
-                circosScatter.stack(trait, stack_trait_data, stack_configs[j]);
-            } else {
-                console.log("Non-zero stack_trait_data length.")
-            }
-            //stepwiseqtl normal
-            stack_trait_data = trait_data
-                .filter(function(d) 
-                { 
-                    var match = (+d.model_idx == (j+1)) && ((d.method == "stepwiseqtl") || (d.method == "fakeqtl"));
-                    return(match);
-                })
-                .map(function(d) {
-                    return({
-                        block_id: "vm"+d.chr,
-                        start: (+d.position - (+d.interval/2))*1000,
-                        end: (+d.position + (+d.interval/2))*1000,
-                        model: d.model,
-                        trait: d.trait,
-                        color: d.color,
-                        stroke_color: d.stroke_color,
-                        model_color: d.model_color,
-                        nearest_marker: d.nearest_marker,
-                        class: d.class
-                    });
-                });
-            if( stack_trait_data.length > 0 ) {
-                trait = "stacks-stepwiseqtl-normal--"+stack_trait_data[0].model+"--"+ stack_trait_data[0].trait;
-                circosScatter.stack(trait, stack_trait_data, stack_configs[j]);
-            } else {
-                console.log("Non-zero stack_trait_data length.")
-            }
-            //stepwiseqtl consensus 
-            stack_trait_data = trait_data
-                .filter(function(d) 
-                { 
-                    var match = (+d.model_idx == (j+1)) && ((d.method == "stepwiseqtl") || (d.method == "fakeqtl"));
-                    return(match);
-                })
-                .map(function(d) {
-                    return({
-                        block_id: "vm"+d.chr,
-                        start: (+d.position_consensus - (+d.interval/2))*1000,
-                        end: (+d.position_consensus + (+d.interval/2))*1000,
-                        model: d.model,
-                        trait: d.trait,
-                        color: d.color,
-                        stroke_color: d.stroke_color,
-                        model_color: d.model_color,
-                        nearest_marker: d.nearest_marker,
-                        mposition: +d.position_consensus,
-                        class: d.class
-                    });
-                });
-            if( stack_trait_data.length > 0 ) {
-                trait = "stacks-stepwiseqtl-consensus--"+stack_trait_data[0].model+"--" + stack_trait_data[0].trait;
-                circosScatter.stack(trait, stack_trait_data, stack_configs[j]);
-            } else {
-                console.log("Non-zero stack_trait_data length.")
             }
         }
     }
 }
 
-var inject_line = function(error, data)
-{
-    bin_size = 2; //Specifies the number of indices per 'bin' of data
-    for( i = 0; i < (data.length/bin_size); i++ ) {
-        lod_data     = data[bin_size*i];
-        lod_config   = data[(bin_size*i)+1];
-        for( var model in lod_data ) {
-            //scanone
-            lod_trait_data = lod_data[model]
-                .filter(function(d) { return(d.method == "scanone"); })
-                .map(function(d) {
-            //I need to figure out how to separate the different models into different datasets
-                    return({
-                        method: d.method,
-                        block_id: "vm"+d.chr,
-                        position: +d.position*1000,
-                        value: +d.lod,
-                        model: d.model,
-                        trait: d.trait
-                    });
-                });
-            //Edit the lod_config per the max lod values, axes spacing, etc.
-            max_lod = lod_trait_data.reduce(function(a,b) { 
-                return(a.value > b.value ? a : b);
-            }).value;
-            lod_config.max = max_lod + max_lod/10; // Add 10% to top
-            lod_config.backgrounds[0].end = lod_config.max;
-            //Have 4 horizontal axes per dataset
-            lod_config.axes[0].spacing = lod_config.max/4;
-            trait = "lines-scanone--"+model+"--"+lod_trait_data[0].trait;
-            circosScatter.line(trait, lod_trait_data, lod_config);
-            //stepwiseqtl
-            lod_trait_data = lod_data[model]
-                .filter(function(d) { return(d.method == "stepwiseqtl"); })
-                .map(function(d) {
-            //I need to figure out how to separate the different models into different datasets
-                    return({
-                        method: d.method,
-                        block_id: "vm"+d.chr,
-                        position: +d.position*1000,
-                        value: +d.lod,
-                        model: d.model,
-                        trait: d.trait
-                    });
-                });
-            //Edit the lod_config per the max lod values, axes spacing, etc.
-            max_lod = lod_trait_data.reduce(function(a,b) { 
-                return(a.value > b.value ? a : b);
-            }).value;
-            lod_config.max = max_lod + max_lod/10; // Add 10% to top
-            lod_config.backgrounds[0].end = lod_config.max;
-            //Have 4 horizontal axes per dataset
-            lod_config.axes[0].spacing = lod_config.max/4;
-            trait = "lines-stepwiseqtl--"+model+"--"+lod_trait_data[0].trait;
-            circosScatter.line(trait, lod_trait_data, lod_config);
-        }
-    }
-    circosScatter.render();
-    d3.selectAll(".point")
-      .on('mouseover.highlight', highlight_markers)
-      .on('mouseout.highlight', unhighlight_markers);
-    d3.selectAll(".tile")
-      .on('mouseover.highlight', highlight_markers)
-      .on('mouseout.highlight', unhighlight_markers);
-    d3.selectAll("g[class='line']")
-        .on('click', hide_lod_profs);
-    d3.selectAll("*[class^='lines-']")
-        .attr('opacity','0.8')
-        .attr('visibility','hidden');
-    d3.selectAll("*[class^='scatters-']")
-        .attr('opacity','0')
-        .attr('visibility','hidden');
-    d3.selectAll("*[class^='stacks-']")
-        .attr('opacity','0')
-        .attr('visibility','hidden');
-    //Find the arc of the centermost scatterplot and build a square.
-            d3.selectAll("*[class^='scatter']")
-            .selectAll(".block")
-            .select("path.background")
-            .attr("d");
-                                    
-    //Update all the scatter plots with a 'marker' attribute to select all identical nearest markers
-    var points = d3.selectAll(".point")
-                   .datum( function(d) {
-                       return d;
-                   })
-                   .attr( "marker", function(d) {
-                        return d.nearest_marker;
-                   });
-    //Update all stack intervals with a 'marker' attribute to select all identical nearest interval stacks
-    var stacks = d3.selectAll(".tile")
-                   .datum( function(d) {
-                       return d;
-                   })
-                   .attr( "marker", function(d) {
-                        return d.nearest_marker;
-                   });
-    d3.selectAll("*[marker^='marker--fake--trait']").attr('visibility', 'hidden');
+const inject_data = (linkage_groups, qtls, traits, trait_idx, models, scatter_config, stack_config, line_config) => {
+    //Scatterplots (QTL bubble tracks)
+    inject_scatters(linkage_groups, qtls, traits, trait_idx, models, scatter_config, "scanone", "normal");
+    inject_scatters(linkage_groups, qtls, traits, trait_idx, models, scatter_config, "scanone", "consensus");
+    inject_scatters(linkage_groups, qtls, traits, trait_idx, models, scatter_config, "stepwiseqtl", "normal");
+    inject_scatters(linkage_groups, qtls, traits, trait_idx, models, scatter_config, "stepwiseqtl", "consensus");
+
+    //Stacks (1.5 LOD interval tracks)
+    inject_stacks(linkage_groups, qtls, traits, trait_idx, models, stack_config, "scanone", "normal");
+    inject_stacks(linkage_groups, qtls, traits, trait_idx, models, stack_config, "scanone", "consensus");
+    inject_stacks(linkage_groups, qtls, traits, trait_idx, models, stack_config, "stepwiseqtl", "normal");
+    inject_stacks(linkage_groups, qtls, traits, trait_idx, models, stack_config, "stepwiseqtl", "consensus");
+
+    //LOD profiles
+    inject_lods(linkage_groups, traits[trait_idx], models, line_config, "scanone");
+    inject_lods(linkage_groups, traits[trait_idx], models, line_config, "stepwiseqtl");
 }
 
-var map_scatter = function(data) {
-    return(data);
+const gen_scatter_color = d => (d.color);
+
+const gen_scatter_size = d => (d.size);
+
+const gen_scatter_tooltip = d => {
+    var variance = Math.round(d.marker_variance, 1);
+    var position = Math.round(d.position/1000.0, 1);
+    return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+circos_model2modelname[d.model]+"<br />Pos: "+position.toString()+"cM<br />Var: "+variance.toString()+"%<br />"+d.nearest_marker);
 }
 
-var gen_scatter_color = function(d) {
-    return d.color;
+const gen_stack_tooltip = function(d) {
+    var start = Math.round(d.start/1000.0, 1);
+    var end = Math.round(d.end/1000.0, 1);
+    var range = Math.round((d.end-d.start)/1000.0, 1);
+    return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+circos_model2modelname[d.model]+"<br />Start-End: "+start.toString()+"-"+end.toString()+"cM<br />Range: "+range.toString()+"cM");
 }
 
-var gen_scatter_stroke_color = function(d) {
-    return d.stroke_color;
-}
-
-var gen_scatter_tooltip = function(d) {
-        var variance = Math.round(d.variance, 1);
-        var position = Math.round(d.position/1000.0, 1);
-        return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+circos_model2modelname[d.model]+"<br />Pos: "+position.toString()+"cM<br />Var: "+variance.toString()+"%<br />"+d.nearest_marker);
-}
-
-var gen_stack_tooltip = function(d) {
-        var start = Math.round(d.start/1000.0, 1);
-        var end = Math.round(d.end/1000.0, 1);
-        var range = Math.round((d.end-d.start)/1000.0, 1);
-        return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+circos_model2modelname[d.model]+"<br />Start-End: "+start.toString()+"-"+end.toString()+"cM<br />Range: "+range.toString()+"cM");
-}
-
-
-var gen_scatter_size = function(d) {
-    return(d.size);
-}
-
-var drawCircos = function (error, karyotypes, layout, trait_files, lod_files, scatter_configs, stack_configs, line_configs, circos_trait_config) {
-  if(error) {
-    throw error;
-  }
+const drawCircos = (linkage_groups, qtls, traits, models, track_configs) => {
+  var relevant_karyotypes = gkaryotypes.filter( k => (linkage_groups.includes(k.id)) );
   circosScatter
     .layout(
-        karyotypes,
-        layout
+        relevant_karyotypes,
+        glayout
     );
-  for( i = 0; i < circos_trait_config.length; i++ ) {
-    circos_trait2traitname[circos_trait_config[i].trait] = circos_trait_config[i].label;
-    circos_model2modelname[circos_trait_config[i].model] = circos_trait_config[i].model_label;
+  for( i = 0; i < traits.length; i++ ) {
+    inject_data(linkage_groups, qtls, traits, i, models, track_configs.scatters[i], track_configs.stacks[i], track_configs.lods[i]);
   }
-  var q = d3.queue();
-  for( i = 0; i < trait_files.length; i++ ) {
-    trait_file                =  gfolder_prefix + trait_files[i];
-    scatter_configs[i].color          =  gen_scatter_color;
-    scatter_configs[i].tooltipContent =  gen_scatter_tooltip;
-    scatter_configs[i].size           =  gen_scatter_size;
-    for( j = 0; j < stack_configs[i].length; j++ ) {
-        stack_configs[i][j].color          =  gen_scatter_color;
-        stack_configs[i][j].tooltipContent =  gen_stack_tooltip;
-    }
-    q.defer(d3.csv, trait_file)
-     .defer(get_current_config, scatter_configs[i])
-     .defer(get_current_config, stack_configs[i])
-  }
-  q.awaitAll(inject_scatter);
-
-  var q = d3.queue();
-  for( i = 0; i < lod_files.length; i++ ) {
-    lod_file = gfolder_prefix + lod_files[i]
-    q.defer(d3.json, lod_file)
-     .defer(get_current_config, line_configs[i])
-  }
-  q.awaitAll(inject_line);
+  circosScatter.render();
+  d3.selectAll(".point")
+    .on('mouseover.highlight', highlight_markers)
+    .on('mouseout.highlight', unhighlight_markers);
+  d3.selectAll(".tile")
+    .on('mouseover.highlight', highlight_markers)
+    .on('mouseout.highlight', unhighlight_markers);
+  d3.selectAll("g[class='line']")
+      .on('click', hide_lod_profs);
+  d3.selectAll("*[class^='lines-']")
+      .attr('opacity','0.8')
+      .attr('visibility','hidden');
+  d3.selectAll("*[class^='scatters-']")
+      .attr('opacity','0')
+      .attr('visibility','hidden');
+  d3.selectAll("*[class^='stacks-']")
+      .attr('opacity','0')
+      .attr('visibility','hidden');
+  //Find the arc of the centermost scatterplot and build a square.
+          d3.selectAll("*[class^='scatter']")
+          .selectAll(".block")
+          .select("path.background")
+          .attr("d");
+                                  
+  //Update all the scatter plots with a 'marker' attribute to select all identical nearest markers
+  var points = d3.selectAll(".point")
+                 .datum( function(d) {
+                     return d;
+                 })
+                 .attr( "marker", function(d) {
+                      return d.nearest_marker;
+                 });
+  //Update all stack intervals with a 'marker' attribute to select all identical nearest interval stacks
+  var stacks = d3.selectAll(".tile")
+                 .datum( function(d) {
+                     return d;
+                 })
+                 .attr( "marker", function(d) {
+                      return d.nearest_marker;
+                 });
+  d3.selectAll("*[marker^='marker--fake--trait']").attr('visibility', 'hidden');
 }
 
+const globalTrackGenerator = (ntraits, intertrack_distance=0.3, track_start=0.3, track_end=1.0) => {
+  let gband   = d3.scaleBand()
+                  .domain(seq(0,ntraits,1))
+                  .range([track_start, track_end])
+                  .paddingInner(intertrack_distance);
+  return(gband);
+};
 
+const stackTrackGenerator = (gband, trait_index, nmodels, intertrack_distance=0.01, stack_proportion=0.3) => {
+  const trait_start = gband(trait_index) + gband.bandwidth();
+  const trait_end = gband(trait_index+1);
+  let sband = d3.scaleBand()
+                .domain(seq(0, nmodels, 1))
+                .range([trait_start, trait_end])
+                .padding(intertrack_distance);
+  return(sband);
+};
 
-var generate_new_circos = function (container="#scatterChart", folder_prefix="", width="1024", height="1024", opacity=0.75, highlight_opacity=1.0, bubble_scale=15) {
+const reloadTrackConfigs = (linkage_groups, traits, models) => {
+  //Loop through the traits and generate scatter configs
+  var scatter_configs_json = Array(ntraits);
+  var stack_configs_json = Array(ntraits);
+  var line_configs_json = Array(ntraits);
+  var ntraits = traits.length;
+  var nmodels = models.length;
+  const trackBands = globalTrackGenerator(ntraits);
+  for( let i = 0; i < ntraits; i++ ) {
+      var trait = traits[i];
+      //Edit the scatter layout
+      var scatter_config_json = JSON.parse(JSON.stringify(gscatter_defaults)); //Deep copy
+      var bi = trackBands(i);
+      scatter_config_json.innerRadius     = bi;
+      scatter_config_json.outerRadius     = bi + trackBands.bandwidth();
+      scatter_config_json.max             = nmodels;
+      scatter_config_json.color           = gen_scatter_color;
+      scatter_config_json.size            = gen_scatter_size;
+      scatter_config_json.tooltipContent  = gen_scatter_tooltip;
+      scatter_config_json.trackLabelConf.label = circos_trait2traitname[trait];
+
+      //Generate the axes
+      axis_template                    = scatter_config_json.axes[0];
+      scatter_config_json.axes         = Array(nmodels);
+      for( let j = 0; j < nmodels; j++ ) {
+          scatter_config_json.axes[j]                       = JSON.parse(JSON.stringify(axis_template));
+          scatter_config_json.axes[j].position              = j+1;
+          scatter_config_json.axes[j].color                 = axesColors((j+1)/nmodels);
+          scatter_config_json.axes[j].axisLabelConf.label   = models[j];
+      }
+      scatter_config_json.backgrounds[0].start    = 0;
+      scatter_config_json.backgrounds[0].end      = nmodels;
+      scatter_config_json.backgrounds[0].color    = d3.color("gray45");
+      scatter_config_json.backgrounds[0].opacity  = 1;
+      scatter_configs_json[i] = scatter_config_json;
+      //Edit the stack layout
+      var stackBands = stackTrackGenerator(trackBands, i, nmodels);
+      var stack_configs_inner_json = Array(nmodels);
+      for( let j = 0; j < nmodels; j++ ) {
+          stack_config_json = JSON.parse(JSON.stringify(gstack_defaults));
+          stack_config_json.innerRadius  = stackBands(j);
+          stack_config_json.outerRadius  = stackBands(j) + stackBands.bandwidth();
+          stack_config_json.backgrounds[0].start = 0;
+          stack_config_json.backgrounds[0].color = d3.color("gray22");
+          stack_config_json.backgrounds[0].opacity = 1;
+          stack_config_json.color = gen_scatter_color;
+          stack_config_json.tooltipContent = gen_stack_tooltip;
+          stack_configs_inner_json[j] = stack_config_json;
+      }
+      stack_configs_json[i] = stack_configs_inner_json;
+  
+      //LOD Line Configurations
+      line_config_json = JSON.parse(JSON.stringify(gline_defaults));
+      line_config_json.innerRadius  = bi;
+      line_config_json.outerRadius  = bi + trackBands.bandwidth();
+      line_config_json.color = "white";
+      line_config_json.backgrounds[0].color = d3.color("gray45");
+      line_configs_json[i] = line_config_json;
+  }
+  return( { scatters: scatter_configs_json,
+            stacks: stack_configs_json,
+            lods: line_configs_json } );
+};
+
+const generateNameMaps = (tconfig) => {
+  for( i = 0; i < tconfig.length; i++ ) {
+    var trait = tconfig[i].trait;
+    var model = tconfig[i].model;
+    if(!(trait in circos_trait2traitname)) {
+        circos_trait2traitname[trait] = tconfig[i].label;
+    }
+    if(!(trait in circos_trait2traitshort)) {
+        circos_trait2traitshort[trait] = tconfig[i].label_short;
+    }
+    if(!(model in circos_model2modelname)) {
+        circos_model2modelname[model] = tconfig[i].model_label;
+    }
+  }
+}
+
+const refresh = (linkage_groups, qtls, traits, models) => {
+  configs = reloadTrackConfigs(linkage_groups,traits,models);
+  drawCircos(linkage_groups, qtls, traits, models, configs);
+}
+
+const inject_fake_qtls = (layout, linkage_groups, traits, models, qtls) => {
+    const fake_qtls = [];
+    if( 'trackLabelBlockId' in layout ) {
+        var trackLabelBlockId = layout.trackLabelBlockId;
+    } else {
+        var trackLabelBlockId = "";
+    }
+    linkage_groups.forEach( lg => {
+        if( lg !== trackLabelBlockId ) { //Don't inject data on the label track -- just want the text to render
+            traits.forEach( t => {
+                models.forEach( m => {
+                    fake_qtls.push( {
+                        method: "fakeqtl",
+                        chr: lg.replace( /(vm)(\d+)$/, '$2' ),
+                        trait: t,
+                        model:  m,
+                        position: -1,
+                        position_consensus: -1,
+                        chr2: undefined,
+                        position2: undefined,
+                        nearest_marker: "marker--fake--trait--" + t,
+                        qtl_lod: 0,
+                        qtl_pvalue: 0,
+                        marker_variance: 0,
+                        model_variance: 0,
+                        interval: 0,
+                        class: "" 
+                    } );
+                } );
+            } );
+        }
+    } );
+    fake_qtls.push(...qtls);
+    return(fake_qtls);
+}
+
+const loadStaticConfigurations = (error, data) => {
+  //Copy the loaded static configuration to globals
+  gkaryotypes           = data[0];
+  glayout               = data[1];
+  gcircos_trait_config  = data[2];
+  gqtls                 = data[3];
+  glods                 = data[4];
+  gscatter_defaults     = data[5];
+  gstack_defaults       = data[6];
+  gline_defaults        = data[7];
+  
+  var linkage_groups    = gkaryotypes.map(k => k.id);
+  var traits            = [... new Set(gcircos_trait_config.map(r => r.trait))].sort();
+  var models            = [... new Set(gcircos_trait_config.map(r => r.model))].sort();
+
+  const qtls_with_fake = inject_fake_qtls(glayout, linkage_groups, traits, models, gqtls);
+  
+  generateNameMaps(gcircos_trait_config);
+  refresh(linkage_groups, qtls_with_fake, traits, models);
+};
+
+const setup = () => {
+  d3.queue()
+  .defer(d3.json, 'configs/circos/karyotype.json')
+  .defer(d3.json, 'configs/circos/layout.default.json')
+  .defer(d3.csv,  'configs/model-traits.cfg.csv')
+  .defer(d3.csv,  'configs/circos/qtl_collated.consensus.csv')
+  .defer(d3.json, 'configs/circos/lod_profiles.json')
+  .defer(d3.json, 'configs/circos/scatter.default.json')
+  .defer(d3.json, 'configs/circos/stack.default.json')
+  .defer(d3.json, 'configs/circos/line.default.json')
+  .awaitAll(loadStaticConfigurations);
+};
+  
+const generate_new_circos = (container="#scatterChart", width="1024", height="1024", opacity=0.75, highlight_opacity=1.0, bubble_scale=15) => {
     circosScatter = new Circos({
         container: container,
         width: width,
         height: height 
     });
 
-    gfolder_prefix                = folder_prefix
     qtl_bubble_opacity            = opacity;
     qtl_bubble_highlight_opacity  = highlight_opacity;
     qtl_bubble_scale_factor       = bubble_scale;
-
-    d3.queue()
-    .defer(d3.json, folder_prefix+'karyotype.json')
-    .defer(d3.json, folder_prefix+'configs/circos/layout.json')
-    .defer(d3.json, folder_prefix+'configs/circos/all_traits.json')
-    .defer(d3.json, folder_prefix+'configs/circos/all_lods.json')
-    .defer(d3.json, folder_prefix+'configs/circos/scatter.configs.json')
-    .defer(d3.json, folder_prefix+'configs/circos/stack.configs.json')
-    .defer(d3.json, folder_prefix+'configs/circos/line.configs.json')
-    .defer(d3.csv,  folder_prefix+'configs/model-traits.cfg.csv')
-    .await(drawCircos);
+    
+    setup();
 }

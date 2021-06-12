@@ -5,14 +5,15 @@
   "main": "drawcircos.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-	"start": "./node_modules/http-server/bin/http-server -a localhost -p 8080 -c-1",
-	"launch": "open http://localhost:8080/drawCircos.html"
+    "start": "./node_modules/http-server/bin/http-server -a 0.0.0.0 -p 8080 -c-1",
+    "launch": "open http://localhost:8080/drawCircos.html"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "circos": "^2.1.0",
-	"http-server": "^0.12.3",
-    "material-design-lite": "^1.3.0"
+    "circos": "github:bliptrip/circosJS",
+    "http-server": "^0.12.3",
+    "material-design-lite": "^1.3.0",
+    "webpack": "^5.38.1"
   }
 }
