@@ -202,9 +202,8 @@ const gen_stack_tooltip = function(d) {
     return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+circos_model2modelname[d.model]+"<br />Start-End: "+start.toString()+"-"+end.toString()+"cM<br />Range: "+range.toString()+"cM");
 }
 
-const drawCircos = (linkage_groups, qtls, traits, models, track_configs) => {
-  //var relevant_karyotypes = gkaryotypes.filter( k => (linkage_groups.includes(k.id)) );
-  var relevant_karyotypes = linkage_groups.map( lg => (gkaryotypes.find( k => (k.id == lg))) );
+const drawCircos = (karyotypes, linkage_groups, qtls, traits, models, track_configs) => {
+  var relevant_karyotypes = linkage_groups.map( lg => (karyotypes.find( k => (k.id == lg))) );
   circosScatter
     .layout(
         relevant_karyotypes,
@@ -299,7 +298,7 @@ const reloadTrackConfigs = (linkage_groups, traits, models, stack_proportion=0.3
       scatter_config_json.trackLabelConf.label = circos_trait2traitname[trait];
 
       //Generate the axes
-      var axis_template                    = scatter_config_json.axes[0];
+      var axis_template                = scatter_config_json.axes[0];
       scatter_config_json.axes         = Array(nmodels);
       for( let j = 0; j < nmodels; j++ ) {
           scatter_config_json.axes[j]                       = JSON.parse(JSON.stringify(axis_template));
@@ -357,9 +356,9 @@ const generateNameMaps = (tconfig) => {
   }
 }
 
-const refresh = (linkage_groups, qtls, traits, models) => {
+const refresh = (karyotypes, linkage_groups, qtls, traits, models) => {
   gconfigs = reloadTrackConfigs(linkage_groups,traits,models);
-  drawCircos(linkage_groups, qtls, traits, models, gconfigs);
+  drawCircos(karyotypes, linkage_groups, qtls, traits, models, gconfigs);
 }
 
 const inject_fake_qtls = (layout, linkage_groups, traits, models, qtls) => {
@@ -398,7 +397,7 @@ const inject_fake_qtls = (layout, linkage_groups, traits, models, qtls) => {
 }
 
 
-const generate_new_circos = (container="#scatterChart", width="1024", height="1024", opacity=0.75, highlight_opacity=1.0, bubble_scale=15) => {
+const generate_new_circos = (container="#scatterChart", width="2048", height="2048", opacity=0.75, highlight_opacity=1.0, bubble_scale=15) => {
     if( circosScatter !== undefined ) {
         circosScatter.detach();
         delete window.circosScatter;
@@ -424,6 +423,7 @@ export default function View() {
     const traits                      = useSelector(selectList('traits'));
     const [init, setInit]             = useState(false);
     const [postInit, setPostInit]     = useState(false);
+    const [trackLabelProportion, setTrackLabelProportion] = useState(0.2);
 
     const generateMethodConsensus = () => {
         var consensus = qtlConsensus ? "consensus" : "normal";
@@ -458,7 +458,7 @@ export default function View() {
         generateNameMaps(gcircos_trait_config);
     };
 
-    const redraw = (lgLabelSector=undefined) => {
+    const redraw = (karyotypes, lgLabelSector=undefined) => {
         var linkage_groups    = linkageGroups
                                     .filter(k => k.enabled)
                                     .map(k => k.id);
@@ -472,7 +472,7 @@ export default function View() {
                                     .filter(m => m.enabled)
                                     .map(m => m.id);
         generate_new_circos();
-        refresh(linkage_groups, gqtls, traits_enabled, models_enabled);
+        refresh(karyotypes, linkage_groups, gqtls, traits_enabled, models_enabled);
         change_scan_type(generateMethodConsensus());
     };
 
@@ -504,32 +504,22 @@ export default function View() {
 
     useEffect(() => {
         if( postInit === true ) {
-            var labelSector = undefined;
+            var labelSector      = undefined;
+            var linkage_groups   = linkageGroups.filter(k => k.enabled).map(k => k.id);
+            var karyotypes       = JSON.parse(JSON.stringify(gkaryotypes.filter(k => linkage_groups.includes(k.id))));
             if( displayTrackLabels ) {
                 labelSector = glayout['trackLabelBlockId']
-                gkaryotypes.push(
+                karyotypes.push(
                 {
                     "id": labelSector,
                     "label": "", //Must be blank
                     "color": "rgb(255,255,255)",
-                    "len": 230000
+                    "len": Math.round((trackLabelProportion/(1-trackLabelProportion)) * karyotypes.reduce((a,k) => a + k.len, 0))
                 }); //Inject a sector to show labels
-            } else {
-                gkaryotypes = gkaryotypes.filter(k => (k.id !== labelSector));
             }
-            redraw(labelSector);
+            redraw(karyotypes, labelSector);
         }
-    }, [displayTrackLabels]);
-
-    useEffect(() => {
-        if( postInit === true ) {
-            var labelSector = undefined;
-            if( displayTrackLabels ) {
-                labelSector = glayout['trackLabelBlockId']
-            }
-            redraw(labelSector);
-        }
-    }, [postInit, linkageGroups, traits, models]);
+    }, [postInit, displayTrackLabels, trackLabelProportion, linkageGroups, traits, models]);
 
 
     if( init === false ) {
