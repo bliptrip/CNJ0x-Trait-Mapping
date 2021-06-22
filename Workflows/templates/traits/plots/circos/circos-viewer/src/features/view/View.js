@@ -96,9 +96,9 @@ const inject_scatters = (linkage_groups, qtls, traits, trait_idx, models, config
                                 .filter( d => ((d.method === method) || (d.method === "fakeqtl")) )
                                 .map( d => ({   ...d,
                                                 block_id: "vm"+d.chr,
-                                                color: blipColors(((trait_idx * models.length) + models.indexOf(d.model))/(traits.length * models.length)),
+                                                color: blipColors((((trait_idx+1) * models.length) + models.indexOf(d.model))/(1.2*(traits.length * models.length))),
                                                 position: +(consensus === "consensus" ? d.position_consensus : d.position) * 1000,
-                                                value: models.indexOf(d.model),
+                                                value: models.indexOf(d.model)+1,
                                                 size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
                                                 lod: +d.qtl_lod,
                                                 pval: +d.qtl_pvalue,
@@ -118,7 +118,7 @@ const inject_stacks = (linkage_groups, qtls, traits, trait_idx, models, config, 
                                     .filter( d => ((d.method === "scanone") || (d.method === "fakeqtl")) )
                                     .map( d => ({ ...d,
                                                     block_id: "vm" + d.chr,
-                                                    color: blipColors(((trait_idx * models.length) + models.indexOf(d.model))/(traits.length * models.length)),
+                                                    color: blipColors((((trait_idx+1) * models.length) + models.indexOf(d.model))/(1.2*(traits.length * models.length))),
                                                     start: (+(consensus === "consensus" ? d.position_consensus : d.position) - (+d.interval/2))*1000,
                                                     end: (+(consensus === "consensus" ? d.position_consensus : d.position) + (+d.interval/2))*1000
                                                 }))
@@ -203,7 +203,8 @@ const gen_stack_tooltip = function(d) {
 }
 
 const drawCircos = (linkage_groups, qtls, traits, models, track_configs) => {
-  var relevant_karyotypes = gkaryotypes.filter( k => (linkage_groups.includes(k.id)) );
+  //var relevant_karyotypes = gkaryotypes.filter( k => (linkage_groups.includes(k.id)) );
+  var relevant_karyotypes = linkage_groups.map( lg => (gkaryotypes.find( k => (k.id == lg))) );
   circosScatter
     .layout(
         relevant_karyotypes,
@@ -255,25 +256,28 @@ const drawCircos = (linkage_groups, qtls, traits, models, track_configs) => {
   d3.selectAll("*[marker^='marker--fake--trait']").attr('visibility', 'hidden');
 }
 
-const globalTrackGenerator = (ntraits, intertrack_distance=0.3, track_start=0.3, track_end=1.0) => {
-  let gband   = d3.scaleBand()
-                  .domain(seq(0,ntraits,1))
-                  .range([track_start, track_end])
-                  .paddingInner(intertrack_distance);
-  return(gband);
+const globalTrackGenerator = (ntraits, track_start=0.3, track_end=1.0) => {
+    let gband   = d3.scaleBand()
+        .domain(seq(0,ntraits-1,1))
+        .range([track_start, track_end])
+        .padding(0.0)
+        .align(0.0); /* Align to start */
+    return(gband);
 };
 
-const stackTrackGenerator = (gband, trait_index, nmodels, intertrack_distance=0.01, stack_proportion=0.3) => {
-  const trait_start = gband(trait_index) + gband.bandwidth();
-  const trait_end = gband(trait_index+1);
+const stackTrackGenerator = (gband, trait_index, nmodels, intertrack_distance=0.3, stack_proportion=0.3) => {
+  const trait_start = gband(trait_index) + (1.0-stack_proportion)*gband.step();
+  const trait_end = gband(trait_index) + gband.step();
   let sband = d3.scaleBand()
-                .domain(seq(0, nmodels, 1))
+                .domain(seq(0, nmodels-1, 1))
                 .range([trait_start, trait_end])
-                .padding(intertrack_distance);
+                .paddingOuter(0.5)
+                .paddingInner(intertrack_distance)
+                .align(0.5);
   return(sband);
 };
 
-const reloadTrackConfigs = (linkage_groups, traits, models) => {
+const reloadTrackConfigs = (linkage_groups, traits, models, stack_proportion=0.3, intertrack_distance=0.1) => {
   //Loop through the traits and generate scatter configs
   var ntraits = traits.length;
   var scatter_configs_json = Array(ntraits);
@@ -287,8 +291,8 @@ const reloadTrackConfigs = (linkage_groups, traits, models) => {
       var scatter_config_json = JSON.parse(JSON.stringify(gscatter_defaults)); //Deep copy
       var bi = trackBands(i);
       scatter_config_json.innerRadius     = bi;
-      scatter_config_json.outerRadius     = bi + trackBands.bandwidth();
-      scatter_config_json.max             = nmodels;
+      scatter_config_json.outerRadius     = bi + (1.0-stack_proportion)*trackBands.step();
+      scatter_config_json.max             = nmodels+1;
       scatter_config_json.color           = gen_scatter_color;
       scatter_config_json.size            = gen_scatter_size;
       scatter_config_json.tooltipContent  = gen_scatter_tooltip;
@@ -300,11 +304,11 @@ const reloadTrackConfigs = (linkage_groups, traits, models) => {
       for( let j = 0; j < nmodels; j++ ) {
           scatter_config_json.axes[j]                       = JSON.parse(JSON.stringify(axis_template));
           scatter_config_json.axes[j].position              = j+1;
-          scatter_config_json.axes[j].color                 = axesColors((j+1)/nmodels);
+          scatter_config_json.axes[j].color                 = axesColors(j/(1.2*nmodels));
           scatter_config_json.axes[j].axisLabelConf.label   = models[j];
       }
       scatter_config_json.backgrounds[0].start    = 0;
-      scatter_config_json.backgrounds[0].end      = nmodels;
+      scatter_config_json.backgrounds[0].end      = nmodels+1;
       scatter_config_json.backgrounds[0].color    = d3.color("gray45");
       scatter_config_json.backgrounds[0].opacity  = 1;
       scatter_configs_json[i] = scatter_config_json;
@@ -454,6 +458,24 @@ export default function View() {
         generateNameMaps(gcircos_trait_config);
     };
 
+    const redraw = (lgLabelSector=undefined) => {
+        var linkage_groups    = linkageGroups
+                                    .filter(k => k.enabled)
+                                    .map(k => k.id);
+        if( lgLabelSector !== undefined ) {
+            linkage_groups.push(lgLabelSector);
+        }
+        var traits_enabled    = traits
+                                    .filter(t => t.enabled)
+                                    .map(t => t.id);
+        var models_enabled    = models
+                                    .filter(m => m.enabled)
+                                    .map(m => m.id);
+        generate_new_circos();
+        refresh(linkage_groups, gqtls, traits_enabled, models_enabled);
+        change_scan_type(generateMethodConsensus());
+    };
+
     useEffect(() => {
         /* This is where I should load static configuration */
         /*
@@ -482,17 +504,9 @@ export default function View() {
 
     useEffect(() => {
         if( postInit === true ) {
-            var labelSector = glayout['trackLabelBlockId']
-            var linkage_groups    = linkageGroups
-                                        .filter(k => k.enabled)
-                                        .map(k => k.id);
-            var traits_enabled    = traits
-                                        .filter(t => t.enabled)
-                                        .map(t => t.id);
-            var models_enabled    = models
-                                        .filter(m => m.enabled)
-                                        .map(m => m.id);
+            var labelSector = undefined;
             if( displayTrackLabels ) {
+                labelSector = glayout['trackLabelBlockId']
                 gkaryotypes.push(
                 {
                     "id": labelSector,
@@ -500,15 +514,22 @@ export default function View() {
                     "color": "rgb(255,255,255)",
                     "len": 230000
                 }); //Inject a sector to show labels
-                linkage_groups.push(labelSector);
             } else {
                 gkaryotypes = gkaryotypes.filter(k => (k.id !== labelSector));
             }
-            generate_new_circos();
-            refresh(linkage_groups, gqtls, traits_enabled, models_enabled);
-            change_scan_type(generateMethodConsensus());
+            redraw(labelSector);
         }
-    }, [postInit, displayTrackLabels, linkageGroups, traits, models]);
+    }, [displayTrackLabels]);
+
+    useEffect(() => {
+        if( postInit === true ) {
+            var labelSector = undefined;
+            if( displayTrackLabels ) {
+                labelSector = glayout['trackLabelBlockId']
+            }
+            redraw(labelSector);
+        }
+    }, [postInit, linkageGroups, traits, models]);
 
 
     if( init === false ) {
