@@ -1,5 +1,9 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createAction, createSlice } from '@reduxjs/toolkit';
+
+export const MAX_QTL_MODEL_COUNT = 10;
+
 const initialState = {
+    qtlModelCount: MAX_QTL_MODEL_COUNT,
     qtlConsensus: false,
     qtlMethod: "scanone",
     displayTrackLabels: false,
@@ -13,6 +17,9 @@ export const viewControllerSlice = createSlice({
     initialState,
     // The `reducers` field lets us define reducers and generate associated actions
     reducers: {
+        setQTLModelCount: (state, action) => {
+            state.qtlModelCount = action.payload;
+        },
         setQTLConsensus: (state, action) => {
             state.qtlConsensus = action.payload;
         },
@@ -36,13 +43,14 @@ export const viewControllerSlice = createSlice({
 });
 
 /* Action creators -- wrapping fundamental list elements */
-const { setQTLConsensus, 
+const { setQTLModelCount,
+        setQTLConsensus, 
         setQTLMethod, 
         setListLL, 
         setListItemCheckedLL, 
         setDisplayTrackLabels } = viewControllerSlice.actions;
 
-export {setQTLConsensus, setQTLMethod, setDisplayTrackLabels};
+export {setQTLConsensus, setQTLModelCount, setQTLMethod, setDisplayTrackLabels};
 
 export const setList = (name) => (list) => {var payload = { list: list,
                                                             name: name };
@@ -56,6 +64,7 @@ export const setListItemChecked = (name,id) => (payload) => {payload.name   = na
 // the state. Selectors can also be defined inline where they're used instead of
 // in the slice file. For example: `useSelector((state: RootState) => state.counter.value)`
 export const selectDisplayTrackLabels = (state) => state.viewController.displayTrackLabels;
+export const selectQTLModelCount = (state) => state.viewController.qtlModelCount;
 export const selectQTLConsensus = (state) => state.viewController.qtlConsensus;
 export const selectQTLMethod = (state) => state.viewController.qtlMethod;
 export const selectList = (name) => (state) => state.viewController[name];

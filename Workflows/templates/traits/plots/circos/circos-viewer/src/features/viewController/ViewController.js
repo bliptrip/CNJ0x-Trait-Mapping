@@ -4,13 +4,16 @@ import { useDrag, useDrop } from 'react-dnd';
 import {selectList,
         selectListItem,
         selectDisplayTrackLabels,
+        selectQTLModelCount,
         selectQTLConsensus,
         selectQTLMethod,
+        setQTLModelCount,
         setQTLConsensus,
         setQTLMethod,
         setList,
         setListItemChecked,
-        setDisplayTrackLabels
+        setDisplayTrackLabels,
+        MAX_QTL_MODEL_COUNT
 } from './viewControllerSlice';
 //import styles from './ViewController.module.css';
 import update from 'immutability-helper';
@@ -21,16 +24,20 @@ import ButtonGroup from '@material-ui/core/ButtonGroup';
 import Checkbox from '@material-ui/core/Checkbox';
 import Divider from '@material-ui/core/Divider';
 import FormGroup from '@material-ui/core/FormGroup';
+import Grid from '@material-ui/core/Grid';
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormControl from '@material-ui/core/FormControl';
+import Input from '@material-ui/core/Input';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import Slider from '@material-ui/core/Slider';
 import Switch from '@material-ui/core/Switch';
 import Tooltip from '@material-ui/core/Tooltip';
+import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
 
@@ -44,10 +51,96 @@ const ItemTypes = {
 };
 
 const useStyles = makeStyles((theme) => ({
+    input: {
+        width: 50,
+    },
     button: {
         margin: theme.spacing(0.5),
     },
 }));
+
+const QTLModelCountSelector = () => {
+    const classes             = useStyles();
+    const dispatch            = useDispatch();
+    const qtlCount            = useSelector(selectQTLModelCount);
+    const [value, setValue]   = useState(qtlCount);
+
+    const handleSliderChange = (event, newValue) => {
+        setValue(newValue);
+    };
+
+    const handleInputChange = (event) => {
+        setValue(event.target.value === '' ? '' : Number(event.target.value));
+    };
+
+    const handleSubmit = (event) => {
+        dispatch(setQTLModelCount(value));
+    }
+
+    const handleBlur = () => {
+        if (value < 1) {
+            setValue(0);
+        } else if (value > MAX_QTL_MODEL_COUNT) {
+            setValue(MAX_QTL_MODEL_COUNT);
+        }
+    };
+
+    return (
+        <React.Fragment>
+            <ListItem>
+                <Tooltip title="Maximum number of QTLs to show per model-trait, sorted by percent variance explained." arrow>
+                    <Typography id="qtl-count-slider" gutterBottom>
+                        Max Number QTLs
+                    </Typography>
+                </Tooltip>
+            </ListItem>
+            <ListItem>
+                <Grid container spacing={1} justifyContent="space-between" alignItems="center">
+                    <Grid item>
+                        <Tooltip title="Submit QTL Model Count" arrow>
+                            <Button
+                                variant="contained"
+                                color="primary"
+                                className={classes.button}
+                                startIcon={<PlayForWorkIcon />}
+                                onClick={handleSubmit}
+                            />
+                        </Tooltip>
+                    </Grid>
+                    <Grid item xs>
+                        <Slider
+                            value={typeof value === 'number' ? value : MAX_QTL_MODEL_COUNT}
+                            onChange={handleSliderChange}
+                            aria-labelledby="qtl-count-slider"
+                            valueLabelDisplay="auto"
+                            step={1}
+                            marks
+                            min={1}
+                            max={MAX_QTL_MODEL_COUNT}
+                        />
+                    </Grid>
+                    <Grid item>
+                        <Input
+                        className={classes.input}
+                        value={value}
+                        margin="dense"
+                        onChange={handleInputChange}
+                        onBlur={handleBlur}
+                        inputProps={{
+                            step: 1,
+                            min: 1,
+                            max: MAX_QTL_MODEL_COUNT,
+                            type: 'number',
+                            'aria-labelledby': 'qtl-count-slider',
+                        }}
+                        />
+                    </Grid>
+                </Grid>
+            </ListItem>
+        </React.Fragment>
+    );
+};
+
 
 const QTLMethodSelector = () => {
     const dispatch      = useDispatch();
@@ -338,6 +431,8 @@ const LabelTrackSwitch = () => {
 const ViewController = () => {
     return(
         <List>
+            <QTLModelCountSelector />
+            <Divider />
             <LabelTrackSwitch />
             <Divider />
             <QTLConsensusSwitch />
