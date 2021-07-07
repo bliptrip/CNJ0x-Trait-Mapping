@@ -1,6 +1,5 @@
 /* React and React-Redux libraries */
-import React, {useState, useEffect} from 'react';
-import Plot from 'react-plotly.js';
+import React, {useContext, useState, useEffect} from 'react';
 
 /* General support libraries */
 import clsx from 'clsx';
@@ -25,8 +24,16 @@ import ChevronRightIcon from '@material-ui/icons/ChevronRight';
 /* Application-Specific Features */
 import ViewController from './features/viewController/ViewController';
 import View from './features/view/View';
+import CorrPlot from './features/corrPlot/CorrPlot';
 import EffectPlot from './features/effectPlot/EffectPlot';
 import LodProfilePlot from './features/lodProfilePlot/LodProfilePlot';
+import BlupTable from './features/blupTable/BlupTable';
+import BlupTableGrid from './features/blupTableGrid/BlupTableGrid';
+
+import * as d3 from 'd3';
+import {DataFrame} from 'dataframe-js';
+
+import blupContext from './app/blupContext';
 
 import './App.css';
 
@@ -37,17 +44,18 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
   },
   appBar: {
-    position: "relative",
-    left: 30,
-    top: 30,
-    backgroundColor: "#FFFFFFC0",
     borderRadius: 10,
+    backgroundColor: "#EEEFFFD0",
     transition: theme.transitions.create(['margin', 'width'], {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
     }),
   },
   menuButton: {
+    position: "relative",
+    backgroundColor: "#FFFFFFC0",
+    left: 13,
+    top: 13,
     marginRight: theme.spacing(2),
     zIndex: 2000
   },
@@ -160,12 +168,18 @@ function PersistentDrawerLeft() {
                 direction="column"
                 justify="flex-start"
                 alignItems="center">
-                <Grid item xs={6}>
+                <Grid item xs={12}>
                     <EffectPlot />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12}>
                     <LodProfilePlot />
                 </Grid>
+                <Grid item xs={12}>
+                    <CorrPlot />
+                </Grid>
+            </Grid>
+            <Grid item xs={12}>
+                <BlupTableGrid />
             </Grid>
         </Grid>
       </main>
@@ -174,9 +188,25 @@ function PersistentDrawerLeft() {
 }
 
 function App() {
+    const [init, setInit]     = useState(false);
+    const [blups, setBlups]   = useState([]);
+
+    useEffect( () => {
+        d3.json('configs/blups_collated.long.json')
+        .then( d => {
+            setBlups(d);
+        });
+    }, [init]);
+
+    if( init === false ) {
+        setInit(true);
+    }
+
     return (
         <div className="App">
-            <PersistentDrawerLeft />
+            <blupContext.Provider value={blups}>
+                <PersistentDrawerLeft />
+            </blupContext.Provider>
         </div>
     );
 }

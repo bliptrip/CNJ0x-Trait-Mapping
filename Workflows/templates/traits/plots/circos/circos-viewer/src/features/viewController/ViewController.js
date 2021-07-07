@@ -15,6 +15,7 @@ import {selectList,
         setDisplayTrackLabels,
         MAX_QTL_MODEL_COUNT
 } from './viewControllerSlice';
+import {clearState} from '../../app/localStorage';
 //import styles from './ViewController.module.css';
 import update from 'immutability-helper';
 
@@ -34,6 +35,7 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import Modal from '@material-ui/core/Modal';
 import Slider from '@material-ui/core/Slider';
 import Switch from '@material-ui/core/Switch';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -45,6 +47,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import AllInclusiveIcon from '@material-ui/icons/AllInclusive';
 import ClearIcon from '@material-ui/icons/Clear';
 import PlayForWorkIcon from '@material-ui/icons/PlayForWork';
+import RotateLeftIcon from '@material-ui/icons/RotateLeft';
 
 const ItemTypes = {
     VIEW_ELEMENT: 'ViewElement',
@@ -57,7 +60,60 @@ const useStyles = makeStyles((theme) => ({
     button: {
         margin: theme.spacing(0.5),
     },
+    paper: {
+        position: 'absolute',
+        top: "50%",
+        left: "50%",
+        transform: 'translate("-50%", "-50%")',
+        backgroundColor: theme.palette.background.paper,
+        border: '2px solid #000',
+        boxShadow: theme.shadows[5],
+        padding: theme.spacing(2, 4, 3),
+    },
 }));
+
+const ConfigurationResetor = () => {
+    const classes             = useStyles();
+    const [open, setOpen]     = useState(false);
+
+    const handleReset = (event) => {
+        clearState();
+        setOpen(true);
+    }
+
+    const handleClose = (event) => {
+        setOpen(false);
+    }
+
+    return (
+        <React.Fragment>
+            <ListItem>
+                <Tooltip title="Reset Configuration State to Defaults" arrow>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        className={classes.button}
+                        startIcon={<RotateLeftIcon />}
+                        onClick={handleReset}
+                    >
+                            Reset State
+                    
+                    </Button>
+                </Tooltip>
+                <Modal
+                    open={open}
+                    onClose={handleClose}
+                    aria-labelledby="modal-reset"
+                    aria-describedby="modal-description"
+                >
+                    <div className={classes.paper}>
+                        Refresh browser to view changes.
+                    </div>
+                </Modal>
+            </ListItem>
+        </React.Fragment>
+    );
+};
 
 const QTLModelCountSelector = () => {
     const classes             = useStyles();
@@ -256,7 +312,7 @@ const ListViewController = ({listName, listType}) => {
             const disableSelectAll = (listItemsEnabledLength === listItemsLength);
             const disableSelectNone = (listItemsEnabledLength === 0);
             return(
-                <React.Fragment>
+                <div>
                     <Tooltip title="Select All" arrow>
                         <Button
                             variant="contained"
@@ -277,7 +333,7 @@ const ListViewController = ({listName, listType}) => {
                             onClick={selectNone}
                         />
                     </Tooltip>
-                </React.Fragment>
+                </div>
             );
         } else {
             return(<div></div>); 
@@ -431,6 +487,8 @@ const LabelTrackSwitch = () => {
 const ViewController = () => {
     return(
         <List>
+            <ConfigurationResetor />
+            <Divider />
             <QTLModelCountSelector />
             <Divider />
             <LabelTrackSwitch />

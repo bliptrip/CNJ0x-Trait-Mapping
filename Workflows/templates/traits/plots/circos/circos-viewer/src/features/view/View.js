@@ -7,8 +7,11 @@ import {selectQTLModelCount,
         selectDisplayTrackLabels,
         setList
 } from '../viewController/viewControllerSlice';
+import {selectTransform,
+        setTransform} from './viewSlice';
 import {setEffectPlotData} from '../effectPlot/effectPlotSlice';
 import {setLodProfilePlotData} from '../lodProfilePlot/lodProfilePlotSlice';
+import {setBlupTableGridFilters, setBlupTableGridData} from '../blupTableGrid/blupTableGridSlice';
 
 import * as d3 from 'd3';
 import DataFrame from 'dataframe-js';
@@ -96,9 +99,12 @@ export default function View() {
     const linkageGroups               = useSelector(selectList('linkageGroups'));
     const models                      = useSelector(selectList('models'));
     const traits                      = useSelector(selectList('traits'));
+    const transformAccessor           = useSelector(selectTransform);
     const [init, setInit]             = useState(false);
     const [postInit, setPostInit]     = useState(false);
     const [trackLabelProportion, setTrackLabelProportion] = useState(0.2);
+    var zoom;
+    var transform;
 
     const inject_scatters = (linkage_groups, qtls, traits, trait_idx, models, config, method, consensus) => {
         var trait = traits[trait_idx];
@@ -138,6 +144,8 @@ export default function View() {
                                                         end: (+(consensus === "consensus" ? d.position_consensus : d.position) + (+d.interval/2))*1000
                                                     }))
                                         .filter( d => (linkage_groups.includes(d.block_id)) );
+            stack_trait_data = stack_trait_data.sort( (a,b) => (b.marker_variance - a.marker_variance) )
+                                               .slice(0,qtlModelCount+linkage_groups.length); //Add one so that 'fake' qtls render
             if( stack_trait_data.length > 0 ) {
                 var trait_class = "stacks-"+method+"-"+consensus+"--"+model+"--"+trait;
                 circosScatter.stack(trait_class, stack_trait_data, config[i]);
@@ -208,7 +216,7 @@ export default function View() {
         var variance = Math.round(d.marker_variance, 1);
         var position = Math.round(d.position/1000.0, 1);
         return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+circos_model2modelname[d.model]+"<br />Pos: "+position.toString()+"cM<br />Var: "+variance.toString()+"%<br />"+d.nearest_marker);
-    }
+    };
 
     const gen_scatter_action = d => {
         const lodProfileData = { data: glods[d.trait][d.model][qtlMethod][d.block_id],
@@ -218,7 +226,8 @@ export default function View() {
                                  chr: d.chr };
         dispatch(setEffectPlotData(d));
         dispatch(setLodProfilePlotData(lodProfileData));
-    }
+        dispatch(setBlupTableGridFilters([{columnField: "trait", value: d.trait, operatorValue: "==="}]));
+    };
 
     const gen_stack_tooltip = function(d) {
         var start = Math.round(d.start/1000.0, 1);
@@ -228,64 +237,65 @@ export default function View() {
     }
 
     const drawCircos = (karyotypes, linkage_groups, qtls, traits, models, track_configs) => {
-    var relevant_karyotypes = linkage_groups.map( lg => (karyotypes.find( k => (k.id == lg))) );
-    circosScatter
-        .layout(
-            relevant_karyotypes,
-            glayout
-        );
-    for( var i = 0; i < traits.length; i++ ) {
-        inject_data(linkage_groups, qtls, traits, i, models, track_configs.scatters[i], track_configs.stacks[i], track_configs.lods[i]);
-    }
-    circosScatter.render();
-    var svg = d3.select(".svg-content-responsive");
-    /*svg.select("g.all").remove();*/
-    var gall=svg.select("g.all").remove();
-    svg.append("g")
-        .attr('class', 'top')
-        .append(() => gall.node()); //Move the 'all' group above the 'top' group -- top group is what d3-zoom operates on
-    d3.selectAll(".point")
-        .on('mouseover.highlight', highlight_markers)
-        .on('mouseout.highlight', unhighlight_markers);
-    d3.selectAll(".tile")
-        .on('mouseover.highlight', highlight_markers)
-        .on('mouseout.highlight', unhighlight_markers);
-    d3.selectAll("g[class='line']")
-        .on('click', hide_lod_profs);
-    d3.selectAll("*[class^='lines-']")
-        .attr('opacity','0.8')
-        .attr('visibility','hidden');
-    d3.selectAll("*[class^='scatters-']")
-        .attr('opacity','0')
-        .attr('visibility','hidden');
-    d3.selectAll("*[class^='stacks-']")
-        .attr('opacity','0')
-        .attr('visibility','hidden');
-    //Find the arc of the centermost scatterplot and build a square.
-    /*
+        var relevant_karyotypes = linkage_groups.map( lg => (karyotypes.find( k => (k.id == lg))) );
+        circosScatter
+            .layout(
+                relevant_karyotypes,
+                glayout
+            );
+        for( var i = 0; i < traits.length; i++ ) {
+            inject_data(linkage_groups, qtls, traits, i, models, track_configs.scatters[i], track_configs.stacks[i], track_configs.lods[i]);
+        }
+        circosScatter.render();
+        var svg = d3.select(".svg-content-responsive");
+        var gall=svg.select("g.all").remove();
+        svg.append("g")
+            .attr('class', 'top')
+            .append(() => gall.node()); //Move the 'all' group above the 'top' group -- top group is what d3-zoom operates on
+        var gtop = d3.select('g.top');
+        zoom.transform(gtop, transform);
+        d3.selectAll(".point")
+            .on('mouseover.highlight', highlight_markers)
+            .on('mouseout.highlight', unhighlight_markers);
+        d3.selectAll(".tile")
+            .on('mouseover.highlight', highlight_markers)
+            .on('mouseout.highlight', unhighlight_markers);
+        d3.selectAll("g[class='line']")
+            .on('click', hide_lod_profs);
+        d3.selectAll("*[class^='lines-']")
+            .attr('opacity','0.8')
+            .attr('visibility','hidden');
+        d3.selectAll("*[class^='scatters-']")
+            .attr('opacity','0')
+            .attr('visibility','hidden');
+        d3.selectAll("*[class^='stacks-']")
+            .attr('opacity','0')
+            .attr('visibility','hidden');
+        //Find the arc of the centermost scatterplot and build a square.
+        /*
             d3.selectAll("*[class^='scatter']")
             .selectAll(".block")
             .select("path.background")
             .attr("d");
-        */
-                                    
-    //Update all the scatter plots with a 'marker' attribute to select all identical nearest markers
-    var points = d3.selectAll(".point")
-                    .datum( function(d) {
-                        return d;
-                    })
-                    .attr( "marker", function(d) {
-                        return d.nearest_marker;
-                    });
-    //Update all stack intervals with a 'marker' attribute to select all identical nearest interval stacks
-    var stacks = d3.selectAll(".tile")
-                    .datum( function(d) {
-                        return d;
-                    })
-                    .attr( "marker", function(d) {
-                        return d.nearest_marker;
-                    });
-    d3.selectAll("*[marker^='marker--fake--trait']").attr('visibility', 'hidden');
+            */
+
+        //Update all the scatter plots with a 'marker' attribute to select all identical nearest markers
+        var points = d3.selectAll(".point")
+            .datum( function(d) {
+                return d;
+            })
+            .attr( "marker", function(d) {
+                return d.nearest_marker;
+            });
+        //Update all stack intervals with a 'marker' attribute to select all identical nearest interval stacks
+        var stacks = d3.selectAll(".tile")
+            .datum( function(d) {
+                return d;
+            })
+            .attr( "marker", function(d) {
+                return d.nearest_marker;
+            });
+        d3.selectAll("*[marker^='marker--fake--trait']").attr('visibility', 'hidden');
     }
 
     const globalTrackGenerator = (ntraits, track_start=0.3, track_end=1.0) => {
@@ -310,68 +320,68 @@ export default function View() {
     };
 
     const reloadTrackConfigs = (linkage_groups, traits, models, stack_proportion=0.3, intertrack_distance=0.1) => {
-    //Loop through the traits and generate scatter configs
-    var ntraits = traits.length;
-    var scatter_configs_json = Array(ntraits);
-    var stack_configs_json = Array(ntraits);
-    var line_configs_json = Array(ntraits);
-    var nmodels = models.length;
-    const trackBands = globalTrackGenerator(ntraits);
-    for( let i = 0; i < ntraits; i++ ) {
-        var trait = traits[i];
-        //Edit the scatter layout
-        var scatter_config_json = JSON.parse(JSON.stringify(gscatter_defaults)); //Deep copy
-        var bi = trackBands(i);
-        scatter_config_json.innerRadius     = bi;
-        scatter_config_json.outerRadius     = bi + (1.0-stack_proportion)*trackBands.step();
-        scatter_config_json.max             = nmodels+1;
-        scatter_config_json.color           = gen_scatter_color;
-        scatter_config_json.size            = gen_scatter_size;
-        scatter_config_json.tooltipContent  = gen_scatter_tooltip;
-        scatter_config_json.selectAction    = gen_scatter_action;
-        scatter_config_json.trackLabelConf.label = circos_trait2traitname[trait];
+        //Loop through the traits and generate scatter configs
+        var ntraits = traits.length;
+        var scatter_configs_json = Array(ntraits);
+        var stack_configs_json = Array(ntraits);
+        var line_configs_json = Array(ntraits);
+        var nmodels = models.length;
+        const trackBands = globalTrackGenerator(ntraits);
+        for( let i = 0; i < ntraits; i++ ) {
+            var trait = traits[i];
+            //Edit the scatter layout
+            var scatter_config_json = JSON.parse(JSON.stringify(gscatter_defaults)); //Deep copy
+            var bi = trackBands(i);
+            scatter_config_json.innerRadius     = bi;
+            scatter_config_json.outerRadius     = bi + (1.0-stack_proportion)*trackBands.step();
+            scatter_config_json.max             = nmodels+1;
+            scatter_config_json.color           = gen_scatter_color;
+            scatter_config_json.size            = gen_scatter_size;
+            scatter_config_json.tooltipContent  = gen_scatter_tooltip;
+            scatter_config_json.selectAction    = gen_scatter_action;
+            scatter_config_json.trackLabelConf.label = circos_trait2traitname[trait];
 
-        //Generate the axes
-        var axis_template                = scatter_config_json.axes[0];
-        scatter_config_json.axes         = Array(nmodels);
-        for( let j = 0; j < nmodels; j++ ) {
-            scatter_config_json.axes[j]                       = JSON.parse(JSON.stringify(axis_template));
-            scatter_config_json.axes[j].position              = j+1;
-            scatter_config_json.axes[j].color                 = axesColors(j/(1.2*nmodels));
-            scatter_config_json.axes[j].axisLabelConf.label   = models[j];
+            //Generate the axes
+            var axis_template                = scatter_config_json.axes[0];
+            scatter_config_json.axes         = Array(nmodels);
+            for( let j = 0; j < nmodels; j++ ) {
+                scatter_config_json.axes[j]                       = JSON.parse(JSON.stringify(axis_template));
+                scatter_config_json.axes[j].position              = j+1;
+                scatter_config_json.axes[j].color                 = axesColors(j/(1.2*nmodels));
+                scatter_config_json.axes[j].axisLabelConf.label   = models[j];
+            }
+            scatter_config_json.backgrounds[0].start    = 0;
+            scatter_config_json.backgrounds[0].end      = nmodels+1;
+            scatter_config_json.backgrounds[0].color    = d3.color("gray45");
+            scatter_config_json.backgrounds[0].opacity  = 1;
+            scatter_configs_json[i] = scatter_config_json;
+            //Edit the stack layout
+            var stackBands = stackTrackGenerator(trackBands, i, nmodels);
+            var stack_configs_inner_json = Array(nmodels);
+            for( let j = 0; j < nmodels; j++ ) {
+                var stack_config_json = JSON.parse(JSON.stringify(gstack_defaults));
+                stack_config_json.innerRadius  = stackBands(j);
+                stack_config_json.outerRadius  = stackBands(j) + stackBands.bandwidth();
+                stack_config_json.backgrounds[0].start = 0;
+                stack_config_json.backgrounds[0].color = d3.color("gray22");
+                stack_config_json.backgrounds[0].opacity = 1;
+                stack_config_json.color = gen_scatter_color;
+                stack_config_json.tooltipContent = gen_stack_tooltip;
+                stack_configs_inner_json[j] = stack_config_json;
+            }
+            stack_configs_json[i] = stack_configs_inner_json;
+
+            //LOD Line Configurations
+            var line_config_json = JSON.parse(JSON.stringify(gline_defaults));
+            line_config_json.innerRadius  = bi;
+            line_config_json.outerRadius  = bi + trackBands.bandwidth();
+            line_config_json.color = "white";
+            line_config_json.backgrounds[0].color = d3.color("gray45");
+            line_configs_json[i] = line_config_json;
         }
-        scatter_config_json.backgrounds[0].start    = 0;
-        scatter_config_json.backgrounds[0].end      = nmodels+1;
-        scatter_config_json.backgrounds[0].color    = d3.color("gray45");
-        scatter_config_json.backgrounds[0].opacity  = 1;
-        scatter_configs_json[i] = scatter_config_json;
-        //Edit the stack layout
-        var stackBands = stackTrackGenerator(trackBands, i, nmodels);
-        var stack_configs_inner_json = Array(nmodels);
-        for( let j = 0; j < nmodels; j++ ) {
-            var stack_config_json = JSON.parse(JSON.stringify(gstack_defaults));
-            stack_config_json.innerRadius  = stackBands(j);
-            stack_config_json.outerRadius  = stackBands(j) + stackBands.bandwidth();
-            stack_config_json.backgrounds[0].start = 0;
-            stack_config_json.backgrounds[0].color = d3.color("gray22");
-            stack_config_json.backgrounds[0].opacity = 1;
-            stack_config_json.color = gen_scatter_color;
-            stack_config_json.tooltipContent = gen_stack_tooltip;
-            stack_configs_inner_json[j] = stack_config_json;
-        }
-        stack_configs_json[i] = stack_configs_inner_json;
-    
-        //LOD Line Configurations
-        var line_config_json = JSON.parse(JSON.stringify(gline_defaults));
-        line_config_json.innerRadius  = bi;
-        line_config_json.outerRadius  = bi + trackBands.bandwidth();
-        line_config_json.color = "white";
-        line_config_json.backgrounds[0].color = d3.color("gray45");
-        line_configs_json[i] = line_config_json;
-    }
-    return( { scatters: scatter_configs_json,
-                stacks: stack_configs_json,
-                lods: line_configs_json } );
+        return( { scatters: scatter_configs_json,
+                  stacks: stack_configs_json,
+                  lods: line_configs_json } );
     };
 
     const generateNameMaps = (tconfig) => {
@@ -391,8 +401,8 @@ export default function View() {
     }
 
     const refresh = (karyotypes, linkage_groups, qtls, traits, models) => {
-    gconfigs = reloadTrackConfigs(linkage_groups,traits,models);
-    drawCircos(karyotypes, linkage_groups, qtls, traits, models, gconfigs);
+        gconfigs = reloadTrackConfigs(linkage_groups,traits,models);
+        drawCircos(karyotypes, linkage_groups, qtls, traits, models, gconfigs);
     }
 
     const inject_fake_qtls = (layout, linkage_groups, traits, models, qtls) => {
@@ -443,6 +453,9 @@ export default function View() {
             if( transform_str !== "" ) {
                 g.attr("transform", transform_str);
             }
+            dispatch(setTransform({ x: transform.x, 
+                                    y: transform.y, 
+                                    k: transform.k }));
         };
 
         if( circosScatter !== undefined ) {
@@ -454,12 +467,15 @@ export default function View() {
             width: width,
             height: height 
         });
-        //Detach top-level group (.all) and insert our own group, since we will be doing our own transformation on top of it
+        transform = d3.zoomIdentity.translate(transformAccessor.x, transformAccessor.y).scale(transformAccessor.k);
+        zoom = d3.zoom()
+                 .extent([[0,0],[width, height]])
+                 .scaleExtent([0.1,20])
+                 .on("zoom", zoomed);
+
         var svg = d3.select(".svg-content-responsive");
-        svg.call(  d3.zoom()
-                    .extent([[0,0],[width, height]])
-                    .scaleExtent([-10,20])
-                    .on("zoom", zoomed) );
+        svg.call( zoom )
+           .call( zoom.transform, transform );
 
         qtl_bubble_opacity            = opacity;
         qtl_bubble_highlight_opacity  = highlight_opacity;
@@ -576,6 +592,6 @@ export default function View() {
     }
 
     return (
-        <div id='scatterChart'></div>
+        <div id='scatterChart' style={{"background": "white", "border-width": "10px", "border-color": "black"}} ></div>
     );
 }

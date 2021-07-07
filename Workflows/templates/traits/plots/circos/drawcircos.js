@@ -427,3 +427,5 @@ const generate_new_circos = (container="#scatterChart", width="1024", height="10
     
     setup();
 }
+
+export default generate_new_circos;
