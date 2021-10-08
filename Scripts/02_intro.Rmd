@@ -1,0 +1,58 @@
+# Introduction {#intro}
+
+The American cranberry, _Vaccinium macrocarpon Ait._, is part of a rich and diverse genera with over 500 species adapted
+to live in marginal habitats.  Members of the genus Vaccinium are extremophiles in the plant kingdom, thriving in
+acidic, peaty bogs, on the rims of sulfur-belching volcanoes, and as epiphytes in the upper-story of forests
+[@VanderKloet1988;@VanderKloet2010].  As such, the development and advancement of Vaccinium member germplasm for
+commercial use offers a chance to expand agriculture beyond fast-dwindling arable land, offering opportunities to expand
+nutritional and genetic diversity to the human diet.
+
+Cranberry is one of only a few species in _Vaccinium_ of commercial importance, including blueberries and lingonberries
+[@Chandler1947;@Vorsa2019].  Despite its economic importance and nearly a century of breeding, domestication of most
+planted cultivars is limited to only one or two generations beyond wild germplasm, with only recent introduction of
+third-generation cultivars into cultivated marshes.  Limited breeding progress stems from sporadic funding, large
+planting space requirements, and long evaluation times of six to eight years after planting [@Vorsa2019].
+
+Advancement and cost-reduction in next generation sequencing (NGS) technologies and newer analytical tools have narrowed
+the molecular resource gap between major crops such as maize and minor crops such as cranberry
+[@Covarrubias-Pazaran2018].  As a consequence, the last seven years have shown incredible progress in cranberry
+molecular resource development and utilization, including: assembly of plastid and mitochondrial genomes
+[@Diaz-Garcia2019;@Fajardo2014;@Fajardo:2013cz], construction of a high quality genome (Diaz-Garcia genome), de novo
+sequencing of cranberry fruit transcriptome to elaborate flavonoid regulation and synthesis [@Sun2016], microsatellite
+and genotype by sequencing (GBS) based linkage map development as a foundation to better understand the genetic
+architecture of traits [@Covarrubias-Pazaran2016;@Daverdin2017;@Georgi2013;@Schlautman2015;@Schlautman2017], and pilot
+applications in association mapping and genomic selection [@Covarrubias-Pazaran2018]. 
+
+In addition to the above-mentioned cranberry molecular resource development and its applications, several QTL studies
+have been done on a variety of cranberry traits of interest.  Using previously characterized cranberry SCAR sequences,
+blueberry-derived microsatellites, and newly generated microsatellite markers designed around flavonoid biosynthesis
+pathway genes, necrophytic pathogen resistance, and conserved orthologous sequences (COS), Georgi et al. found evidence
+of several QTL in four related populations for field fruit-rot resistance (FFRR), titratable acidity (TA), fruit weight,
+and sound fruit yield (SFY) [@Georgi2013].  Later, Schlautman et al. constructed a high-density microsatellite linkage
+map in a Rutger’s elite breeding population, CNJ02-1, finding and documenting QTL for mean fruit weight (MFW), total
+yield (TY), and biennial bearing index (BBI) [@Schlautman2015].  Daverdin et al. generated high-density linkage maps in
+four diverse populations selected to demonstrate high levels of segregation for FFRR, finding 15 QTL across all
+populations for rot-resistance, while demonstrating that yield traits segregate independently of FFRR [@Daverdin2017]
+Diaz-Garcia et al. demonstrated the power of combining newer imaging technologies with novel image analysis techniques
+to rapidly generate fruit shape, size, and color descriptors, important proxies for fruit quality and yield, and found
+QTL for anthocyanin production, MFW, and shape descriptors important for sweetened dried cranberry (SDC) production
+[@Diaz-Garcia2018;@Diaz-Garcia2018a].
+
+The goal of this study was to conduct QTL analysis using traditional phenotyping techniques used by cranberry breeders
+since the beginning of domestication [@Vorsa2019;@Eck1931-1990;@Franklin1958].  Some of the traits used in the current
+study are relevant to current high-throughput phenomic tools used today, and some are unique traits traditionally
+collected by breeders to make selection decisions. Leveraging advanced genomic and phenomic tools will be needed to
+accelerate genetic gain in cranberries, but understanding which traditional traits are still useful and relevant in the
+modern context is an important priority in breeding programs.  Therefore, this study aims to not only discover new QTL
+based on traditional phenotyping methods, but to compare the results with previously QTL studies for
+agronomically-important traits based on more modern phenomic approaches.
+
+This process includes building support not only against previously found marker-trait associations, but also adding
+confidence to more modern, high-throughput phenotyping methods being adopted by the researchers and breeders.
+Traditionally, marker-trait associations derived from QTL or GWAS studies are validated using advanced molecular
+techniques such as genetic engineering approaches to compare knockout and knockdown mutant phenotypes.  However, without
+efficient transformation methods, lack of protocols to re-differentiate callus tissue in culture, and an absence of
+research on genetically malleable genotypes, these traditional marker-trait validation methods are nearly impossible to
+implement in cranberry.  As such, any additional trait-mapping study using cranberry populations can serve to filter out
+real trait-marker associations from false positives, building more success into any future applications of
+marker-assisted selection (MAS) to advance germplasm.  

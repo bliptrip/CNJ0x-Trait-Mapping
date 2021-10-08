@@ -1,0 +1,26 @@
+# Methods {#methods}
+
+## Plant Material and Traits Collected {-}
+
+From 2011 to 2014, cranberry uprights bearing fruit were delivered from samples taken at the New Jersey Agricultural
+Experiment Station (NJAES).  These samples were derived from two full-sib interrelated breeding populations, CNJ02
+($n=169$) and CNJ04 ($n=72$).  The CNJ02 population included progeny from a cross between maternal parent, CNJ97-105
+(_Mullica Queen_), and paternal parent, NJS98-23 (_Crimson Queen_); the smaller CNJ04 population included progeny from a
+reciprocal cross between CNJ97-105 (_Mullica Queen_) and _Stevens_.
+
+Cranberry traits have customarily been measured on a per-upright basis and the traits collected on CNJ02 and CNJ04
+represent a set of traits traditionally believed to be important to cranberries (Vorsa and Zalapa personal
+communication).  In this instance, the following traits were manually gathered per upright, 10 uprights per genotype:
+number of pedicels (NP), number of berries (NB), number of aborted flowers (NFA), total berry weight (TBM), upright
+length (UL), and evidence of rebud (RB).  Moreover, the following traits were collected on the largest fruit per
+upright: length (BL), width (BW), weight (BM), calyx diameter (CD), calyx lobe characteristics (CLC), shape
+characteristics (S), amount of fruit bloom or bloom rating (BR), and number of developed seeds (NS).  A summary of
+traits collected is displayed in Table 1.
+
+## Trait Evaluation and Transformation
+
+Categorical traits were transformed to numeric values to enable subsequent application to linear regression models.
+Shape-related traits were first converted to persistent topology values (PTV) in order to facilitate better comparison
+between genotypes 16,19.  In brief, shape templates presented in Figure 1 and Figure 2 were first converted to PTVs and
+then recorded shape traits were mapped to these template PTVs.  For all other categorical traits, numeric values were
+chosen such that larger values represented more desirable breeding attributes, as shown in Table 2.

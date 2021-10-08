@@ -1,0 +1,13 @@
+--- 
+title: "Quantitative Trait Loci for Yield, Shape, and Biennial Bearing Parameters in American Cranberry (_Vaccinium macrocarpon Ait._) using Conventional Phenotype Measurement Methods"
+author: "Andrew Maule"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+output: bookdown::html_document2
+documentclass: book
+bibliography: [book.bib] 
+biblio-style: apalike
+link-citations: yes
+github-repo: bliptrip/CNJ0x-Trait-Mapping
+description: "QTL mapping paper for cranberry upright phenotypic data taken from 2011-2014.  Uprights came from Rutgers University P.E. Marucci Center in Chatsworth, NJ, USA"
+---

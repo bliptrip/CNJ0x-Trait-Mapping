@@ -1,0 +1,5 @@
+rmd_files: ["index.Rmd", "01_abstract.Rmd", "02_intro.Rmd", "03_methods.Rmd", "04_results.Rmd", "05_discuss.Rmd"]
+delete_merged_file: true
+install_deps: true #Whether to install dependencies
+workflow: 9 #Workflow number to use for graphs/etc in this document
+sandbox: sandbox #Name of folder to place circos files needed to render QTL circos plots.
