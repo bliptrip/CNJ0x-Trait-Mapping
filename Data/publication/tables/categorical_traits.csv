@@ -1,0 +1,9 @@
+Trait,Categorical Value,Numeric Value
+Calyx Lobe Form,open (strongly folded back),0
+Calyx Lobe Form,medium,1
+Calyx Lobe Form,closed (folded over calyx),2
+Calyx Lobe Size,large,0
+Calyx Lobe Size,medium,1
+Calyx Lobe Size,small,2
+Rebud,no,0
+Rebud,yes,1

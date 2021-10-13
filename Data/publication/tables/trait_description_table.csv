@@ -1,0 +1,21 @@
+Trait,Category,Type,Values,QTL Analysis Performed
+Total Berry Mass (g),Upright Traits,R,,yes (CNJ02)
+Upright Length (cm),Upright Traits,R,,
+Dry Mass of Leaves (g),Upright Traits,R,,
+Rebud,Upright Traits,B,yes;no,
+Number of Pedicels,Pedicel Traits,I,,yes (CNJ02)
+Number without Fruit,Pedicel Traits,I,,
+Number with Berries,Pedicel Traits,I,,
+Number with Aborted Flowers,Pedicel Traits,I,,
+Number with Aborted Berries,Pedicel Traits,I,,
+Length (mm),Largest Berry Traits,R,,yes (CNJ02)
+Width (mm),Largest Berry Traits,R,,yes (CNJ02)
+Weight (g),Largest Berry Traits,R,,yes (CNJ02)
+Calyx Diameter (mm),Largest Berry Traits,R,,
+Calyx Lobe Fold Pattern,Largest Berry Traits,C,open;medium;closed,
+Calyx Lobe Size,Largest Berry Traits,C,small;medium;large,
+Calyx End Shape,Largest Berry Traits,C,round;flattened;pointed,
+Pedicel End Shape,Largest Berry Traits,C,round;flattened;pointed,
+Berry Skin Bloom Level,Largest Berry Traits,I,1=shiny;2=moderate;3=heavy,
+Berry Shape,Largest Berry Traits,C,round;oval(elongated round);oblong(elongated round with squre ends);pyriform(pear-shaped);spindle,yes (CNJ02)
+Number Developed Seeds,Largest Berry Traits,R,,
