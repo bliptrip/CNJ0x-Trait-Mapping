@@ -38,8 +38,8 @@ extract_effects <- function(method, model, trait, chr, position) {
     AvB <- as.numeric((effects$Means["AC"] + effects$Means["AD"]) - (effects$Means["BC"] + effects$Means["BD"]))
     CvD <- as.numeric((effects$Means["AC"] + effects$Means["BC"]) - (effects$Means["AD"] + effects$Means["BD"]))
     Int <- as.numeric((effects$Means["AC"] + effects$Means["BD"]) - (effects$Means["AD"] + effects$Means["BC"]))
-    effects.means.tb <- tibble(genotype=names(effects$Means), effect.mean=as.numeric(effects$Means))
-    effects.ses.tb <- tibble(genotype=names(effects$SEs), effect.se=as.numeric(effects$SEs))
+    effects.means.tb <- tibble(genotype=names(effects$Means), effect_mean=as.numeric(effects$Means))
+    effects.ses.tb <- tibble(genotype=names(effects$SEs), effect_se=as.numeric(effects$SEs))
     #The qtl$prob contains the list of significant QTLs and the probability of a given genotype at the QTL.  I would like to show a boxplot of
     #blup values at the different genotypes for each QTL, but since the genotype is a mixed distribution at each QTL, I will only include genotypes with a higher
     #than, say, 95% probability of being a given genotype, and choose that as the representative genotype (assigning the entire BLUP and/or trait to that genotype for organization)
@@ -48,17 +48,19 @@ extract_effects <- function(method, model, trait, chr, position) {
     #print(paste0("qtl.mname = ", qtl.mname, ", qtl.i = ",qtl.i))
     #print(paste0("qtl$name = ", qtl$name))
     qtl.p <- data.frame(qtl$prob[[qtl.i]])
-    qtl.p$id.i <- rownames(qtl.p)
+    qtl.p$id_i <- rownames(qtl.p)
     qtl.p.nest <- qtl.p %>% 
                     mutate(blup=cross$pheno[,trait]) %>% 
-                    pivot_longer(!c(id.i,blup),names_to='genotype', values_to='probability') %>% 
+                    pivot_longer(!c(id_i,blup),names_to='genotype', values_to='probability') %>% 
                     filter(probability > 0.95) %>%
                     group_by(genotype) %>%
                     nest() %>%
                     left_join(effects.means.tb, by="genotype") %>%
                     left_join(effects.ses.tb, by="genotype") %>%
                     mutate(method=method, model=model, trait=trait, chr=chr, position=position, AvB=AvB, CvD=CvD, Int=Int, blups=data) %>%
-                    select(-data)
+                    select(-data) %>%
+                    group_by(method,model,trait,chr,position) %>%
+                    nest()
     return(qtl.p.nest)
 }
 
@@ -86,7 +88,8 @@ generate_collated_effects <- function(qtl.collated.tb,num_top_qtls) {
     return(effects.collated.tb)
 }
 
-qtl.tb  <- read_csv(file=paste0(workflow,'/traits/qtl_collated.csv'), col_names=TRUE) %>%
+
+qtl.tb  <- read_csv(file=paste0(workflow,'/traits/qtl_collated.consensus.csv'), col_names=TRUE) %>%
                     filter(is.na(chr2) & is.na(position2)) %>% #Remove interaction effects for now
                     group_by(trait) %>%
                     mutate(GxYLRpvalue = rep(min(GxYLRpvalue,na.rm=TRUE),length(GxYLRpvalue))) %>%
@@ -94,9 +97,12 @@ qtl.tb  <- read_csv(file=paste0(workflow,'/traits/qtl_collated.csv'), col_names=
                     ungroup()
 
 effs.tb <- generate_collated_effects(qtl.tb, num_top_qtls)
+colnames(effs.tb) <- gsub('.','_',colnames(effs.tb),fixed=TRUE)
 saveRDS(effs.tb,file=paste0(workflow,'/traits/effects_collated.rds'), compress=TRUE)
+write_json(effs.tb, paste0(workflow, "/traits/effects_collated.json"), auto_unbox=T, pretty=T)
 #Write a csv file without the grouped blups
 write.csv(effs.tb %>% select(!blups), file=paste0(workflow,'/traits/effects_collated.csv'), row.names=FALSE)
+
 
 effs.tb <- readRDS(paste0(workflow,'/traits/effects_collated.rds')) #We can start here to load older state
 
@@ -196,7 +202,7 @@ effs.complete.tb <-  qtl.tb %>%
                                qtl.lod = paste0(round.digits(qtl.lod,2),"$^{",unlist(map(qtl.pvalue,siginfo)),"}$"))
                             
 
-generate_table <- function(tb, meths) {
+generate_table <- function(tb, caption, meths) {
     tb <- tb %>%
             filter(method %in% meths) %>%
             mutate(trait_name = ifelse(trait_repeat, "", cell_spec(trait_name, "html", bold=TRUE)),
@@ -205,18 +211,19 @@ generate_table <- function(tb, meths) {
                    marker = ifelse(is.na(marker)," ",marker),
                    position = paste0(round.digits(position,2),"\u00b1",round.digits(interval/2,2)),
                    marker.variance = color_bar("lightblue")(marker.variance)) %>%
-            select(method,trait_name,model_name,model.variance,chr,position,qtl.lod,marker.variance,marker,trait_repeat,model_repeat,plot_filename,plot_mpieffects_filename)
-    colnames(tb) <- c("method", "Trait[note]", "Model[note]", "Model Variance[note]", "Linkage Group", "Marker Location[note]", "pLOD[note]", "Variance Explained by QTL", "Nearest Marker", "trait_repeat", "model_repeat", "plot_filename", "plot_mpieffects_filename")
+            select(method,trait_name,model_name,model.variance,chr,position,qtl.lod,marker.variance,trait_repeat,model_repeat,plot_filename,plot_mpieffects_filename)
+    colnames(tb) <- c("method", "Trait[note]", "Model[note]", "Model Variance[note]", "Linkage Group", "Marker Location[note]", "pLOD[note]", "Variance Explained by QTL", "trait_repeat", "model_repeat", "plot_filename", "plot_mpieffects_filename")
     tb %>%
         select(!c(method,trait_repeat,model_repeat,plot_filename,plot_mpieffects_filename)) %>%
         mutate('Effect Size Boxplots[note]'="") %>%
         mutate('Effect Difference Plots[note]'="") %>%
-        kable("html", table.attr="id=\"kableTable\"", align='lllrrrllcc', escape = FALSE) %>%
-        kable_paper("striped", full_width=FALSE) %>%
+        kbl("html", caption=caption, table.attr="id=\"kableTable\"", align='lllrrrllcc', escape = FALSE) %>%
+        kable_paper("striped", full_width=TRUE) %>%
+        column_spec(1, width = "1.5cm") %>%
         column_spec(4, width = "1cm") %>%
         column_spec(5, width = "2.5cm") %>%
-        column_spec(9, image=spec_image(tb$plot_filename,1280,320)) %>%
-        column_spec(10, image=spec_image(tb$plot_mpieffects_filename,640,320)) %>%
+        column_spec(8, width = "5cm", image=spec_image(paste0('file://',tb$plot_filename),1280,320)) %>%
+        column_spec(9, width = "4cm", image=spec_image(paste0('file://',tb$plot_mpieffects_filename),640,320)) %>%
         add_footnote(c(paste0("All QTLs in table derived from running R/qtl package function ",meths,"().\n","Significance codes for model genotype$*$year effects appended to trait:\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n"), 
                        "Significance codes for model genotype effects appended to model",
                        "Variance of model with all significant QTLs fitted.",
@@ -227,12 +234,12 @@ generate_table <- function(tb, meths) {
 }
 
 #Table for all traits
-ktable.one <- generate_table(effs.complete.tb,"scanone")
-print(ktable.one)
+ktable.one <- generate_table(effs.complete.tb, "QTLs (scanone) with Effect Plots for All Traits", "scanone")
+ktable.one
 cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/effectplots.scanone.png'),mustWork=TRUE),"'"))
 
-ktable.sw <- generate_table(effs.complete.tb,"stepwiseqtl")
-print(ktable.sw)
+ktable.sw <- generate_table(effs.complete.tb, "QTLs (stepwiseqtl) with Effect Plots for All Traits", "stepwiseqtl")
+ktable.sw
 cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/effectplots.stepwiseqtl.png'),mustWork=TRUE),"'"))
 
 #Break out into more meaninful nuggets
@@ -240,7 +247,7 @@ cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --s
 effs.complete.tb %>%
     group_by(method,trait) %>%
     group_walk( ~ {
-                    ktbl <- generate_table(cbind(.y,.x),.y$method)
+                    ktbl <- generate_table(cbind(.y,.x), paste0("QTLs (", .y$method, ") with Effect Plots for trait ", .y$trait), .y$method)
                     print(ktbl)
                   } )
 
