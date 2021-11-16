@@ -3,15 +3,17 @@
 ##### For analyzing phenotypes #####
 install.packages(c("Hmisc"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("tidyverse"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
-install.packages(c("dplyr"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("pryr"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
-install.packages(c("openxlsx","RColorBrewer"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+install.packages(c("car","openxlsx","RColorBrewer"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("lm"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 #
 ###### For qtl pipeline #####
 ##Only install the following packages when running for the first time
 install.packages(c("lme4"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("qtl"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+install.packages(c("devtools"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+#require(devtools)
+#install_version("sommer", version = "4.1.3", repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) #Install specific version of sommer since every release breaks shit
 install.packages(c("sommer"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("lattice"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 #IRanges is a part of bioconductor package: ## try http:// if https:// URLs are not supported
@@ -29,6 +31,7 @@ install.packages(c("jsonlite"), repos = "http://mirror.las.iastate.edu/CRAN/", d
 #For generating interesting, interactive plots
 install.packages(c("plotly"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 #For generating correlation-type heatmaps
+install.packages(c("ggcorrplot"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) 
 install.packages(c("corrplot"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) 
 install.packages(c("GGally"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) #Themese package for ggplot2
 install.packages(c("ggthemes"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
