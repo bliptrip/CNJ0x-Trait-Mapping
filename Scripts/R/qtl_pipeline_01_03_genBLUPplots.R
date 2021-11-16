@@ -12,17 +12,19 @@ library(formattable)
 library(GGally)
 library(ggplot2)
 library(ggthemes)
+library(jsonlite)
 library(kableExtra)
 library(knitr)
 library(RColorBrewer)
 library(tidyverse)
 
-source(paste0(workflow,"/configs/model.cfg"))
 source('./usefulFunctions.R')
 
-workflow <- get0("workflow", ifnotfound="../../Workflows/1")
+workflow <- get0("workflow", ifnotfound="../../Workflows/9")
 P1_Name <- get0("P1_Name", ifnotfound="Mullica_Queen")
 P2_Name <- get0("P2_Name", ifnotfound="Crimson_Queen")
+
+source(paste0(workflow,"/configs/model.cfg"))
 
 #In case we override the workflow on the command-line
 args = commandArgs(trailingOnly=TRUE)
@@ -33,64 +35,57 @@ if(length(args)!=0) {
 }
 
 collateBLUPs <- function(trait.cfg, trait.path, args.l) {
-    selectedmodels.df   <- args.l[[1]]
     models.tb.p         <- args.l[[2]]
 	num_years			<- args.l[[3]]
     trait_name          <- trait.cfg$trait
     model_label         <- trait.cfg$model
-    selectedmodel.label <- (selectedmodels.df %>% filter((trait == trait_name) & (model == model_label)) %>% select(selected_model))[[1]] #Choose the correct model
-    anova.drop1.selectedmodel.file <- paste0(trait.path,"/anova.models.drop1.rds")
-    if( file.exists(anova.drop1.selectedmodel.file) ) {
-		anova.drop1.selectedmodel.l <- readRDS(anova.drop1.selectedmodel.file)
-		model						<- anova.drop1.selectedmodel.l[[selectedmodel.label]]
-        varcomp	  <- model$sigma
-        g.idx     <- which(grepl("^u:id",names(varcomp)))
-        ge.idx    <- which(grepl("^id:year",names(varcomp)))
-        e.idx	  <- which(grepl("^units",names(varcomp)))
-        vg        <- varcomp[[g.idx]][trait_name,trait_name]
-        vge       <- ifelse(length(ge.idx) > 0,varcomp[[ge.idx]][trait_name,trait_name],NA)
-        ve        <- varcomp[[e.idx]][trait_name,trait_name]
-        if( model_label == "all-years" ) {
-			if(is.na(vge)) {
-				h2 <- vg/(vg+(ve/num_years))
-			} else {
-				h2 <- vg/(vg+(vge/num_years)+(ve/num_years))
-			}
-        } else {
-			h2 <- vg/(vg+ve)
-        }
-        u                    <- model$U[["u:id"]]
-        intercept            <- (model$Beta %>% filter(Effect == "(Intercept)"))$Estimate
-        blups                <- u[[trait_name]] + intercept
-        blupsZ                <- scale(blups)[,1]
-        anova.file            <- paste0(trait.path,'/anova.csv')
-        GLRpvalue            <- NA
-        GZRpvalue            <- NA
-        GxYLRpvalue            <- NA
-        GxYZRpvalue            <- NA
-        if( file.exists(anova.file) ) {
-            anova.df=read.csv(file=anova.file, header=TRUE, row.names=1)
-            GLRpvalue    <- as.numeric(anova.df %>% filter(dropterm == 'vs(id, Gu = A)') %>% select(PrChisq))
-            GZRpvalue    <- as.numeric(anova.df %>% filter(dropterm == 'vs(id, Gu = A)') %>% select(PrNorm))
-            if( model_label == "all-years" ) {
-                GxYLRpvalue <- as.numeric(anova.df %>% filter(dropterm == 'id:year') %>% select(PrChisq))
-                GxYZRpvalue <- as.numeric(anova.df %>% filter(dropterm == 'id:year') %>% select(PrNorm))
-            }
-        }
-        if( model_label == "all-years" ) {
-            pheno <- model$data[,c("id",trait_name)] %>% group_by(id) %>% dplyr::summarize(mean=mean(.data[[trait_name]]))
-            pheno <- pheno[["mean"]]
-        } else {
-            pheno <- model$data[[trait_name]]
-        }
-        phenoZ        <- scale(pheno)[,1]
-        ids           <- names(blups)
-        model_label   <- ifelse(trait.cfg$model == 'all-years', 'All Years', trait.cfg$model)
-        models.tb.p$value <- models.tb.p$value %>% 
-                                add_row(id=factor(ids), model=factor(trait.cfg$model, labels=model_label), trait=factor(trait_name, labels=factor(trait.cfg$label)), value=blups, valueZ=blupsZ, type=factor("BLUPs"), label=factor(trait.cfg$label), label_short=factor(trait.cfg$label_short), GLRpvalue=GLRpvalue, GZRpvalue=GZRpvalue, GxYLRpvalue=GxYLRpvalue, GxYZRpvalue=GxYZRpvalue, vg=vg, vge=vge, ve=ve, h2=h2)
-        models.tb.p$value <- models.tb.p$value %>% 
-                                add_row(id=factor(ids), model=factor(trait.cfg$model, labels=model_label), trait=factor(trait_name, labels=factor(trait.cfg$label)), value=pheno, valueZ=phenoZ, type=factor("Raw"), label=factor(trait.cfg$label), label_short=factor(trait.cfg$label_short), GLRpvalue=GLRpvalue, GZRpvalue=GZRpvalue, GxYLRpvalue=GxYLRpvalue, GxYZRpvalue=GxYZRpvalue, vg=vg, vge=vge, ve=ve, h2=h2) 
+    cat(paste0("Processing trait: ", trait_name, ", Model: ", model_label,"\n"))
+    model <- readRDS(paste0(trait.path,"/mmer.rds"))
+    varcomp	  <- model$sigma
+    g.idx     <- which(grepl("^u:id",names(varcomp)))
+    ge.idx    <- which(grepl("^id:year",names(varcomp)))
+    e.idx	  <- which(grepl("^units",names(varcomp)))
+    vg        <- varcomp[[g.idx]][trait_name,trait_name]
+    vge       <- ifelse(length(ge.idx) > 0,varcomp[[ge.idx]][trait_name,trait_name],NA)
+    ve        <- varcomp[[e.idx]][trait_name,trait_name]
+    if( model_label == "all-years" ) {
+		if(is.na(vge)) {
+			h2 <- vg/(vg+(ve/num_years))
+		} else {
+			h2 <- vg/(vg+(vge/num_years)+(ve/num_years))
+		}
+    } else {
+		h2 <- vg/(vg+ve)
     }
+    u                    <- model$U[["u:id"]]
+    intercept            <- (model$Beta %>% filter(Effect == "(Intercept)"))$Estimate
+    blups                <- u[[trait_name]] + intercept
+    blupsZ                <- scale(blups)[,1]
+    anova.file            <- paste0(trait.path,'/anova.csv')
+    GLRpvalue            <- NA
+    GZRpvalue            <- NA
+    GxYLRpvalue            <- NA
+    GxYZRpvalue            <- NA
+    if( file.exists(anova.file) ) {
+        anova.df=read.csv(file=anova.file, header=TRUE, row.names=1)
+        GLRpvalue    <- as.numeric(anova.df %>% filter(dropterm == 'vs(id, Gu = A)') %>% dplyr::select(PrChisq))
+        GZRpvalue    <- as.numeric(anova.df %>% filter(dropterm == 'vs(id, Gu = A)') %>% dplyr::select(PrNorm))
+        if( model_label == "all-years" ) {
+            GxYLRpvalue <- as.numeric(anova.df %>% filter(dropterm == 'id:year') %>% dplyr::select(PrChisq))
+            GxYZRpvalue <- as.numeric(anova.df %>% filter(dropterm == 'id:year') %>% dplyr::select(PrNorm))
+        }
+    }
+    if( model_label == "all-years" ) {
+        pheno <- model$dataOriginal[,c("id",trait_name)] %>% group_by(id) %>% dplyr::summarize(mean=mean(.data[[trait_name]]))
+        pheno <- pheno[["mean"]]
+    } else {
+        pheno <- model$dataOriginal[[trait_name]]
+    }
+    phenoZ        <- scale(pheno)[,1]
+    ids           <- names(blups)
+    models.tb.p$value <- models.tb.p$value %>% 
+                            add_row(id=factor(ids), model=factor(trait.cfg$model), model_label=factor(trait.cfg$model_label), trait=factor(trait.cfg$trait), value=pheno, valueZ=phenoZ, type=factor("Raw"), label=factor(trait.cfg$label), label_short=factor(trait.cfg$label_short), GLRpvalue=GLRpvalue, GZRpvalue=GZRpvalue, GxYLRpvalue=GxYLRpvalue, GxYZRpvalue=GxYZRpvalue, vg=vg, vge=vge, ve=ve, h2=h2) %>%
+                            add_row(id=factor(ids), model=factor(trait.cfg$model), model_label=factor(trait.cfg$model_label), trait=factor(trait.cfg$trait), value=blups, valueZ=blupsZ, type=factor("BLUPs"), label=factor(trait.cfg$label), label_short=factor(trait.cfg$label_short), GLRpvalue=GLRpvalue, GZRpvalue=GZRpvalue, GxYLRpvalue=GxYLRpvalue, GxYZRpvalue=GxYZRpvalue, vg=vg, vge=vge, ve=ve, h2=h2) 
 }
 
 pheno.means.df <-read.csv(file=pheno_dpath2fpath(pheno_file))
@@ -98,7 +93,7 @@ pheno.means.df$year <- as.factor(pheno.means.df$year) #Needed for modeling colum
 n.years <- nlevels(pheno.means.df$year)
 traits.df   <- read.csv(file=paste0(workflow,"/configs/model-traits.cfg.csv"),header=T,stringsAsFactors=T)
 #Just build a 'long' version of collated BLUPs as tibble table, and then use tidyverse 'pivot_wider()' to flatten
-model.collated.long.tb	   <- tibble(id=factor(), model=factor(), trait=factor(), value=numeric(), valueZ=numeric(), type=factor(), label=factor(), label_short=factor(), GLRpvalue=numeric(), GZRpvalue=numeric(), GxYLRpvalue=numeric(), GxYZRpvalue=numeric(), vg=numeric(), vge=numeric(), ve=numeric(), h2=numeric())
+model.collated.long.tb	   <- tibble(id=factor(), model=factor(), model_label=factor(), trait=factor(), value=numeric(), valueZ=numeric(), type=factor(), label=factor(), label_short=factor(), GLRpvalue=numeric(), GZRpvalue=numeric(), GxYLRpvalue=numeric(), GxYZRpvalue=numeric(), vg=numeric(), vge=numeric(), ve=numeric(), h2=numeric())
 model.collated.long.tb.p   <- newPointer(model.collated.long.tb)
 selectedmodels.df          <- read.csv(file=paste0(workflow,"/traits/selectedModels.csv"))
 loopThruTraits(workflow, collateBLUPs, loopArgs=list(selectedmodels.df,model.collated.long.tb.p,n.years))
@@ -110,6 +105,22 @@ model.collated.long.tb     <- model.collated.long.tb.p$value %>%
 #Save long version, as it can be manipulated in many ways to produce meaningful plots/graphs
 saveRDS(model.collated.long.tb, file=paste0(workflow,'/traits/blups_collated.long.rds'), compress=TRUE)
 model.collated.long.tb <- readRDS(file=paste0(workflow,'/traits/blups_collated.long.rds'))
+model.collated.raw.tb <- model.collated.long.tb %>% 
+                            filter(type == "Raw") %>% 
+                            dplyr::select(c('id','model','trait','value','valueZ')) %>%
+                            rename(raw=value) %>%
+                            rename(rawZ=valueZ)
+model.collated.blup.tb <- model.collated.long.tb %>% 
+                            filter(type == "BLUPs") %>%
+                            dplyr::select(-type) %>%
+                            rename(blup=value) %>%
+                            rename(blupZ=valueZ)
+model.collated.wide.tb <- model.collated.blup.tb %>% 
+                            left_join(model.collated.raw.tb, by=c('id','model','trait') ) %>%
+                            rename(genotype=id) %>%
+                            mutate(id=seq(1,n()))
+
+write_json(model.collated.wide.tb, paste0(workflow, '/traits/blups_collated.long.json'), auto_unbox=T, pretty=T) #Also write to JSON file for easy import by other programming languages/tools
 
 #Spread out
 #model.collated.tb <- spread(model.collated.long.tb, trait, blup)
@@ -158,7 +169,12 @@ model.collated.long.tb <- readRDS(file=paste0(workflow,'/traits/blups_collated.l
 #dev.off()
 
 model.collated.long.tb <- model.collated.long.tb %>% 
+                            drop_na(value) %>%
                             mutate(model_trait=as.factor(paste0(model,' ',trait)), model_type=as.factor(paste0(model,' ',type)))
+all_model_types <- model.collated.long.tb %>% dplyr::select(model_trait) %>% unique()
+
+#Inject empty entries
+
 
 model.collated.long.stats.tb <- model.collated.long.tb %>%
                                     filter(!(id %in% c(P1_Name,P2_Name))) %>%
@@ -174,10 +190,18 @@ model.collated.long.ylims.tb <- model.collated.long.tb %>%
                                     filter(!(id %in% c(P1_Name,P2_Name))) %>%
                                     group_by(trait,type) %>%
                                     filter(min(value)!= max(value)) %>%
-                                    dplyr::summarize(min=min(value, na.rm=TRUE) - 2.5, minZ=min(valueZ, na.rm=TRUE)-1,
-                                              max=max(value, na.rm=TRUE) + 2.5, maxZ=max(valueZ, na.rm=TRUE)+1,
+                                    dplyr::summarize(min=min(value, na.rm=TRUE), minZ=min(valueZ, na.rm=TRUE),
+                                              max=max(value, na.rm=TRUE), maxZ=max(valueZ, na.rm=TRUE),
                                               .groups="keep") %>%
+                                    dplyr::mutate(range=max-min, 
+                                                  rangeZ = maxZ-minZ) %>%
+                                    dplyr::mutate(min = min - range/8,
+                                                  max = max + range/8,
+                                                  minZ = minZ - rangeZ/8,
+                                                  maxZ = maxZ + rangeZ/8) %>%
                                     gather("limit","value",-c("trait","type"))
+
+
 
 model.collated.long.ylims.tb$model <- model.collated.long.tb$model[1]
 model.collated.long.ylims.tb$model_type <- paste0(model.collated.long.tb$model[1], " ", model.collated.long.ylims.tb$type)#Just a 'placeholder' to allow ggplot to work with using this dataset
@@ -195,6 +219,8 @@ gs <- model.collated.long.tb %>%
         left_join(model.collated.long.ylims.tb, by="trait") %>%
         group_by(trait) %>%
         do(
+           fake = for r in .$data[[1]] {
+           }
            plot = ggplot(.$data[[1]], aes(x=factor(model), y=value, group=factor(model_type), fill=factor(type))) +
                     geom_boxplot(alpha=0.4, position=position_dodge(1)) +
                     geom_jitter(alpha=0.1, position=position_jitterdodge(jitter.width=0.5, dodge.width=1)) +
@@ -204,8 +230,8 @@ gs <- model.collated.long.tb %>%
                     ylab("") +
                     xlab("Year") + 
                     guides(fill='none') +
-                    ggtitle(label=.$trait) +
-                    theme(    axis.text.x = element_text(face="bold", size=32, angle = 60, hjust = 1),
+                    ggtitle(label=.$data[[1]]$label_short) +
+                    theme(  axis.text.x = element_text(face="bold", size=32, angle = 60, hjust = 1),
                             axis.text.y = element_text(face="bold", size=32),
                             legend.title = element_text(fac="bold", size=32),
                             legend.text = element_text(fac="bold", size=24),
@@ -215,23 +241,55 @@ gs <- model.collated.long.tb %>%
                             plot.subtitle = element_text(size=48, hjust = 0.5),
                             plot.margin = ggplot2::unit(c(1,1,1,1),"cm")))
                         
-p1 <- (gs %>% filter(trait == "Berry Length"))$plot[[1]] + ylab("Value")
-p2 <- (gs %>% filter(trait == "Berry Weight"))$plot[[1]]
-p3 <- (gs %>% filter(trait == "Berry Width"))$plot[[1]]
-p4 <- (gs %>% filter(trait == "Total Berry Weight"))$plot[[1]] + guides(fill=guide_legend(title="Type of Value"))
-#p3 <- (gs %>% filter(trait == "Berry Width"))$plot[[1]] + guides(fill=guide_legend(title="Type of Value"))
-#p4 <- (gs %>% filter(trait == "Total Berry Weight"))$plot[[1]]
-p5 <- (gs %>% filter(trait == "Number of Pedicels"))$plot[[1]] + ylab("Value")
-p6 <- (gs %>% filter(trait == "Number of Berries"))$plot[[1]]
-p7 <- (gs %>% filter(trait == "Number of Seeds"))$plot[[1]]
 
-#pg <- plot_grid(p1,p2,p3,NULL,p4,NULL,p5,p6,p7,nrow=3,ncol=3,rel_widths=c(1,1,1.25))
-pg <- plot_grid(p1,p2,p3,p4,p5,p6,p7,nrow=2,ncol=4,rel_widths=c(1,1,1,1.25))
-
-#png(filename=paste0(workflow,'/traits/plots/blups_collated.boxplot.plotgrid.png'), width=2560, height=3840, bg="white")
-png(filename=paste0(workflow,'/traits/plots/blups_collated.boxplot.plotgrid.wide.png'), width=3840, height=2560, bg="white")
+#Yield-related traits
+##Upright Yield
+p1 <- (gs %>% filter(trait == "berry_length"))$plot[[1]] + ylab("Value")
+p2 <- (gs %>% filter(trait == "berry_weight"))$plot[[1]]
+p3 <- (gs %>% filter(trait == "berry_width"))$plot[[1]]
+p4 <- (gs %>% filter(trait == "total_berry_weight"))$plot[[1]] + guides(fill=guide_legend(title="Type of Value"))
+p5 <- (gs %>% filter(trait == "num_peds"))$plot[[1]] + ylab("Value")
+p6 <- (gs %>% filter(trait == "num_seeds"))$plot[[1]]
+p7 <- (gs %>% filter(trait == "UMFM"))$plot[[1]]
+p8 <- (gs %>% filter(trait == "ULvW"))$plot[[1]]
+pg <- plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,nrow=2,ncol=4,rel_widths=c(1,1,1,1.25))
+png(filename=paste0(workflow,'/traits/plots/blups_collated.boxplot.upright_yield.png'), width=3840, height=2560, bg="white")
 pg
 dev.off()
+##Upright Yield-Secondary Traits
+p1 <- (gs %>% filter(trait == "upright_length"))$plot[[1]] + ylab("Value")
+p2 <- (gs %>% filter(trait == "secondary_growth"))$plot[[1]]
+p3 <- (gs %>% filter(trait == "dry_wt_leaves"))$plot[[1]] + guides(fill=guide_legend(title="Type of Value"))
+pg <- plot_grid(p1,p2,p3,nrow=1,ncol=3,rel_widths=c(1,1,1.25))
+png(filename=paste0(workflow,'/traits/plots/blups_collated.boxplot.upright_yield2.png'), width=2880, height=1280, bg="white")
+pg
+dev.off()
+
+#Biennial-bearing traits
+p1 <- (gs %>% filter(trait == "BBI_UTBM"))$plot[[1]] + ylab("Value")
+p2 <- (gs %>% filter(trait == "BBI_TY"))$plot[[1]]
+p3 <- (gs %>% filter(trait == "BBI_SFY"))$plot[[1]]
+p4 <- (gs %>% filter(trait == "rebud"))$plot[[1]] + guides(fill=guide_legend(title="Type of Value"))
+pg <- plot_grid(p1,p2,p3,p4,nrow=1,ncol=4,rel_widths=c(1,1,1,1.25))
+png(filename=paste0(workflow,'/traits/plots/blups_collated.boxplot.bbi.png'), width=3840, height=1280, bg="white")
+pg
+dev.off()
+
+#Whole Plot Traits as collected by Vorsa's Group
+p1 <- (gs %>% filter(trait == "TY"))$plot[[1]] + ylab("Value")
+p2 <- (gs %>% filter(trait == "SFY"))$plot[[1]]
+p3 <- (gs %>% filter(trait == "MFM"))$plot[[1]]
+p4 <- (gs %>% filter(trait == "PFR"))$plot[[1]] + guides(fill=guide_legend(title="Type of Value"))
+p5 <- (gs %>% filter(trait == "Tacy"))$plot[[1]] + ylab("Value")
+p6 <- (gs %>% filter(trait == "Brix"))$plot[[1]]
+p7 <- (gs %>% filter(trait == "TA"))$plot[[1]]
+p8 <- (gs %>% filter(trait == "PAC"))$plot[[1]]
+pg <- plot_grid(p1,p2,p3,p4,p5,p6,p7,p8,nrow=2,ncol=4,rel_widths=c(1,1,1,1.25))
+png(filename=paste0(workflow,'/traits/plots/blups_collated.boxplot.plot_traits.png'), width=3840, height=2560, bg="white")
+pg
+dev.off()
+
+
 
 g <- model.collated.long.tb %>% 
         group_by(model,trait,type) %>%
@@ -360,11 +418,12 @@ generateTable <- function(values.collated.tb, type) {
 }
 
 generateTable(model.collated.raw_summary.tb, "raw")
+generateTable(model.collated.blup_summary.tb, "blups")
 generateTable(model.collated.blup_summary.tb %>% filter(trait %in% c("Berry Length","Berry Width", "Berry Weight")), "blups")
 generateTable(model.collated.blup_summary.tb %>% filter(trait %in% c("Number of Berries", "Total Berry Weight")), "blups")
 
-summary.path <- normalizePath(paste0(workflow,'/traits/'), mustWork = TRUE);
-summary.file <- paste0(summary.path,'/blups.summary.table.png');
-cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",summary.file,"'"))
+#summary.path <- normalizePath(paste0(workflow,'/traits/'), mustWork = TRUE);
+#summary.file <- paste0(summary.path,'/blups.summary.table.png');
+#cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",summary.file,"'"))
 
 save.image(paste0(workflow,"/.RData.01_genBLUP"))
