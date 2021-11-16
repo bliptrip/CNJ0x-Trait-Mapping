@@ -1,52 +1,107 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Andrew Maule
-# Objective: Using normalized berry templates, merge a set of categorical berry shape descriptors to create a chimera shape.  Uses 
-# distance transforms to generate the chimera.
-#
-# Output: A chain code version of chimera.
-#         
-# import the necessary packages
+# Objective: Given a set of berry shape classifications and their templates, generates a chimera of these
+#               shapes and calculates a subset of GiNA parameters on them, in addition to the slope chain
+#               code parameter tortuosity, along with unsigned manhattan chain code x/y outputs as binary
+#               strings.
+
 import argparse
 import cv2
-from glob import *
-import matplotlib.pyplot as plt
+import logging
+import math
 import numpy as np
-from skimage import measure
+import pandas as pd
+import re
 import sys
-
-shape_choices=['round', 'oblong', 'oval', 'pyriform', 'spindle']
-stdout_default='-'
+from ztools.dip.binary_segment import BinaryThresholdSegment
+from ztools.dip.chaincodes.umcc import UMCCEncoder
+from ztools.dip.chaincodes.scc import SCCEncoder
+from ztools.dip.chimera import Chimera
 
 # construct the argument parser and parse the arguments
 def parse_args():
-    parser = argparse.ArgumentParser(prog=sys.argv[0], description="A command-line utility for generating a chain code representation of berry shapes.")
-    parser.add_argument('-p', '--path', action='store', type=str, required=True, help="Input folder path containing normalized berry template representations of different berry shapes.")
-    parser.add_argument('-m', '--map', action='store', default="{'round': '*round*.small.png', 'oblong': '*oblong*.small.png', 'oval': '*oval*.small.png', 'pyriform': '*pyriform*.small.png', 'spindle': '*spindle*.small.png'}", help="Dictionary mapping berry shapes to berry template filename (glob-patterns allowed).")
-    parser.add_argument('-o', '--output', action='store', default=stdout_default, help="Output file to write chaincode representation to ('{}' for stdout)".format(stdout_default))
-    parser.add_argument('shapes', metavar='shapes', type=str, nargs='+', choices=shape_choices, help="Sequence of input shapes to merge into chimera.  Valid values: {}".format(shape_choices))
+    parser = argparse.ArgumentParser(prog=sys.argv[0], description="A command-line utility for generating GiNA-like berry parameters from a set of individual berry images and merging into collated dataset.")
+    parser.add_argument('-d', '--data', action='store', type=str, required=True, help="Input collated upright trait dataset.")
+    parser.add_argument('-o', '--odata', action='store', type=str, required=True, help="Output collated upright trait dataset with chimeric shape parameters injected.")
+    parser.add_argument('-l', '--level', type=str, default="WARNING", choices=["DEBUG","INFO","WARNING","ERROR","CRITICAL"], help="Set the debug log level.")
+    parser.add_argument('--audit-path', action='store', type=str, help="If --audit-path is defined, this is where the chimeric binary images and their contours will be stored for subsequent auditing.")
+    parser.add_argument('--min_area', '--mina', '--minArea', dest='mina', type=int, default='100', help="Remove foreground blobs (fruit) less than this size.")
+    parser.add_argument('--max_area', '--maxa', '--maxArea', dest='maxa', type=int, default='3000000', help="Remove foreground blobs (fruit) greather than this size.")
+    parser.add_argument('-m', '--map', action='store', default="{'round': '*round_binary.png', 'oblong': '*oblong_binary.png', 'oval': '*oval_binary.png', 'pyriform': '*pyriform_binary.png', 'spindle': '*spindle_binary.png'}", help="Dictionary mapping shape categories to template binary image file (glob-patterns allowed).")
+    parser.add_argument('--map-path', dest='mapp', action='store', default="../../Data/phenotypic data/DerivedData/berry_templates/", help="Dictionary mapping shape categories to template binary image file (glob-patterns allowed).")
     parsed = parser.parse_args(sys.argv[1:])
     return(parsed)
 
+def cleanupShapes(s):
+    try:
+        if np.nan == s:
+            return(None)
+        elif re.search(r'\*|-',s):
+            return(None)
+        elif re.search('^\s*ob',s,re.IGNORECASE):
+            return('oblong')
+        elif re.search('^\s*o',s,re.IGNORECASE):
+            return('oval')
+        elif re.search('^\s*p',s,re.IGNORECASE):
+            return('pyriform')
+        elif re.search('^\s*r',s,re.IGNORECASE):
+            return('round')
+        elif re.search('^\s*s',s,re.IGNORECASE):
+            return('spindle')
+        else:
+            return(None)
+    except Exception as e:
+        print(e)
+        pass
+    return(None)
+
+def mixupShapes(df,chimera,segmenter,logger):
+    shapes = df['berry shape'].dropna()
+    chimera.compose(shapes)
+    segment_df = segmenter.segment(chimera.composite)[0]
+    umcc    = UMCCEncoder(logger=logger, contours=chimera.contours)
+    tolerance = 0.5
+    highest_tolerance = tolerance
+    scc        = SCCEncoder(logger=logger,contours=chimera.contours, tolerance=tolerance)
+    highest_tortuosity = scc.tortuosity()
+    while( True ):
+        tolerance = tolerance/2
+        scc.encode(contours=chimera.contours, tolerance=tolerance)
+        new_tortuosity = scc.tortuosity()
+        if( scc.tortuosity() > 1.025 * highest_tortuosity ): #Give ourselves some buffer room on this
+            highest_tolerance = tolerance
+            highest_tortuosity = new_tortuosity
+        else:
+            break
+    scc.encode(contours=chimera.contours, tolerance=highest_tolerance)
+    df.insert(df.shape[1], 'chimera_LvsW', segment_df['LvsW'][0])
+    df.insert(df.shape[1], 'chimera_eccentricity', segment_df['blobEccentricity'][0])
+    df.insert(df.shape[1], 'chimera_solidity', segment_df['blobSolidity'][0])
+    df.insert(df.shape[1], 'chimera_tortuosity', scc.tortuosity())
+    df.insert(df.shape[1], 'chimera_umccX', str(umcc.x))
+    df.insert(df.shape[1], 'chimera_umccLogX', math.log(umcc.x))
+    df.insert(df.shape[1], 'chimera_umccY', str(umcc.y))
+    df.insert(df.shape[1], 'chimera_umccLogY', math.log(umcc.y))
+    return(df)
+
 
 if __name__ == '__main__':
-    templates   = {}
-    dtransforms = {}
-    parsed = parse_args()
-    shapes = parsed.shapes
-    parsed.map = eval(parsed.map)
-    for k in parsed.map:
-        names           = glob("{}/{}".format(parsed.path,parsed.map[k]))
-        templates[k]    = cv2.imread(names[0], cv2.IMREAD_GRAYSCALE)
-        dtransforms[k]  = cv2.distanceTransform(templates[k], distanceType=cv2.DIST_L2, maskSize=cv2.DIST_MASK_PRECISE) - cv2.distanceTransform(np.bitwise_not(templates[k]), distanceType=cv2.DIST_L2, maskSize=cv2.DIST_MASK_PRECISE)
-    dsums = dtransforms[shapes[0]]
-    for s in shapes[1:]:
-        dsums += dtransforms[s]
-    dsums = ((dsums / len(shapes)) > 0).astype(dtype='uint8')
-    dsums[dsums > 0] = 255
-    if( parsed.output != stdout_default ):
-        cv2.imwrite(parsed.output, dsums)
-    contours = measure.find_contours(dsums)[0]
-    print("Number of contours: {}".format(len(contours)))
-    plt.imshow(dsums)
-    plt.plot(contours[:, 1], contours[:, 0], '-g', linewidth=2)
-    plt.show()
+    logger      = logging.getLogger()
+    parsed      = parse_args()
+    decoded_level = eval("logging.{}".format(parsed.level))
+    logger.setLevel(decoded_level)
+
+    collated_df = pd.read_excel(parsed.data, header=1)
+    #Preprocess berry shape categories, fixing shortened abbreviations and removing anything that is invalid (mark as None, or NA).
+    collated_shapes = collated_df['berry shape']
+    collated_df['berry shape'] = collated_shapes.apply(cleanupShapes)
+
+    segmenter = BinaryThresholdSegment( channel=0, resize=1.0, minArea=parsed.mina, maxArea=parsed.maxa, numRefs=0 )
+
+    chimera = Chimera()
+    chimera.loadMap(parsed.mapp, parsed.map)
+    collated_shapes_df = collated_df[['population','year','accession name','up-right no.','berry shape']]
+    collated_shapes_condensed_df = collated_shapes_df.groupby(['population','year','accession name'],sort=False,dropna=True)
+    collated_shapes_new_df = collated_shapes_condensed_df.apply(mixupShapes, chimera, segmenter, logger)
+    collated_df = collated_df.merge(collated_shapes_new_df,on=['population','year','accession name','up-right no.'], how='left')
+    collated_df.to_csv(parsed.odata, index=False)

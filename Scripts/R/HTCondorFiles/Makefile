@@ -15,8 +15,8 @@ include $(WORKFLOW)/configs/perms.mk
 #condor_submit -i Rpackage.sub
 #Comment-out any packages you don't want to install if they're already in the tarball.
 Rbuild:
-		gsed -e 's/{R_VERSION}/$(R_VERSION)/g' Rpackage.install.sh.template > Rpackage.install.sh
-		gsed -e 's/{R_VERSION}/$(R_VERSION)/g' Rpackage.sub.template > Rpackage.sub
+		sed -e 's/{R_VERSION}/$(R_VERSION)/g' Rpackage.install.sh.template > Rpackage.install.sh
+		sed -e 's/{R_VERSION}/$(R_VERSION)/g' Rpackage.sub.template > Rpackage.sub
 		chmod u+x Rpackage.install.sh
 		ssh $(USERNAME)@$(SUBMIT_SERVER) 'mkdir -p projects/'
 		scp ../packagedeps.chtc.R Rpackage.install.sh Rpackage.sub $(USERNAME)@$(SUBMIT_SERVER):~/projects/

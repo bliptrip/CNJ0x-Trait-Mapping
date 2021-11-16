@@ -1,4 +1,4 @@
-#!/opt/local/bin/python
+#!/usr/bin/env python3
 
 import sys
 import argparse
@@ -17,9 +17,9 @@ if __name__ == '__main__':
     parsed           = parse_args()
 
     wb_input         = load_workbook(parsed.input)
-    ws_input         = wb_input.get_sheet_by_name(parsed.input_ws)
+    ws_input         = wb_input[parsed.input_ws]
     wb_output        = load_workbook(parsed.output)
-    ws_output        = wb_output.get_sheet_by_name(parsed.output_ws)
+    ws_output        = wb_output[parsed.output_ws]
     #initialize the map dictionary to empty
     cranmap          = {}
 

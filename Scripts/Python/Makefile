@@ -54,12 +54,82 @@ berry_normalize:
 		mkdir -p $(BERRY_TEMPLATE_OFOLDER)
 		$(DEBUGP) ./berry_templates_normalize.py -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_oblong_binary.png -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_oval_binary.png -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_pyriform_binary.png -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_round_binary.png -i $(BERRY_TEMPLATE_IFOLDER)/fruit_template_spindle_binary.png -o $(BERRY_TEMPLATE_OFOLDER)
 
-berry_chimera:
-		$(DEBUGP) ./berry_chimera.py -p $(BERRY_TEMPLATE_OFOLDER) -o $(BERRY_TEMPLATE_OFOLDER)/chimera.png "round" "round" "round" "oblong" "oval"
-
 berry_chimera_downsample:
-		$(DEBUGP) ./berry_chimera_downsample.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oblong_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oblong_binary.small.png
-		$(DEBUGP) ./berry_chimera_downsample.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_round_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_round_binary.small.png
-		$(DEBUGP) ./berry_chimera_downsample.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_binary.small.png
-		$(DEBUGP) ./berry_chimera_downsample.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_spindle_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_spindle_binary.small.png
-		$(DEBUGP) ./berry_chimera_downsample.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_pyriform_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_pyriform_binary.small.png
+		$(DEBUGP) ./berry_chimera_downsample.py -d 4 -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oblong_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oblong_binary.small.png
+		$(DEBUGP) ./berry_chimera_downsample.py -d 4 -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_round_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_round_binary.small.png
+		$(DEBUGP) ./berry_chimera_downsample.py -d 4 -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_binary.small.png
+		$(DEBUGP) ./berry_chimera_downsample.py -d 4 -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_spindle_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_spindle_binary.small.png
+		$(DEBUGP) ./berry_chimera_downsample.py -d 4 -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_pyriform_binary.png -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_pyriform_binary.small.png
+
+berry_chimera_templates:
+		$(DEBUGP) ./berry_chimera.py -p $(BERRY_TEMPLATE_OFOLDER) -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oblong_binary.small.npy "oblong"
+		$(DEBUGP) ./berry_chimera.py -p $(BERRY_TEMPLATE_OFOLDER) -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_round_binary.small.npy "round"
+		$(DEBUGP) ./berry_chimera.py -p $(BERRY_TEMPLATE_OFOLDER) -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_binary.small.npy "oval"
+		$(DEBUGP) ./berry_chimera.py -p $(BERRY_TEMPLATE_OFOLDER) -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_spindle_binary.small.npy "spindle"
+		$(DEBUGP) ./berry_chimera.py -p $(BERRY_TEMPLATE_OFOLDER) -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_pyriform_binary.small.npy "pyriform"
+
+berry_chimeras:
+		$(DEBUGP) ./berry_chimera.py -d $(DATA_DIR)/$(DERIVED_DIR)/Data-combined-collated.xlsx -o $(DATA_DIR)/$(DERIVED_DIR)/Data-combined-collated.all.csv
+
+berry_umcc:
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oblong_binary.small.npy		-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oblong_binary.small.umcc
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_round_binary.small.npy		-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_round_binary.small.umcc
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_binary.small.npy			-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_binary.small.umcc
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_spindle_binary.small.npy		-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_spindle_binary.small.umcc
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_pyriform_binary.small.npy		-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_pyriform_binary.small.umcc
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_5050.small.npy 	   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_5050.small.umcc 	  
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_7525.small.npy 	   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_7525.small.umcc 	  
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_2575.small.npy 	   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_2575.small.umcc 	  
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_5050.small.npy   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_5050.small.umcc  
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_7525.small.npy   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_7525.small.umcc  
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_2575.small.npy   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_2575.small.umcc  
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_5050.small.npy  -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_5050.small.umcc 
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_7525.small.npy  -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_7525.small.umcc 
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_2575.small.npy  -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_2575.small.umcc 
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_5050.small.npy -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_5050.small.umcc
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_7525.small.npy -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_7525.small.umcc
+		$(DEBUGP) ./berry_umcc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_2575.small.npy -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_2575.small.umcc
+
+berry_scc:
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oblong_binary.small.npy		-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oblong_binary.small.scc
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_round_binary.small.npy		-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_round_binary.small.scc
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_binary.small.npy			-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_binary.small.scc
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_spindle_binary.small.npy		-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_spindle_binary.small.scc
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_pyriform_binary.small.npy		-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_pyriform_binary.small.scc
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_5050.small.npy 	   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_5050.small.scc 	  
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_7525.small.npy 	   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_7525.small.scc 	  
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_2575.small.npy 	   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_2575.small.scc 	  
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_5050.small.npy   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_5050.small.scc  
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_7525.small.npy   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_7525.small.scc  
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_2575.small.npy   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_2575.small.scc  
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_5050.small.npy  -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_5050.small.scc 
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_7525.small.npy  -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_7525.small.scc 
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_2575.small.npy  -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_2575.small.scc 
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_5050.small.npy -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_5050.small.scc
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_7525.small.npy -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_7525.small.scc
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_2575.small.npy -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_2575.small.scc
+		$(DEBUGP) ./berry_scc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_wavy_binary.small.npy -o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_wavy_binary.small.scc
+
+berry_escc:
+		$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oblong_binary.small.npy		-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oblong_binary.small.escc
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_round_binary.small.npy		-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_round_binary.small.escc
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_binary.small.npy			-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_oval_binary.small.escc
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_spindle_binary.small.npy		-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_spindle_binary.small.escc
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_template_pyriform_binary.small.npy		-o $(BERRY_TEMPLATE_OFOLDER)/fruit_template_pyriform_binary.small.escc
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_5050.small.npy 	   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_5050.small.escc 	  
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_7525.small.npy 	   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_7525.small.escc 	  
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_2575.small.npy 	   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oval_2575.small.escc 	  
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_5050.small.npy   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_5050.small.escc  
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_7525.small.npy   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_7525.small.escc  
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_2575.small.npy   -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_oblong_2575.small.escc  
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_5050.small.npy  -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_5050.small.escc 
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_7525.small.npy  -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_7525.small.escc 
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_2575.small.npy  -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_spindle_2575.small.escc 
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_5050.small.npy -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_5050.small.escc
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_7525.small.npy -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_7525.small.escc
+		#$(DEBUGP) ./berry_escc.py -i $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_2575.small.npy -o $(BERRY_TEMPLATE_OFOLDER)/fruit_chimera_round_pyriform_2575.small.escc
+
+
+berry_umcc_plot:
+		#$(DEBUGP) ./plot_umcc_diffs.py -i $(BERRY_TEMPLATE_OFOLDER) --names oblong round oval spindle pyriform --files fruit_template_oblong_binary.small.umcc.npy fruit_template_round_binary.small.umcc.npy fruit_template_oval_binary.small.umcc.npy fruit_template_spindle_binary.small.umcc.npy fruit_template_pyriform_binary.small.umcc.npy
+		$(DEBUGP) ./plot_umcc_diffs.py -i $(BERRY_TEMPLATE_OFOLDER) --names oblong round oval rov5050 rov7525 rov2575 rob5050 rob7525 rob2575 --files fruit_template_oblong_binary.small.umcc.npy fruit_template_round_binary.small.umcc.npy fruit_template_oval_binary.small.umcc.npy fruit_chimera_round_oval_5050.small.umcc.npy fruit_chimera_round_oval_7525.small.umcc.npy fruit_chimera_round_oval_2575.small.umcc.npy fruit_chimera_round_oblong_5050.small.umcc.npy fruit_chimera_round_oblong_7525.small.umcc.npy fruit_chimera_round_oblong_2575.small.umcc.npy

@@ -1,3 +1,6 @@
-cv2,
-shapely,
-skimage
+numpy
+opencv-python
+openpyxl
+pandas
+shapely
+scikit-image

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Andrew Maule
 # Objective: Read in berry shape templates (binary grayscale image files), determine all berry areas, and normalize all images
 #            such that all berries are the same area and have their center of masses in the center of the image.  This is

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Author: Andrew Maule
 # Objective: Downsamples a chimera berry image in order to reduce the number of contours needed for describing the outline.
 #
