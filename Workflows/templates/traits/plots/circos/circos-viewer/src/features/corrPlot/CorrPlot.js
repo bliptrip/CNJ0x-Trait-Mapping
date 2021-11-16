@@ -37,19 +37,19 @@ const CorrPlot = () => {
             const traits_short = traits.filter( t => t.enabled ).map( t => traitmap[t.id].short );
             const traits_long = traits.filter( t => t.enabled ).map( t => t.text );
             const columns = ['',...traits_short]; //The '' column represents the row names
-            var dataSubset = plotData.select(...columns).filter( r => traits_short.includes(r.get('')) );
+            var dataSubset = plotData.select(...columns).filter( r => columns.includes(r.get('')) );
+            //Sort the rows in same order as columns
+            dataSubset = new DataFrame(dataSubset.toArray().sort( (a,b) => (columns.indexOf(a[0]) - columns.indexOf(b[0]))), columns)
             var dataSubsetA = dataSubset.drop('').toArray();
             for( var i = 0; i < dataSubsetA.length; i++ ) {
                 var row = dataSubsetA[i];
-                let rname = columns[i+1];
-                let ridx  = columns.indexOf(rname)-1;
-                for( var j = ridx; j < row.length; j++ ) {
+                for( var j = i; j < row.length; j++ ) {
                     row[j] = null;
                 }
             };
             const transformedData = {
-                x: traits_long,
-                y: traits_long.reverse(),
+                x: [...traits_short], //Since Array.protype.reverse() modifies the array in-place, we need to make a copy of this before reversing -- otherwise the data displayed isn't correct
+                y: traits_short.reverse(),
                 z: dataSubsetA.reverse(),
                 type: 'heatmap',
                 hoverongaps: false
