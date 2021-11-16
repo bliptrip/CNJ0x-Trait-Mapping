@@ -8,7 +8,7 @@ library(tidyverse)
 # loading libraries
 source('./usefulFunctions.R')
 
-workflow <- "../../Workflows/1"
+workflow <- get0("workflow", ifnotfound="../../Workflows/1")
 
 args = commandArgs(trailingOnly=TRUE)
 
@@ -32,37 +32,14 @@ deconstruct_qtl_formula <- function(qtl_formula) {
     return(qtls)
 }
 
-#Function to strip out uncessary 'bin_<chr>.<pos>cM.' prefix from the effect names.
-strip_effect_prefix <- function(effect_names) {
-    return(gsub("^.*\\.([[:alpha:]]+)","\\1",effect_names))
-}
-
-#Additive-only effects
-strip_effect_prefix_1way <- function(effects) {
-    names(effects$Means) <- strip_effect_prefix(names(effects$Means))
-    names(effects$SEs) <- strip_effect_prefix(names(effects$SEs))
-    return(effects)
-}
-
-#Pairwise effects -- different structure for the effects
-strip_effect_prefix_2way <- function(effects) {
-    rownames(effects$Means)  <- strip_effect_prefix(rownames(effects$Means)) 
-    colnames(effects$Means)  <- strip_effect_prefix(colnames(effects$Means)) 
-    rownames(effects$SEs)  <- strip_effect_prefix(rownames(effects$SEs)) 
-    colnames(effects$SEs)  <- strip_effect_prefix(colnames(effects$SEs)) 
-    return(effects)
-}
-
-
 #Function that iterates through a set of model qtls and fills in the collated datatable
 generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, trait, loopArgs) {
     collated.df.p <- loopArgs$qtls
-    effects.l.p   <- loopArgs$effects
 
     qtl.model.terms  <- deconstruct_qtl_formula(formula(qtl))
     qtl.num          <- length(qtl.model.terms)
     #Now add in anova p-values for genotype effects (BLUPs), and if applicable, for GxE
-    anova.df <- read.csv(file=paste0(workflow,'/traits/',model,'--',trait,'/anova.csv'), header=TRUE, row.names=1)
+    anova.df <- read.csv(file=paste0(workflow,'/traits/',model,'--',trait,'/anova.csv'), header=TRUE, row.names=2)
     GLRpvalue    <- anova.df['vs(id, Gu = A)','PrChisq']
     GZRpvalue    <- anova.df['vs(id, Gu = A)','PrNorm']
     if( model == "all-years" ) {
@@ -102,16 +79,6 @@ generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, trait, lo
                 qtl.lod   <- qtl_model$result.drop[f2,"LOD"]
                 qtl.p     <- qtl_model$result.drop[f2,"Pvalue(F)"]
             }
-            #Derive the effects for the QTL
-            #m.effects         <- effectplot(cross, pheno.col=trait, mname1=paste0("bin_",mychr,".",mypos,"cM"), draw=FALSE)
-            m.effects         <- effectplot(cross, pheno.col=trait, mname1=paste0(mychr,"@",mypos), draw=FALSE)
-            #Make the names of the genotypes more manageable to read
-            m.effects         <- strip_effect_prefix_1way(m.effects)
-            #Convert Means/SEs to list so that the toJSON function will include the name of each effect (associative array)
-            m.effects$Means   <- as.list(m.effects$Means)
-            m.effects$SEs     <- as.list(m.effects$SEs)
-
-
         } else { #pairwise effect
             qtl_idx2      <- which(qtl$altname == qtl.model.term.v[2])
             mychr2        <- as.numeric(qtl$chr[qtl_idx2])
@@ -128,16 +95,9 @@ generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, trait, lo
                 qtl.lod   <- qtl_model$result.drop[f2,"LOD"]
                 qtl.p     <- qtl_model$result.drop[f2,"Pvalue(F)"]
             }
-            #Interaction effects
-            #m.effects         <- effectplot(cross, pheno.col=trait, mname1=paste0("bin_",mychr,".",mypos,"cM"), mname2=paste0("bin_",mychr2,".",mypos2,"cM"), draw=FALSE)
-            m.effects         <- effectplot(cross, pheno.col=trait, mname1=paste0(mychr,"@",mypos), mname2=paste0(mychr2,"@",mypos2), draw=FALSE)
-            m.effects         <- strip_effect_prefix_2way(m.effects)
-            m.effects$Means   <- data.frame(m.effects$Means)
-            m.effects$SEs     <- data.frame(m.effects$SEs)
         }
         #TODO: Fill in interaction qtls
         append.pointer(collated.df.p, c(method, model, trait, mychr, mypos, mychr2, mypos2, mymarker, qtl.lod, qtl.var, qtl.p, qtl_model.var, qtl_lodint, GLRpvalue, GxYLRpvalue, GZRpvalue, GxYZRpvalue))
-        append.pointer(effects.l.p, m.effects)
     }
 }
 
@@ -146,7 +106,6 @@ generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, trait, lo
 #index into qtl.collated.df
 qtl.collated.df   <- data.frame(method=character(),model=character(),trait=character(),chr=numeric(),position=numeric(),chr2=numeric(),position2=numeric(),nearest.marker=numeric(),qtl.lod=numeric(),marker.variance=numeric(),qtl.pvalue=numeric(),model.variance=numeric(),interval=numeric(),GLRpvalue=numeric(),GxYLRpvalue=numeric(),GZRpvalue=numeric(),GxYZRpvalue=numeric(),stringsAsFactors=FALSE)
 qtl.collated.df.p <- newPointer(qtl.collated.df)
-qtl.effects.l.p   <- newPointer(list())
 
 collateQtlCB      <- function(trait.cfg, trait.path, loopArgs) {
     model <- as.character(trait.cfg$model)
@@ -170,9 +129,8 @@ collateQtlCB      <- function(trait.cfg, trait.path, loopArgs) {
 }
 
 #Loop through all legitimate traits and build collated qtl file.
-loopThruTraits(workflow, collateQtlCB, loopArgs=list(qtls=qtl.collated.df.p, effects=qtl.effects.l.p))
+loopThruTraits(workflow, collateQtlCB, loopArgs=list(qtls=qtl.collated.df.p))
 
-browser()
 qtl.collated.df <- qtl.collated.df.p$value
 write.csv(qtl.collated.df, file=paste0(workflow,'/traits/qtl_collated.csv'), row.names=F)
 
@@ -180,8 +138,3 @@ write.csv(qtl.collated.df, file=paste0(workflow,'/traits/qtl_collated.csv'), row
 #us to quickly lookup the qtl effects
 qtl.collated.names.df <- qtl.collated.df %>% mutate(model_trait=paste(model,trait,sep="--"))
 qtl.collated.names.df <- qtl.collated.names.df %>% mutate(id=paste(method,model_trait,trait,chr,position,chr2,position2,sep="/"))
-qtl.effects.l   <- qtl.effects.l.p$value
-names(qtl.effects.l) <- qtl.collated.names.df$id
-saveRDS(qtl.effects.l, file=paste0(workflow,'/traits/effects_collated.rds'), compress=T)
-qtl.effects.json  <- toJSON(qtl.effects.l, dataframe="columns", auto_unbox=F, pretty=T)
-write(qtl.effects.json, paste0(workflow,'/effects_collated.json'))
