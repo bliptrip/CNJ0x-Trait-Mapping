@@ -10,4 +10,6 @@ biblio-style: apalike
 link-citations: yes
 github-repo: bliptrip/CNJ0x-Trait-Mapping
 description: "QTL mapping paper for cranberry upright phenotypic data taken from 2011-2014.  Uprights came from Rutgers University P.E. Marucci Center in Chatsworth, NJ, USA"
+workflow: 9 #Workflow number to use for graphs/etc in this document
+sandbox: sandbox #Name of folder to place circos files needed to render QTL circos plots.
 ---

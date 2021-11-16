@@ -1,1 +1,48 @@
 # Results {#results}
+
+```{r echo=FALSE, include=FALSE, message=FALSE}
+    workflow="../Workflows/9"
+```
+
+```{r trait-uprightyield-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for upright yield traits in CNJ02 population (A) and CNJ04 population (B)."}
+    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj02.png")
+    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj02.A.png")
+    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj04.png")
+    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj04.B.png")
+    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj0x.png")
+    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
+    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
+    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
+    knitr::include_graphics(imageCombined)
+```
+
+```{r trait-uprightother-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for other upright yield traits in CNJ02 population (A) and CNJ04 population (B)."}
+    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj02.png")
+    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj02.A.png")
+    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj04.png")
+    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj04.B.png")
+    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj0x.png")
+    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
+    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
+    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
+    knitr::include_graphics(imageCombined)
+```
+
+```{r trait-plot-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for plot-sampled traits in CNJ02 (A) and CNJ04 (B) populations."}
+    imageA = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj02.png")
+    imageAA = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj02.A.png")
+    imageB = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj04.png")
+    imageBA = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj04.B.png")
+    imageCombined = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj0x.png")
+    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
+    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
+    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
+    knitr::include_graphics(imageCombined)
+```
+
+```{r trait-corrplots, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for populations CNJ02 (A) and CNJ04 (B)."}
+    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj02.png"),"A"))
+    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj04.png"),"B"))
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","2x1",paste0(workflow,"/traits/plots/corrplot.cnj02.A.png"), paste0(workflow,"/traits/plots/corrplot.cnj04.B.png"), paste0(workflow,"/traits/plots/corrplot.cnj0x.png")))
+    knitr::include_graphics(paste0(workflow,"/traits/plots/corrplot.cnj0x.png"))
+```
