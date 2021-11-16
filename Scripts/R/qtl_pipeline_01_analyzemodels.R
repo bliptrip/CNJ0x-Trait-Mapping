@@ -69,7 +69,7 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
     #Get our A matrix, since it will be necessary.
     A <- model$A.mat
     #Gather fixed terms
-    fixed <- as.formula(trait.cfg$fixed)
+    fixed <- model$call$fixed
     yuyuf <- strsplit(as.character(fixed[3]), split = "[+-]")[[1]]
     response <- strsplit(as.character(fixed[2]), split = "[+]")[[1]]
     fixedtermss <- apply(data.frame(yuyuf),1,function(x) {
@@ -78,14 +78,14 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
     fixedtermss <- fixedtermss[which(fixedtermss != "-1")]
     fixedtermss <- fixedtermss[which(fixedtermss != "1")]
     #Gather random terms
-    random <- as.formula(trait.cfg$random)
-    yuyur <- strsplit(as.character(random[2]), split = "[+-]")[[1]]
+    random <- model$call$random
+    yuyur <- strsplit(as.character(random)[2], split = "[+-]")[[1]]
     randomtermss <- apply(data.frame(yuyur),1,function(x) {
         strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
     })
     randomtermss    <- randomtermss[which(randomtermss != "-1")]
     randomtermss    <- randomtermss[which(randomtermss != "1")]
-    rcov <- as.formula(trait.cfg$rcov)
+    rcov <- model$call$rcov
     yuyuu <- strsplit(as.character(rcov[2]), split = "[+-]")[[1]]
     rcovtermss <- apply(data.frame(yuyuu),1,function(x) {
         strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
@@ -97,7 +97,6 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
                                 ChiDf=character(allterms.size),
                                 PrChisq=numeric(allterms.size),
                                 PrChisqInfo=character(allterms.size))
-    anova.models      <- list('full'=model)
     #rownames(anova.combined) <- as.character(allterms)
     #Now for each fixed term, drop it from model and calculate prob under assumption of chisqr distro for likelihood ratio
     i = 1
@@ -108,14 +107,14 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
         } else {
             fixedf <- paste(response,"~ 1")
         }
-        mmer.expr <- paste0(c("mmer(fixed=", fixedf, ", random=", trait.cfg$random, ", rcov=", trait.cfg$rcov, ", data=model$dataOriginal"), collapse="")
+        mmer.expr <- paste0(c("mmer(fixed=", fixedf, ", random=", random, ", rcov=", rcov, ", data=model$dataOriginal"), collapse="")
         if( !is.empty(trait.cfg["mmer_args"]) ) {
                 mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
         }
         mmer.expr <- paste0(mmer.expr,")")
         print(mmer.expr)
         model.drop1 <- try(eval(parse(text=mmer.expr)))
-        if( length(model.drop1) > 1 ) {
+        if( !is.null(model.drop1) && !is_bare_list(model.drop1) ) { #Indicates that the model was singular, and failed to find a solution
             anova.cols    <- c("Chisq", "ChiDf", "PrChisq", "PrChisqInfo")
             anova.drop1 <- anova(model, model.drop1)[2,]
             prchisq <- strsplit(anova.drop1$PrChisq, split = " ")[[1]]
@@ -123,7 +122,6 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
             anova.drop1$PrChisqInfo <- prchisq[2]
             anova.combined[i,anova.cols] = anova.drop1[,anova.cols]
                   anova.combined[i,"dropterm"] = fixedtermss[i]
-                  anova.models <- eval(parse(text=paste0("list.append(anova.models,'",fixedtermss[i],"'=model.drop1)")))
             i = i + 1
         }
     }    
@@ -132,14 +130,18 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
     for (j in seq_along(randomtermss)) {
         usef <- setdiff(randomtermss,randomtermss[k])
         randomf <- paste("~",paste(usef,collapse = " + "))
-        mmer.expr <- paste0(c("mmer(fixed=", trait.cfg$fixed, ", random=", randomf, ", rcov=", trait.cfg$rcov, ", data=model$dataOriginal"), collapse="")
+		if( length(usef) > 0 ) {
+				mmer.expr <- paste0(c("mmer(fixed=", fixed, ", random=", randomf, ", rcov=", rcov, ", data=model$dataOriginal"), collapse="")
+		} else {
+				mmer.expr <- paste0(c("mmer(fixed=", fixed, ", rcov=", rcov, ", data=model$dataOriginal"), collapse="")
+		}
         if( !is.empty(trait.cfg["mmer_args"]) ) {
                 mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
         }
         mmer.expr <- paste0(mmer.expr,")")
         print(mmer.expr)
         model.drop1 <- try(eval(parse(text=mmer.expr)))
-        if( length(model.drop1) > 1 ) {
+        if( !is.null(model.drop1) && !is_bare_list(model.drop1) ) { #Indicates that the model was singular, and failed to find a solution
             anova.cols    <- c("Chisq", "ChiDf", "PrChisq", "PrChisqInfo")
             anova.drop1 <- anova(model, model.drop1)[2,]
             prchisq <- strsplit(anova.drop1$PrChisq, split = " ")[[1]]
@@ -147,7 +149,6 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
             anova.drop1$PrChisqInfo <- prchisq[2]
             anova.combined[k+(i-1),anova.cols] = anova.drop1[,anova.cols]
             anova.combined[k+(i-1),"dropterm"] = randomtermss[k]
-            anova.models <- eval(parse(text=paste0("list.append(anova.models,'",randomtermss[k],"'=model.drop1)")))
             k = k + 1
         }
     }    
@@ -163,7 +164,6 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
                         left_join(vcov %>% dplyr::select(vcov.cols), by="dropterm")
     #Where applicable, add Zratio values for random effects (as found in vcov matrix) and pnorm values for these
     saveRDS(anova.combined, file=paste0(trait.path,"/anova.rds"), compress=TRUE)
-    saveRDS(anova.models, file=paste0(trait.path,"/anova.models.drop1.rds"), compress=TRUE)
     write.csv(anova.combined, file=paste0(trait.path,"/anova.csv"), row.names=TRUE)
 }
 
@@ -201,17 +201,18 @@ write.csv(models.selected.df, file=paste0(workflow,"/traits/selectedModels.csv")
 generateCrossFilesCB <- function(trait.cfg,trait.path,args.l) {
     gData             <- args.l[[1]]
     map.df             <- args.l[[2]]
-    selectedModels     <- args.l[[3]]
+    #selectedModels     <- args.l[[3]]
     trait_name         <- trait.cfg$trait
     model_label         <- trait.cfg$model
-    anova.drop1.selectedmodel.file <- paste0(trait.path,"/anova.models.drop1.rds")
-    selectedmodel.label <- (selectedModels$value %>% filter((trait == trait_name) & (model == model_label)) %>% dplyr::select(selected_model))[[1]]
-    if( file.exists(anova.drop1.selectedmodel.file) ) {
-        anova.drop1.selectedmodel.l <- readRDS(anova.drop1.selectedmodel.file)
-        model                        <- anova.drop1.selectedmodel.l[[selectedmodel.label[[1]]]]
-        blups                        <- model$U[["u:id"]][[trait_name]]
+    #anova.drop1.selectedmodel.file <- paste0(trait.path,"/anova.models.drop1.rds")
+    #selectedmodel.label <- (selectedModels$value %>% filter((trait == trait_name) & (model == model_label)) %>% dplyr::select(selected_model))[[1]]
+    #if( file.exists(anova.drop1.selectedmodel.file) ) {
+        #anova.drop1.selectedmodel.l <- readRDS(anova.drop1.selectedmodel.file)
+        #model                        <- anova.drop1.selectedmodel.l[[selectedmodel.label[[1]]]]
+        model   <- readRDS(file=paste0(trait.path,"/mmer.rds"))
+        blups   <- model$U[["u:id"]][[trait_name]]
         generate_cross_file(trait.cfg, blups, gData, map.df, trait.path)
-    }
+    #}
 }
 
 gData.rqtl        <- readRDS(file=paste0(workflow,"/traits/rqtl.gdata.rds"))
