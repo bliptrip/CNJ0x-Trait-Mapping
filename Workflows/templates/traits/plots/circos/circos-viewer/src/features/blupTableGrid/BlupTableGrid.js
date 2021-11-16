@@ -205,14 +205,14 @@ export default function BlupTableGrid() {
 
     useEffect( () => {
         if( blupTableData && blupTableData.length > 0 && apiRef.current && apiRef.current.upsertFilter ) {
-            //Delete all current filters
-            currFilters.forEach( f => {
-                apiRef.current.deleteFilter(f);
-            });
             //Add new filters
             const filtersWithId = filters.map( f => ({ ...f, id: uuidv4() }) );
             filtersWithId.forEach( f => {
                 apiRef.current.upsertFilter(f);
+            });
+            //Delete all previous filters
+            currFilters.forEach( f => {
+                apiRef.current.deleteFilter(f);
             });
             setCurrFilters(filtersWithId);
         }
