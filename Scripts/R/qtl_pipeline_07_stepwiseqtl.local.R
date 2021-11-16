@@ -7,7 +7,8 @@ library(qtl)
 
 args = commandArgs(trailingOnly=TRUE)
 
-workflow="../../Workflows/1"
+workflow <- get0("workflow", ifnotfound="../../Workflows/1")
+
 if(length(args)==0) {
     print("No arguments supplied.")
 } else{
