@@ -20,7 +20,7 @@ library(tidyverse)
 
 source('./usefulFunctions.R')
 
-workflow <- get0("workflow", ifnotfound="../../Workflows/9")
+workflow <- get0("workflow", ifnotfound="../../Workflows/1")
 P1_Name <- get0("P1_Name", ifnotfound="Mullica_Queen")
 P2_Name <- get0("P2_Name", ifnotfound="Crimson_Queen")
 
