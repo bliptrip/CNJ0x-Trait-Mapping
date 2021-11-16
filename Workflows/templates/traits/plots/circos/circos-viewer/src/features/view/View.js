@@ -128,8 +128,7 @@ export default function View() {
         scatter_trait_data = d3.merge(Array.from(scatter_trait_data.values()));
         var trait_class = "scatters-" + method + "-" + consensus + "--" + trait;
         circosScatter.scatter(trait_class, scatter_trait_data, config);
-    };
-
+    }; 
     const inject_stacks = (linkage_groups, qtls, traits, trait_idx, models, config, method, consensus) => {
         var trait = traits[trait_idx];
         models.forEach( (model,i) => {
@@ -219,13 +218,13 @@ export default function View() {
     };
 
     const gen_scatter_action = d => {
-        const lodProfileData = { data: glods[d.trait][d.model][qtlMethod][d.block_id],
+        const lodProfileData = { data: glods[d.trait][d.model][d.method][d.block_id],
                                  color: d.color,
                                  model: d.model,
                                  trait: d.trait,
                                  chr: d.chr };
-        dispatch(setEffectPlotData(d));
         dispatch(setLodProfilePlotData(lodProfileData));
+        dispatch(setEffectPlotData(d));
         dispatch(setBlupTableGridFilters([{columnField: "trait", value: d.trait, operatorValue: "==="}]));
     };
 
