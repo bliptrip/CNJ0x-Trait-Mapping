@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import csv
 import os
@@ -32,10 +32,10 @@ def generate_submit_data(num_clusters, num_perms, seed, workflow, model, trait, 
         subfile = masterfold + '/' + subfile
         shutil.copy(template, subfile)
         #Edit the sub file to match configuration settings
-        cmd = "/usr/local/bin/gsed -i -e 's/{R_VERSION}/" + r_version + "/g' " + subfile
+        cmd = "sed -i -e 's/{R_VERSION}/" + r_version + "/g' " + subfile
         print(cmd)
         subprocess.call(cmd, shell=True)
-        cmd = "/usr/local/bin/gsed -E -i -e 's/^(queue[[:space:]]*)[[:digit:]]+/\\1" + str(num_clusters) + "/g' " + subfile
+        cmd = "sed -E -i -e 's/^(queue[[:space:]]*)[[:digit:]]+/\\1" + str(num_clusters) + "/g' " + subfile
         print(cmd)
         subprocess.call(cmd, shell=True)
         #Copy the appropriate cross.csv into the current folder.
