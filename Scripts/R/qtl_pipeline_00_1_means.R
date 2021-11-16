@@ -55,21 +55,12 @@ cnjpop.pheno.df$dry_wt_leaves[cnjpop.pheno.df.dry_wt_leaves.zeros.idx] <- NA
 cnjpop.pheno.df <- cnjpop.pheno.df %>%
                       mutate(row=extract_row(accession),
                              column=extract_col(accession),
-							 accession_name=gsub(" ","_",accession_name)) #Remove spaces from accession names as dataframe columns can't have them
+							 accession_name=gsub("[- ]","_",accession_name,fixed=FALSE)) #Replace spaces/hyphens with underscores 
 
 #Calculate means of uprights
 cnjpop.pheno.means.df <- cnjpop.pheno.df %>%
                             group_by(population,year,accession_name,accession,row,column) %>%
-                            summarize(berry_length=mean(berry_length, na.rm=T), 
-                                      berry_width=mean(berry_width, na.rm=T),
-                                      berry_weight=mean(berry_weight, na.rm=T),
-                                      num_seeds=mean(num_seeds, na.rm=T),
-                                      num_peds=mean(num_peds, na.rm=T),
-                                      num_berries=mean(num_berries, na.rm=T),
-                                      total_berry_weight=mean(total_berry_weight, na.rm=T),
-                                      upright_length=mean(upright_length, na.rm=T),
-                                      secondary_growth=mean(secondary_growth, na.rm=T),
-                                      dry_wt_leaves=mean(dry_wt_leaves, na.rm=T))
+                            summarize(across(num_peds:chimera_umccLogY,mean,na.rm=T))
 
 #Filter out parents for comparing parental values to children values
 #cnjpop.pheno.parents.df <- cnjpop.pheno.df %>% filter(!grepl("CNJ0.*", cnjpop.pheno.df$accession_name))
@@ -89,21 +80,8 @@ cnjpop.pheno.p2.means.df <- cnjpop.pheno.means.df %>%
 #Remove the population column
 cnjpop.pheno.p2.means.df <- subset(cnjpop.pheno.p2.means.df, select=-c(population))                                
 
-############### NOTE: Maybe consider removing the 'complete gentoype' code below when considering across each year itself. #####################
-
-#Determine which genotypes are represented across all three years
-#p1
-#cnjpop.pheno.p1.means.table <- table(cnjpop.pheno.p1.means.df$accession_name) 
-#Complete genotypes should apply for both full and means data
-#cnjpop.pheno.p1.CompleteGenoTypes <- names(which(cnjpop.pheno.p1.means.table == 3))
-#cnjpop.pheno.p1.means.df <- cnjpop.pheno.p1.means.df[cnjpop.pheno.p1.means.df$accession_name %in% cnjpop.pheno.p1.CompleteGenoTypes,]
-#p2
-#cnjpop.pheno.p2.means.table <- table(cnjpop.pheno.p2.means.df$accession_name) 
-#Complete genotypes should apply for both full and means data
-#cnjpop.pheno.p2.CompleteGenoTypes <- names(which(cnjpop.pheno.p2.means.table == 3))
-#cnjpop.pheno.p2.means.df <- cnjpop.pheno.p2.means.df[cnjpop.pheno.p2.means.df$accession_name %in% cnjpop.pheno.p2.CompleteGenoTypes,]
-
 #Write the means to an output csv file.
+
 write.csv(cnjpop.pheno.means.df, file=pheno_dpath2fpath("Data-combined-collated.means.csv"), row.names=FALSE)
 write.csv(cnjpop.pheno.p1.means.df, file=pheno_dpath2fpath("Data-combined-collated.cnj04.means.csv"), row.names=FALSE)
 write.csv(cnjpop.pheno.p2.means.df, file=pheno_dpath2fpath("Data-combined-collated.cnj02.means.csv"), row.names=FALSE)
