@@ -1,21 +1,31 @@
-Trait,Category,Type,Values,QTL Analysis Performed
-Total Berry Mass (g),Upright Traits,R,,yes (CNJ02)
-Upright Length (cm),Upright Traits,R,,
-Dry Mass of Leaves (g),Upright Traits,R,,
-Rebud,Upright Traits,B,yes;no,
-Number of Pedicels,Pedicel Traits,I,,yes (CNJ02)
-Number without Fruit,Pedicel Traits,I,,
-Number with Berries,Pedicel Traits,I,,
-Number with Aborted Flowers,Pedicel Traits,I,,
-Number with Aborted Berries,Pedicel Traits,I,,
-Length (mm),Largest Berry Traits,R,,yes (CNJ02)
-Width (mm),Largest Berry Traits,R,,yes (CNJ02)
-Weight (g),Largest Berry Traits,R,,yes (CNJ02)
-Calyx Diameter (mm),Largest Berry Traits,R,,
-Calyx Lobe Fold Pattern,Largest Berry Traits,C,open;medium;closed,
-Calyx Lobe Size,Largest Berry Traits,C,small;medium;large,
-Calyx End Shape,Largest Berry Traits,C,round;flattened;pointed,
-Pedicel End Shape,Largest Berry Traits,C,round;flattened;pointed,
-Berry Skin Bloom Level,Largest Berry Traits,I,1=shiny;2=moderate;3=heavy,
-Berry Shape,Largest Berry Traits,C,round;oval(elongated round);oblong(elongated round with squre ends);pyriform(pear-shaped);spindle,yes (CNJ02)
-Number Developed Seeds,Largest Berry Traits,R,,
+Trait,Abbreviation,Category,Units,Description,QTL Analysis Performed
+Total Berry Mass,UTBM,Upright Traits,g,,yes (CNJ02)
+Upright Length,UL,Upright Traits,cm,,
+Dry Mass of Leaves,UDM,Upright Traits,g,,
+Rebud,URB,Upright Traits,yes;no,"Evidence for rebud behavior, where a fruiting upright has a larger bud than a vegetative upright.  ",
+Upright Mean Fruit Mass,UMFM,Upright Traits,\frac{g}{berry},Derived from UTBM / UNB,
+Number of Pedicels,UNP,Upright Traits,,,yes (CNJ02)
+Number Pedicels without Fruit,UN0,Upright Traits,,,
+Number Pedicels with Mature Berries,UNB,Upright Traits,,,
+Number Pedicels with Aborted Flowers,UNAF,Upright Traits,,,
+Number Pedicels with Aborted Berries,UNAB,Upright Traits,,,
+Length,UBL,Largest Berry Traits,mm,,yes (CNJ02)
+Width,UBW,Largest Berry Traits,mm,,yes (CNJ02)
+Length versus Width,ULvW,Largest Berry Traits,,Derived from UBL / UBW,
+Mass,UBM,Largest Berry Traits,g,,yes (CNJ02)
+Calyx Diameter,UCD,Largest Berry Traits,mm,,
+Calyx Lobe Fold Pattern,UCLP,Largest Berry Traits,open;medium;closed,,
+Calyx Lobe Size,UCLS,Largest Berry Traits,small;medium;large,,
+Calyx End Shape,UCES,Largest Berry Traits,round;flattened;pointed,,
+Pedicel End Shape,UBES,Largest Berry Traits,round;flattened;pointed,,
+Berry Skin Bloom Level,UBBL,Largest Berry Traits,shiny;moderate;heavy,Assesses the amount of wax on the berry surface.,
+Berry Shape,UBS,Largest Berry Traits,round;oval;oblong;pyriform;spindle,,yes (CNJ02)
+Number Developed Seeds,UNS,Largest Berry Traits,,,
+Total Yield,TY,Plot Traits,\frac{g}{ft^2},,
+Sound Fruit Yield,SFY,Plot Traits,g,,
+Mean Fruit Mass,MFM,Plot Traits,\frac{g}{berry},,
+Percent Fruit Rot,PFR,Plot Traits,100*\frac{TY-SFY}{TY}\%,,
+Total Anthocyanins,Tacy,Plot Traits,\frac{mg}{100g\ berries},,
+Percent Soluble Solids,Brix,Plot Traits,\%,,
+Titratable Acidity,TA,Plot Traits,\%,,
+Proanthocyanins,PAC,Plot Traits,\frac{mg}{g\ berries},,
