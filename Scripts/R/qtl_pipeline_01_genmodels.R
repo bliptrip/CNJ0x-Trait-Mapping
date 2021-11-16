@@ -25,6 +25,7 @@ if(length(args)!=0) {
 library(sommer)
 library(qtl)
 library(dplyr)
+library(rlist)
 library(tidyverse)
 
 #Load the configuration file for this workflow
@@ -192,16 +193,47 @@ mixed_model_analyze <- function(trait.cfg, pheno, geno) {
     trait       <- trait.cfg$trait
     A           <- A.mat(geno)
 
+    random <- as.formula(trait.cfg$random)
+    yuyur <- strsplit(as.character(random[2]), split = "[+-]")[[1]]
+    randomtermss <- apply(data.frame(yuyur),1,function(x) {
+        strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
+    })
+    
+    #Generate a grid of all possible random model terms, but always include first term -- Define the first term as always being the genotype
+    randomtermss_combos = expand.grid(c(TRUE,rep(list(c(FALSE,TRUE)),length(randomtermss)-1)))
+    AICs                = rep(Inf, nrow(randomtermss_combos)) # All the AIC terms -- the model with minimum AIC is the winner
+    LogLikelihoods      = rep(-Inf, nrow(randomtermss_combos)) # All the AIC terms -- the model with minimum AIC is the winner
+    randomfs            = rep("", nrow(randomtermss_combos))
+    models              = list()
     print(paste0("Running trait \"", trait, "\" model analysis."))
-    mmer.expr <- paste0(c("mmer(fixed=", trait.cfg$fixed, ", random=", trait.cfg$random, ", rcov=", trait.cfg$rcov, ", data=pheno"), collapse="")
-    if( !is.empty(trait.cfg["mmer_args"]) ) {
-        mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
+    for( i in 1:nrow(randomtermss_combos) ) {
+        randomtermss_include = unlist(randomtermss_combos[i,])
+        randomtermss_current = randomtermss[randomtermss_include]
+        randomf              = paste("~",paste(randomtermss_current,collapse = " + ")) #Convert back to formula string
+        randomfs[i]          = randomf
+        mmer.expr <- paste0(c("mmer(fixed=", trait.cfg$fixed, ", random=", randomf, ", rcov=", trait.cfg$rcov, ", data=pheno"), collapse="")
+        if( !is.empty(trait.cfg["mmer_args"]) ) {
+            mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
+        }
+        mmer.expr <- paste0(mmer.expr,")")
+        print(mmer.expr)
+        model <- eval(parse(text=mmer.expr))
+        if( !is.null(model) && !is.null(model$AIC) && !is.null(model$monitor) ) {
+            AICs[i]             = model$AIC
+            LogLikelihoods[i]   = model$monitor[1,ncol(model$monitor)]
+        }
+        models = list.append(models,model)
     }
-    mmer.expr <- paste0(mmer.expr,")")
-    print(mmer.expr)
-    ans <- eval(parse(text=mmer.expr))
-    ans$A.mat <- A #Store the additive relationship matrix so it does not need to be calculated later when doing a drop1 style anova to compare two models.
-    return(ans)
+    
+    min_index = which.min(AICs)
+    if( AICs[min_index] != Inf ) #Inf indicates no model could be fit
+    {
+        model       = models[[min_index]]
+        model$A.mat = A #Store the additive relationship matrix so it does not need to be calculated later when doing a drop1 style anova to compare two models.
+    } else {
+        model = list() #Empty list indicates optimal model could not be found and fit
+    }
+    return(list(bestmodel=model, stats=tibble(randomfs=randomfs, AICs=AICs, LogLikelihoods=LogLikelihoods)))
 }
 
 #Read in the model trait configuration file to determine how to model traits.
@@ -218,26 +250,24 @@ for( i in 1:length(traits.df[,1]) ) {
         if( !is.empty(trait.cfg$filter) ) {
             pheno.filtered.df <- eval(parse(text=paste0("pheno.filtered.df %>% filter(", trait.cfg$filter, ")")))
         }
-        random <- as.formula(trait.cfg$random)
-        yuyur <- strsplit(as.character(random[2]), split = "[+-]")[[1]]
-        randomtermss <- apply(data.frame(yuyur),1,function(x) {
-            strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
-        })
-        rcov <- as.formula(trait.cfg$rcov)
-        yuyuu <- strsplit(as.character(rcov[2]), split = "[+-]")[[1]]
-        rcovtermss <- apply(data.frame(yuyuu),1,function(x) {
-            strsplit(as.character((as.formula(paste("~",x)))[2]), split = "[+]")[[1]]
-        })
-        ans <- mixed_model_analyze(trait.cfg, pheno.filtered.df, geno.num)
-        ans.sum <- summary(ans)
-        saveRDS(ans, file=paste0(trait_subfolder_fpath,"/mmer.rds"), compress=TRUE)
-        blups   <- ans$U[["u:id"]][[trait]]
-        vcov    <- ans.sum$varcomp
-        rownames(vcov) <- c(randomtermss,rcovtermss)
-        write.csv(vcov,file=paste0(trait_subfolder_fpath,"/vcov.csv"))
-		id.idx	 <- which(grepl("^u:id",rownames(ans.sum$varcomp)))
-		res.idx	 <- which(grepl("^units",rownames(ans.sum$varcomp)))
+        response    <- mixed_model_analyze(trait.cfg, pheno.filtered.df, geno.num)
+        write_csv(response$stats, file=paste0(trait_subfolder_fpath,"/all_fitted_model_stats.csv"))
+        model       <- response$bestmodel
+        if( !is.null(model) && !is.null(model$U) ) { #Indicates that the model was singular, and failed to find a solution
+            model.sum <- summary(model)
+            saveRDS(model, file=paste0(trait_subfolder_fpath,"/mmer.rds"), compress=TRUE)
+            blups   <- model$U[["u:id"]][[trait]]
+            vcov    <- model.sum$varcomp
+            randomtermss <- trimws(strsplit(as.character(model$call$random)[[2]],split='[+]')[[1]])
+            rcovtermss <- trimws(strsplit(as.character(model$call$rcov)[[2]],split='[+]')[[1]])
+            rownames(vcov) <- c(randomtermss,rcovtermss)
+            write.csv(vcov,file=paste0(trait_subfolder_fpath,"/vcov.csv"))
+        } else {
+            cat(paste0("Best model for trait ", trait, " is singular or failed to find a solution.\n"))
+            saveRDS(model, file=paste0(trait_subfolder_fpath,"/mmer.rds"), compress=TRUE)
+        }
     }
 }
+
 
 save.image(paste0(workflow,"/.RData.01_genmodeleeffects"))
