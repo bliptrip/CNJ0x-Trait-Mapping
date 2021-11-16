@@ -3,6 +3,7 @@
 .PHONY: install GenCross PermMerge Perm2DMerge Rbuild PermBuild StepwiseQTLBuild StepwiseQTL
 
 HTCONDOR=HTCondorFiles
+SANDBOX=../../sandbox
 
 export WORKFLOW ?= ../../Workflows/1
 export RDS_DIR ?= "../../Data/phenotypic\ data/DerivedData/cleanup_data.R.output/Robjs"
@@ -38,7 +39,11 @@ genblupplots:
 #condor_submit -i Rpackage.sub
 #Comment-out any packages you don't want to install if they're already in the tarball.
 Rbuild:
-		make -C $(HTCONDOR) $@
+		make -C $(HTCONDOR) WORKFLOW=../$(WORKFLOW) $@
+
+#Rdownload - Pulls the generaed RPackage file from the submit server.
+Rdownload:
+		make -C $(HTCONDOR) WORKFLOW=../$(WORKFLOW) $@
 		
 #Permbuild is meant for building a tarball of necessary scripts/etc. needed for running single-QTL (scanone) permutation test on cluster.
 PermBuild:
@@ -91,16 +96,15 @@ CollateQTL:
 
 #Generate QTL table
 GenQTLTable:
-		touch "$(WORKFLOW)/traits/qtl_collated.$(QTL_METHOD).png"
 		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_method="$(QTL_METHOD)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_10_01_genQTLtables.R
 
 #Collate all QTL info into one file
 GenConsensus:
-		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_pipeline_10_genconsensus.R
+		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_10_genconsensus.R
 
 #Generate Circos Plot
 GenCircos:
-		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_pipeline_11_gencircos.R
+		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_11_gencircos.R
 
 #Generate QTL table
 GenEffects:
@@ -115,15 +119,30 @@ GenCircosSandbox:
 		cp -r ../../Workflows/templates/traits/plots/circos/package*.json  $(SANDBOX)/
 		cp -r ../../Workflows/templates/traits/plots/circos/drawcircos.*  $(SANDBOX)/
 		cp -r ../../Workflows/templates/traits/plots/circos/*.css $(SANDBOX)/
-		cp -r ../../Workflows/templates/traits/plots/circos/karyotype.json $(SANDBOX)/
 		cp -r ../../Workflows/templates/traits/plots/circos/fonts $(SANDBOX)/
 		cp -r $(WORKFLOW)/configs $(SANDBOX)/
-		cd $(SANDBOX) && npm install
+	cd $(SANDBOX) && npm install
 
 LaunchCircosSandbox:
 		cd $(SANDBOX) && npm run -t start &
 		sleep 5
 		cd $(SANDBOX) && npm run -t launch
+		
+GenReactSandbox:
+		rm -rf $(SANDBOX)
+		cp -r ../../Workflows/templates/traits/plots/circos/circos-viewer  $(SANDBOX)
+		cp -r $(WORKFLOW)/configs $(SANDBOX)/public/
+		cp -r $(WORKFLOW)/traits/blups_collated.long.json $(SANDBOX)/public/configs/
+		cp -r $(WORKFLOW)/traits/plots/corrplot.cnj02.csv $(SANDBOX)/public/configs/
+		cp -r $(WORKFLOW)/traits/plots/corrplot.cnj04.csv $(SANDBOX)/public/configs/
+		cp -r $(WORKFLOW)/traits/qtl_collated.csv $(SANDBOX)/public/configs/
+		cp -r $(WORKFLOW)/traits/qtl_collated.consensus.csv $(SANDBOX)/public/configs/
+		cp -r $(WORKFLOW)/traits/effects_collated.json $(SANDBOX)/public/configs/
+		cp -r $(WORKFLOW)/traits/lod_profiles.json $(SANDBOX)/public/configs/
+		cd $(SANDBOX) && npm install
+
+LaunchReactSandbox:
+		cd $(SANDBOX) && npm start
 
 clean:
 		rm *.Rout
