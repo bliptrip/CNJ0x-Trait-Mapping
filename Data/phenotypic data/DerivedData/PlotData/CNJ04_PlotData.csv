@@ -1,4 +1,4 @@
-row,column,accession_name,year,month,TY,SFY,MFW,PFR,Tacy,Brix,TA,PAC
+row,column,accession_name,year,month,TY,SFY,MFM,PFR,Tacy,Brix,TA,PAC
 3,1,CNJ04_2_1,2011,September,385.2,365.4,2.2,5.1,12,9,2.48,1.33
 3,2,CNJ04_2_2,2011,September,508.2,491.4,2.8,3.3,7,7.5,2.57,1.17
 3,3,CNJ04_2_3,2011,September,293.4,280.2,2.5,4.4,14,8.1,2.69,1.36
