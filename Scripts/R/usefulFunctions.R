@@ -29,7 +29,7 @@ hueGen<-function(n,from,to,s="100%",l="50%"){
 
 
 #Specify the directory prefix for storing data files.
-DATA_FOLDER_PREFIX <- "../../Data/phenotypic data/DerivedData/cleanup_data.R.output"
+DATA_FOLDER_PREFIX <- '../../Data/phenotypic data/DerivedData/cleanup_data.R.output'
 DATA_ROBJS_FOLDER_PREFIX <- paste0(DATA_FOLDER_PREFIX,"/Robjs")
 DATA_PLOTS_FOLDER_PREFIX <- paste0(DATA_FOLDER_PREFIX,"/plots")
 GDATA_FOLDER_PREFIX <- "../../Data/genetic_data/RawData"
