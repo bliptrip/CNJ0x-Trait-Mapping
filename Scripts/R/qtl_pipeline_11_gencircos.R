@@ -93,7 +93,7 @@ qtl.collated.df %>%
                     assign.pointer(lod_profile_traits.l.p, exportLODProfiles(.y$trait, .x), .y$trait)
                   } )
 
-lod_filepath <- paste0(workflow,"/",circosfile2path("lod_profiles.json"))
+lod_filepath <- paste0(workflow,"/traits/lod_profiles.json")
 write_json(lod_profile_traits.l.p$value, lod_filepath, auto_unbox=T, pretty=T)
 
 # Generate Karyotype File for Cranberry using consensus map
