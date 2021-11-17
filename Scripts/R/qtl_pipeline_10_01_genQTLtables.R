@@ -4,7 +4,6 @@
 #
 
 # loading libraries
-library(formattable)
 library(knitr)
 library(kableExtra)
 library(RColorBrewer)
@@ -35,12 +34,10 @@ qtl.collated.tb <- read_csv(file=paste0(workflow,'/traits/qtl_collated.csv'), co
                         ungroup()
 
 consensusMapWithGenes.tb <- read_csv(file=geno_dpath2fpath("consensusMapAll2_withGenes.csv"), col_names=TRUE)
-
 consensusMapWithGenes.filtered.tb <- consensusMapWithGenes.tb %>% 
                                         select(marker, gaccession, blast1, blast2) %>%
                                         mutate(blast1 = gsub("0", "",blast1)) %>%
                                         mutate(blast2 = gsub("0", "",blast2))
-
 qtl.collated.filtered.tb <- qtl.collated.tb %>%
                                 filter(method == qtl_method) %>%
                                 mutate(marker = gsub(".+cM_(.+)", "\\1",nearest.marker), 
@@ -69,21 +66,9 @@ qtl.collated.succinct.tb <- qtl.collated.filtered.tb %>%
                                        ) %>%
                                 select(trait_name,model_name,chr,position,qtl.lod,marker.variance,marker,blast,trait_repeat,model_repeat)
 
+
 colnames(qtl.collated.succinct.tb) <- c("Trait[note]", "Model[note]", "Linkage Group", "Marker Location \u00b1 1.5LOD (cM)", "pLOD[note]", "Variance Explained by QTL", "Nearest Marker", "Putative Function", "trait_repeat", "model_repeat")
-
-qtl.f <- formattable(qtl.collated.succinct.tb, formatters=list(
-                        `Variance Explained by QTL` = color_bar("lightblue"),
-                        `Trait` = formatter("span", style = ~ style(visibility=ifelse(trait_repeat,"hidden","visible"), font.weight = ifelse(trait_repeat,NA,"bold"))),
-                        `Model` = formatter("span", style = ~ style(visibility=ifelse(model_repeat,"hidden","visible"), font.weight = ifelse(model_repeat,NA,"bold"))),
-                        model_repeat = FALSE, #Used to hide this column
-                        trait_repeat = FALSE),
-                      format="html",
-                      digits=3,
-                      align=c('l', 'l', 'r', 'r', 'r', 'l', 'l', 'l')
-                    )
-
-
-qtl.collated.succinct.tb %>%
+mtable <- qtl.collated.succinct.tb %>%
     select(-trait_repeat,-model_repeat) %>%
     kable("html", align='llrrrrll', escape = FALSE, table.attr="id=\"kableTable\"") %>%
     kable_paper("striped", full_width=FALSE) %>%
@@ -95,6 +80,8 @@ qtl.collated.succinct.tb %>%
 	add_footnote(c("Significance codes for Genotype:Year Effects\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n", 
 				   "Significance codes for Genotype Effects",
 				   "Significance codes from QTL pvalues"))
+print(mtable)
 
+cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/'),mustWork=TRUE),'/qtl_collated.',qtl_method,'.png'),"'")
 
-cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/qtl_collated.',qtl_method,'.png'),mustWork=TRUE),"'"))
+save.image(paste0(".RData.10_01.",qtl_method,"genQTLtable"))
