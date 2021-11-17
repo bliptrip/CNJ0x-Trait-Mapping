@@ -6,18 +6,24 @@ README.html
 *.Rout
 *.DS_Store
 *.svg
-*.RData
+*.RData*
+*.RDataTmp
+*.Rprofile
 *.Rhistory
 *.rds
 .vscode/
 *.tar.gz
+*.tar
 .*.sw*
+Data/phenotypic data/DerivedData/ccleanup_data.R.output/*
 Scripts/R/HTCondorFiles/Rpackage.install.sh
 Scripts/R/HTCondorFiles/Rpackage.sub
 .Rproj.user
 node_modules/
 public/configs/
 package-lock.json
+*.png
+Scripts/_main.html
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
