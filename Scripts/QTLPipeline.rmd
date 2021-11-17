@@ -513,6 +513,7 @@ setwd(rRoot);
 num_top_qtl = 2; #Specifies the number of top QTL to return per trait
 qtl_method = "scanone" #First display 'scanone' results
 source('qtl_pipeline_10_01_genQTLtables.R', echo=FALSE); 
+mtable
 ```
 
 ## Display QTL Table Results - StepwiseQTL
@@ -521,6 +522,7 @@ setwd(rRoot);
 num_top_qtl = 2; #Specifies the number of top QTL to return per trait
 qtl_method = "stepwiseqtl" #Display 'stepwiseqtl' results
 source('qtl_pipeline_10_01_genQTLtables.R', echo=FALSE); 
+mtable
 ```
 
 ------------------------------------------------------------------------
