@@ -1,12 +1,13 @@
 library(formattable)
 library(ggfittext)
+library(jsonlite)
 library(kableExtra)
 library(knitr)
 library(qtl)
 library(tidyverse)
 
 #Defaults
-workflow        <- get0("workflow", ifnotfound="../../Workflows/1")
+workflow        <- get0("workflow", ifnotfound="../../Workflows/9")
 num_top_qtls    <- get0("num_top_qtls", ifnotfound=2) #Number of top QTLs to show per trait
 
 args = commandArgs(trailingOnly=TRUE)
@@ -67,11 +68,8 @@ extract_effects <- function(method, model, trait, chr, position) {
 #For each qtl in the collated file, use it's position and consensus position to calculate the effects.  Store this information in the collated file?
 generate_collated_effects <- function(qtl.collated.tb,num_top_qtls) {
     qtl.collated.filtered.tb <- qtl.collated.tb %>%
-                                    arrange(method,trait,model,desc(marker.variance)) %>%
-                                    group_by(method,trait,model) %>%
-                                    mutate(top_qtls = c(rep(TRUE,num_top_qtls),rep(FALSE,length(marker.variance)-num_top_qtls))) %>%
-                                    filter(top_qtls == TRUE) %>%
-                                    select(-top_qtls)
+                                    arrange(method,trait,model,desc(marker_variance)) %>%
+                                    group_by(method,trait,model)
                                     
     effects.tb <- NULL
     for( i in 1:nrow(qtl.collated.filtered.tb) ) {
@@ -95,6 +93,7 @@ qtl.tb  <- read_csv(file=paste0(workflow,'/traits/qtl_collated.consensus.csv'), 
                     mutate(GxYLRpvalue = rep(min(GxYLRpvalue,na.rm=TRUE),length(GxYLRpvalue))) %>%
                     mutate(GxYZRpvalue = rep(min(GxYZRpvalue,na.rm=TRUE),length(GxYZRpvalue))) %>%
                     ungroup()
+colnames(qtl.tb) <- gsub('.','_',colnames(effs.tb),fixed=TRUE)
 
 effs.tb <- generate_collated_effects(qtl.tb, num_top_qtls)
 colnames(effs.tb) <- gsub('.','_',colnames(effs.tb),fixed=TRUE)
@@ -108,6 +107,11 @@ effs.tb <- readRDS(paste0(workflow,'/traits/effects_collated.rds')) #We can star
 
 #Plot generation
 effs.1.tb <- effs.tb %>% 
+                group_by(method,trait,model) %>%
+                mutate(top_qtls = c(rep(TRUE,num_top_qtls),rep(FALSE,length(marker_variance)-num_top_qtls))) %>%
+                filter(top_qtls == TRUE) %>%
+                select(-top_qtls) %>%
+                unnest(data) %>%
                 unnest(blups)
 
 effs.filtered1.tb <- effs.1.tb %>% 
@@ -140,25 +144,30 @@ effs.filtered1.tb <- effs.1.tb %>%
                                             ggsave(filename=.x$plot_filename, plot = .x$plot[[1]], device="png", bg="transparent", dpi=300, width=20, height=5, units="cm")
                                         })
 effs.2.tb <- effs.tb %>% 
-                     pivot_wider(names_from=genotype,values_from=c(effect.mean,effect.se,blups)) %>%
-                     pivot_longer(c(AvB,CvD,Int), names_to="effect.type",values_to="effect.value")
+                group_by(method,trait,model) %>%
+                mutate(top_qtls = c(rep(TRUE,num_top_qtls),rep(FALSE,length(marker_variance)-num_top_qtls))) %>%
+                filter(top_qtls == TRUE) %>%
+                select(-top_qtls) %>%
+                unnest(data) %>%
+                pivot_wider(names_from=genotype,values_from=c(effect_mean,effect_se,blups)) %>%
+                pivot_longer(c(AvB,CvD,Int), names_to="effect_type",values_to="effect_value")
 
-min_effect.value <- floor(min(effs.2.tb$effect.value))
-max_effect.value <- ceiling(max(effs.2.tb$effect.value))
+min_effect_value <- floor(min(effs.2.tb$effect_value))
+max_effect_value <- ceiling(max(effs.2.tb$effect_value))
 
 effs.filtered2.tb <- effs.2.tb %>%
                             group_by(method,trait) %>%
-                            mutate(min_effect.value = min(effect.value), max_effect.value = max(effect.value)) %>%
+                            mutate(min_effect_value = min(effect_value), max_effect_value = max(effect_value)) %>%
                             ungroup() %>%
-                            mutate(effect.label = gsub("AvB","A.-B.",effect.type)) %>%
+                            mutate(effect.label = gsub("AvB","A.-B.",effect_type)) %>%
                             mutate(effect.label = gsub("CvD",".C-.D",effect.label)) %>%
                             mutate(effect.label = factor(levels=rev(c("A.-B.",".C-.D","Int")), effect.label)) %>%
                             group_by(method, trait, model, chr, position) %>%
-                            do(plot  = ggplot(.,aes(x=effect.label, y=effect.value, fill=effect.label)) +
-                                                geom_blank(aes(y=min_effect.value)) +
-                                                geom_blank(aes(y=max_effect.value)) +
+                            do(plot  = ggplot(.,aes(x=effect.label, y=effect_value, fill=effect.label)) +
+                                                geom_blank(aes(y=min_effect_value)) +
+                                                geom_blank(aes(y=max_effect_value)) +
                                                 geom_col(alpha=0.5) +
-                                                geom_bar_text(aes(label=round.digits(effect.value,2)),angle=25) +
+                                                geom_bar_text(aes(label=round.digits(effect_value,2)),angle=25) +
                                                 geom_hline(mapping=aes(yintercept=0),color="grey30",linetype="dashed") +
                                                 coord_flip() +
                                                 guides(fill = 'none') +
@@ -187,19 +196,19 @@ qtl.tb  <- qtl.tb %>%
 
 #Table generation
 effs.complete.tb <-  qtl.tb %>% 
-                        arrange(method,trait,model,desc(marker.variance)) %>%
+                        arrange(method,trait,model,desc(marker_variance)) %>%
                         inner_join(effs.filtered1.tb, by=c("method","trait","model","chr","position"), suffix=c("qtl","effs")) %>%
                         inner_join(effs.filtered2.tb, by=c("method","trait","model","chr","position"), suffix=c("qtl","effs")) %>%
-                        mutate(marker = gsub(".+cM_(.+)", "\\1",nearest.marker), 
+                        mutate(marker = gsub(".+cM_(.+)", "\\1",nearest_marker), 
                                trait_name = trait_to_name(trait.cfg.tb,model,trait), 
                                model_name = model_to_name(trait.cfg.tb,model,trait),
-                               marker.variance=percent(marker.variance/100),
-                               model.variance=percent(model.variance/100))  %>%
+                               marker_variance=percent(marker_variance/100),
+                               model_variance=percent(model_variance/100))  %>%
                         mutate(trait_repeat=(trait_name == c("",trait_name[-length(trait_name)])),
                                model_repeat=(model_name == c("",model_name[-length(model_name)]))) %>%
                         mutate(trait_name = paste0(trait_name,"$^{",unlist(map(GxYLRpvalue,siginfo)),"}$"),  #Append significance string info to names for statistically informative table
                                model_name = paste0(model_name,"$^{",unlist(map(GLRpvalue,siginfo)),"}$"),
-                               qtl.lod = paste0(round.digits(qtl.lod,2),"$^{",unlist(map(qtl.pvalue,siginfo)),"}$"))
+                               qtl_lod = paste0(round.digits(qtl_lod,2),"$^{",unlist(map(qtl_pvalue,siginfo)),"}$"))
                             
 
 generate_table <- function(tb, caption, meths) {
@@ -207,11 +216,11 @@ generate_table <- function(tb, caption, meths) {
             filter(method %in% meths) %>%
             mutate(trait_name = ifelse(trait_repeat, "", cell_spec(trait_name, "html", bold=TRUE)),
                    model_name = ifelse(model_repeat, "", cell_spec(model_name, "html", bold=TRUE)),
-                   model.variance = ifelse(model_repeat, "", color_bar("lightgreen")(model.variance)),
+                   model_variance = ifelse(model_repeat, "", color_bar("lightgreen")(model_variance)),
                    marker = ifelse(is.na(marker)," ",marker),
                    position = paste0(round.digits(position,2),"\u00b1",round.digits(interval/2,2)),
-                   marker.variance = color_bar("lightblue")(marker.variance)) %>%
-            select(method,trait_name,model_name,model.variance,chr,position,qtl.lod,marker.variance,trait_repeat,model_repeat,plot_filename,plot_mpieffects_filename)
+                   marker_variance = color_bar("lightblue")(marker_variance)) %>%
+            select(method,trait_name,model_name,model_variance,chr,position,qtl_lod,marker_variance,trait_repeat,model_repeat,plot_filename,plot_mpieffects_filename)
     colnames(tb) <- c("method", "Trait[note]", "Model[note]", "Model Variance[note]", "Linkage Group", "Marker Location[note]", "pLOD[note]", "Variance Explained by QTL", "trait_repeat", "model_repeat", "plot_filename", "plot_mpieffects_filename")
     tb %>%
         select(!c(method,trait_repeat,model_repeat,plot_filename,plot_mpieffects_filename)) %>%
@@ -252,4 +261,4 @@ effs.complete.tb %>%
                   } )
 
 
-save.image(".RData.12_geneffects")
+save.image(paste0(".RData.12_geneffects.",num_top_qtls))
