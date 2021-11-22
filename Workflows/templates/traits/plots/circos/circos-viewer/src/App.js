@@ -192,7 +192,7 @@ function App() {
     const [blups, setBlups]   = useState([]);
 
     useEffect( () => {
-        d3.json('configs/blups_collated.long.json')
+        d3.json('configs/blups_collated.wide.json')
         .then( d => {
             setBlups(d);
         });

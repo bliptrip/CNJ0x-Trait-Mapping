@@ -120,7 +120,8 @@ model.collated.wide.tb <- model.collated.blup.tb %>%
                             rename(genotype=id) %>%
                             mutate(id=seq(1,n()))
 
-write_json(model.collated.wide.tb, paste0(workflow, '/traits/blups_collated.long.json'), auto_unbox=T, pretty=T) #Also write to JSON file for easy import by other programming languages/tools
+saveRDS(model.collated.wide.tb, file=paste0(workflow,'/traits/blups_collated.wide.rds'), compress=TRUE)
+write_json(model.collated.wide.tb, paste0(workflow, '/traits/blups_collated.wide.json'), auto_unbox=T, pretty=T) #Also write to JSON file for easy import by other programming languages/tools
 
 #Spread out
 #model.collated.tb <- spread(model.collated.long.tb, trait, blup)

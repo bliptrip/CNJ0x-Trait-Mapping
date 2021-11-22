@@ -132,7 +132,7 @@ GenReactSandbox:
 		rm -rf $(SANDBOX)
 		cp -r ../../Workflows/templates/traits/plots/circos/circos-viewer  $(SANDBOX)
 		cp -r $(WORKFLOW)/configs $(SANDBOX)/public/
-		cp -r $(WORKFLOW)/traits/blups_collated.long.json $(SANDBOX)/public/configs/
+		cp -r $(WORKFLOW)/traits/blups_collated.wide.json $(SANDBOX)/public/configs/
 		cp -r $(WORKFLOW)/traits/plots/corrplot.cnj02.csv $(SANDBOX)/public/configs/
 		cp -r $(WORKFLOW)/traits/plots/corrplot.cnj04.csv $(SANDBOX)/public/configs/
 		cp -r $(WORKFLOW)/traits/qtl_collated.csv $(SANDBOX)/public/configs/
