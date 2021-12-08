@@ -4,6 +4,7 @@
 #
 
 # loading libraries
+library(formattable)
 library(knitr)
 library(kableExtra)
 library(RColorBrewer)
@@ -13,7 +14,7 @@ source('./usefulFunctions.R')
 
 #Defaults (can be overridden with command-line invocation)
 workflow        <- get0("workflow", ifnotfound="../../Workflows/1")
-qtl_method      <- get0("qtl_method", ifnotfound="stepwiseqtl") #Which method to filter
+qtl_scan_method      <- get0("qtl_scan_method", ifnotfound="stepwiseqtl") #Which method to filter
 num_top_qtls    <- get0("num_top_qtls", ifnotfound=2) #Number of top QTLs to show per trait
 
 #In case we override the workflow on the command-line
@@ -39,7 +40,7 @@ consensusMapWithGenes.filtered.tb <- consensusMapWithGenes.tb %>%
                                         mutate(blast1 = gsub("0", "",blast1)) %>%
                                         mutate(blast2 = gsub("0", "",blast2))
 qtl.collated.filtered.tb <- qtl.collated.tb %>%
-                                filter(method == qtl_method) %>%
+                                filter(method == qtl_scan_method) %>%
                                 mutate(marker = gsub(".+cM_(.+)", "\\1",nearest.marker), 
                                        model_name = model_to_name(trait.cfg.tb,model,trait), 
                                        trait_name = trait_to_name(trait.cfg.tb,model,trait)) %>%
@@ -51,7 +52,7 @@ qtl.collated.filtered.tb <- qtl.collated.tb %>%
                                        trait_repeat=(trait_name == c("",trait_name[-length(trait_name)])),
                                        model_repeat=(model_name == c("",model_name[-length(model_name)]))) %>%
                                 group_by(trait_name,model_name) %>%
-                                mutate(top_qtls = c(rep(TRUE,num_top_qtls),rep(FALSE,length(marker.variance)-num_top_qtls))) %>%
+                                mutate(top_qtls = c(rep(TRUE,min(num_top_qtls,length(marker.variance))),rep(FALSE,length(marker.variance)-min(num_top_qtls,length(marker.variance))))) %>%
                                 filter(top_qtls == TRUE)
 
 
@@ -82,6 +83,6 @@ mtable <- qtl.collated.succinct.tb %>%
 				   "Significance codes from QTL pvalues"))
 print(mtable)
 
-cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/'),mustWork=TRUE),'/qtl_collated.',qtl_method,'.png'),"'")
+cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/'),mustWork=TRUE),'/qtl_collated.',qtl_scan_method,'.png'),"'")
 
-save.image(paste0(".RData.10_01.",qtl_method,"genQTLtable"))
+save.image(paste0(".RData.10_01.",qtl_scan_method,"genQTLtable"))
