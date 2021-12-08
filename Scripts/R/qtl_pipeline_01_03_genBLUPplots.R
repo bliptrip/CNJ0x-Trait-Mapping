@@ -23,6 +23,8 @@ source('./usefulFunctions.R')
 workflow <- get0("workflow", ifnotfound="../../Workflows/1")
 P1_Name <- get0("P1_Name", ifnotfound="Mullica_Queen")
 P2_Name <- get0("P2_Name", ifnotfound="Crimson_Queen")
+POP_Name <- get0("POP_Name", ifnotfound="CNJ02")
+
 
 source(paste0(workflow,"/configs/model.cfg"))
 
@@ -33,6 +35,8 @@ if(length(args)!=0) {
         eval(parse(text=args[[i]]))
     }
 }
+
+cat(paste0("Population name: ",POP_Name))
 
 collateBLUPs <- function(trait.cfg, trait.path, args.l) {
     models.tb.p         <- args.l[[2]]
@@ -180,8 +184,8 @@ all_model_types <- model.collated.long.tb %>% dplyr::select(model_trait) %>% uni
 model.collated.long.stats.tb <- model.collated.long.tb %>%
                                     filter(!(id %in% c(P1_Name,P2_Name))) %>%
                                     group_by(model,trait,type,model_type) %>%
-                                    dplyr::summarize(min=min(value), minZ=min(valueZ), min_geno = gsub("CNJ02_1_([0-9]+)","g\\1",id[which.min(value)]),
-                                              max=max(value), maxZ=max(valueZ), max_geno = gsub("CNJ02_1_([0-9]+)","g\\1",id[which.max(value)]),
+                                    dplyr::summarize(min=min(value), minZ=min(valueZ), min_geno = gsub(paste0(POP_Name,"_[^_]+_([0-9]+)"),"g\\1",id[which.min(value)]),
+                                              max=max(value), maxZ=max(valueZ), max_geno = gsub(paste0(POP_Name,"_[^_]+_([0-9]+)"),"g\\1",id[which.max(value)]),
                                               .groups="keep") %>%
                                     filter(min != max) %>%
                                     ungroup() %>%
@@ -220,8 +224,6 @@ gs <- model.collated.long.tb %>%
         left_join(model.collated.long.ylims.tb, by="trait") %>%
         group_by(trait) %>%
         do(
-           fake = for r in .$data[[1]] {
-           }
            plot = ggplot(.$data[[1]], aes(x=factor(model), y=value, group=factor(model_type), fill=factor(type))) +
                     geom_boxplot(alpha=0.4, position=position_dodge(1)) +
                     geom_jitter(alpha=0.1, position=position_jitterdodge(jitter.width=0.5, dodge.width=1)) +
@@ -307,7 +309,7 @@ g <- model.collated.long.tb %>%
         guides(fill = 'none') +
         xlab("Year") + 
         ylab("Trait Values") +
-        ggtitle(label="CNJ02 Population Raw Values and BLUPs", subtitle="Yield-Related Traits") +
+        ggtitle(label=paste0(POP_Name," Population Raw Values and BLUPs"), subtitle="Yield-Related Traits") +
         theme( axis.text.x = element_text(face="bold", size=32, angle = 60, hjust = 1),
                axis.text.y = element_text(face="bold", size=32),
                strip.text  = element_text(face="bold", size=36, angle = 30),
@@ -334,7 +336,7 @@ g <- model.collated.long.tb %>%
         guides(fill = 'none') +
         xlab("Year") + 
         ylab("Trait Values") +
-        ggtitle(label="CNJ02 Population Raw Values and BLUPs Z-Score Scaled", subtitle="Yield-Related Traits") +
+        ggtitle(label=paste0(POP_Name," Population Raw Values and BLUPs Z-Score Scaled"), subtitle="Yield-Related Traits") +
         theme( axis.text.x = element_text(face="bold", size=32, angle = 60, hjust = 1),
                axis.text.y = element_text(face="bold", size=32),
                strip.text  = element_text(face="bold", size=36, angle = 30),
@@ -345,29 +347,29 @@ png(filename=paste0(workflow,'/traits/plots/blups_collated.boxplot.allmodels.zsc
 g
 dev.off()
 
-#Generate a table of BLUP summaries by model and trait, with min value, min genotype, max value, max genotype, MQ blup value, CQ blup value
+#Generate a table of BLUP summaries by model and trait, with min value, min genotype, max value, max genotype, P1 blup value, P2 blup value
 
 p1.blup_summary.tb <- model.collated.long.tb %>%
                         filter(id == P1_Name) %>%
                         group_by(model,trait,type) %>%
-                        dplyr::summarize(MQ = mean(value), MQz = mean(value))
+                        dplyr::summarize(P1 = mean(value), P1z = mean(value))
 
 p2.blup_summary.tb <- model.collated.long.tb %>%
                         filter(id == P2_Name) %>%
                         group_by(model,trait,type) %>%
-                        dplyr::summarize(CQ = mean(value), CQz = mean(value))
+                        dplyr::summarize(P2 = mean(value), P2z = mean(value))
 model.collated.summary.tb <- model.collated.long.tb %>%
                                     filter(!(id %in% c(P1_Name,P2_Name))) %>%
                                     group_by(model,trait,type) %>%
                                     dplyr::summarize(min=min(value), mean=mean(value), sd=sd(value), range=abs(min(value)-max(value)),
-                                              minZ=min(valueZ), min_geno = gsub("CNJ02_1_([0-9]+)","g\\1",id[which.min(value)]),
-                                              max=max(value), maxZ=max(valueZ), max_geno = gsub("CNJ02_1_([0-9]+)","g\\1",id[which.max(value)]),
+                                              minZ=min(valueZ), min_geno = gsub(paste0(POP_Name,"_[^_]+_([0-9]+)"),"g\\1",id[which.min(value)]),
+                                              max=max(value), maxZ=max(valueZ), max_geno = gsub(paste0(POP_Name,"_[^_]+_([0-9]+)"),"g\\1",id[which.max(value)]),
                                               GLRpvalue=mean(GLRpvalue),GZRpvalue=mean(GZRpvalue),GxYLRpvalue=mean(GxYLRpvalue),GxYZRpvalue=mean(GxYZRpvalue),
 											  vg=mean(vg), vge=mean(vge), ve=mean(ve), h2=mean(h2)) %>%
                                     filter(min != max) %>%
                                     left_join(p1.blup_summary.tb, by=c("model","trait","type")) %>%
                                     left_join(p2.blup_summary.tb, by=c("model","trait","type")) %>%
-                                    mutate('Parent Range' = round.digits(abs(CQ-MQ),2)) %>%
+                                    mutate('Parent Range' = round.digits(abs(P2-P1),2)) %>%
                                     ungroup() #This is necessary for trait_repeat and model_repeat calculations to work below
 
 model.collated.blup_summary.tb <- model.collated.summary.tb %>%
@@ -394,10 +396,10 @@ generateTable <- function(values.collated.tb, type) {
 			mutate(ve=round.digits(ve,2)) %>%
 			mutate(h2=round.digits(h2,3)) %>%
 			mutate(range=round.digits(range,2)) %>%
-			mutate(MQ=round.digits(MQ,2)) %>%
-			mutate(CQ=round.digits(CQ,2)) %>%
-			dplyr::select(trait,model,vg,vge,ve,h2,min,max,mean,range,min_geno,max_geno,MQ,CQ,'Parent Range') %>%
-			rename("Trait[note]"=trait,"Model[note]"=model,'$\\sigma_{g}^{2}$[note]'=vg,'$\\sigma_{g \\epsilon}^{2}$[note]'=vge,'$\\sigma_{\\epsilon}^{2}$[note]'=ve,'$h^{2}$[note]'=h2,Min=min,Max=max,"Mean \u00b1 SE"=mean,Range=range,'Min Geno[note]'=min_geno,'Max Geno[note]'=max_geno,'MQ[note]'=MQ,'CQ[note]'=CQ) %>%
+			mutate(P1=round.digits(P1,2)) %>%
+			mutate(P2=round.digits(P2,2)) %>%
+			dplyr::select(trait,model,vg,vge,ve,h2,min,max,mean,range,min_geno,max_geno,P1,P2,'Parent Range') %>%
+			rename("Trait[note]"=trait,"Model[note]"=model,'$\\sigma_{g}^{2}$[note]'=vg,'$\\sigma_{g \\epsilon}^{2}$[note]'=vge,'$\\sigma_{\\epsilon}^{2}$[note]'=ve,'$h^{2}$[note]'=h2,Min=min,Max=max,"Mean \u00b1 SE"=mean,Range=range,'Min Geno[note]'=min_geno,'Max Geno[note]'=max_geno,'P1[note]'=P1,'P2[note]'=P2) %>%
 			kable("html", align='llrrrrrrrrccrrr', booktabs=TRUE, escape = FALSE, table.attr="id=\"kableTable\"", caption=ifelse(type=="raw","Raw Phenotype Statistics for Trait Models", "BLUP Statistics for Trait Models")) %>%
 			row_spec(row=which(values.collated.tb$trait != ""), extra_css = "border-top: 1px solid #ddd") %>%
 			add_header_above(c("", "", "F1 Progeny"=10, "Parents"=3)) %>%
@@ -408,10 +410,10 @@ generateTable <- function(values.collated.tb, type) {
 						"Additive genomic by year interaction effect variance of model.",
 						"Residual variance of model.",
 						"Narrow-sense genomic heritability for trait/model.",
-						"F1 progeny genotype with minimum trait value.  Genotype identifier is shortened for visibility.  Translation is g<num> => CNJ02_1_<num>.  eg: g77 => CNJ02_1_77",
+						paste0("F1 progeny genotype with minimum trait value.  Genotype identifier is shortened for visibility.  Translation is g<num> => ",POP_Name,"_1_<num>.  eg: g77 => ",POP_Name,"_1_77"),
 						"F1 progeny genotype with maximum trait value.  Genotype identifier is same format as for maximum genotype.",
-						"Maternal Mullica Queen trait value",
-						"Paternal Crimson Queen trait value"))
+						"Maternal trait value",
+						"Paternal trait value"))
   summary.path <- normalizePath(paste0(workflow,'/traits/'), mustWork = TRUE);
   summary.file <- paste0(summary.path,'/',type,'.summary.table.png')
 	cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",summary.file,"'"))
