@@ -85,4 +85,4 @@ print(mtable)
 
 cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/'),mustWork=TRUE),'/qtl_collated.',qtl_scan_method,'.png'),"'")
 
-save.image(paste0(".RData.10_01.",qtl_scan_method,"genQTLtable"))
+save.image(paste0(workflow,"/.RData.10_01.genQTLtable.",qtl_scan_method,".",num_top_qtls))

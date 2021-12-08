@@ -7,7 +7,7 @@ library(qtl)
 library(tidyverse)
 
 #Defaults
-workflow        <- get0("workflow", ifnotfound="../../Workflows/9")
+workflow        <- get0("workflow", ifnotfound="../../Workflows/1")
 num_top_qtls    <- get0("num_top_qtls", ifnotfound=2) #Number of top QTLs to show per trait
 
 args = commandArgs(trailingOnly=TRUE)
@@ -261,4 +261,4 @@ effs.complete.tb %>%
                   } )
 
 
-save.image(paste0(".RData.12_geneffects.",num_top_qtls))
+save.image(paste0(workflow,"/.RData.12_geneffects.",num_top_qtls))

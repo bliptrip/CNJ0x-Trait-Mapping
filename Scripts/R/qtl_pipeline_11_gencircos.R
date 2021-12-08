@@ -116,4 +116,4 @@ karyotype.json <- toJSON(karyotype.df, pretty=T)
 write(karyotype.json, file=paste0(workflow,"/",circosfile2path("karyotype.json")))
 
 #Save image for reloading later if desired
-save.image(".RData.11_gencircos")
+save.image(paste0(workflow,"/.RData.11_gencircos"))
