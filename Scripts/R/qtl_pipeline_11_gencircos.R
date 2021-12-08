@@ -70,11 +70,19 @@ exportLODProfiles <- function(trait, data) {
           trait_subfolder           <- paste0(model,"--",trait);
           trait_subfolder_fpath     <- file.path(paste0(workflow,"/traits"), trait_subfolder)
           trait_subsubfolder_fpath  <- file.path(paste0(trait_subfolder_fpath, "/", trait))
-          scan.sw                   <- readRDS(paste0(trait_subsubfolder_fpath,'/scansw.rds'))
-          lodprofile_method.l$stepwiseqtl <- exportLODProfile(scan.sw, "stepwiseqtl", model, trait)
-          scan.one.qtl <- readRDS(paste0(trait_subsubfolder_fpath,'/scanone.qtl.rds'))
-          lodprofile_method.l$scanone <-  exportLODProfile(scan.one.qtl, "scanone", model, trait)
-          assign.pointer(lod_profile_models.l.p, lodprofile_method.l, model)
+          sofile <- paste0(trait_subsubfolder_fpath,'/scanone.qtl.rds')
+          if( file.exists(sofile) ) {
+                scan.one.qtl <- readRDS(sofile)
+                lodprofile_method.l$scanone <-  exportLODProfile(scan.one.qtl, "scanone", model, trait)
+          }
+          swfile <- paste0(trait_subsubfolder_fpath,'/scansw.rds')
+          if( file.exists(swfile) ) {
+                scan.sw <- readRDS(swfile)
+                lodprofile_method.l$stepwiseqtl <- exportLODProfile(scan.sw, "stepwiseqtl", model, trait)
+          }
+          if( file.exists(sofile) || file.exists(swfile) ) {
+                assign.pointer(lod_profile_models.l.p, lodprofile_method.l, model)
+          }
       })
     return(lod_profile_models.l.p$value)
 }
