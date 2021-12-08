@@ -25,19 +25,32 @@ fitQtlCB <- function(trait.cfg, trait.path, funArgs) {
     cross <- readRDS(file=paste0(trait.path,"/cross.rds"))
     trait <- trait.cfg$trait
     if( any(cross$pheno[trait] != 0) ) {
-		scan.two.perms <- readRDS(paste0(trait.path, "/operms.2D.rds"))
-		trait_subsubfolder_fpath <- file.path(trait.path, trait);
-		#scanone build model, fit qtls
-		scan.one.qtl <- readRDS(file=paste0(trait_subsubfolder_fpath, "/scanone.qtl.rds"))
-		print(paste0("Running fitqtl() (scanone) with model: ",trait.cfg$model, " | trait: ", trait))
-		scan.one.md  <- fitqtl(cross, pheno.col=c(trait), qtl=scan.one.qtl, formula = formula(scan.one.qtl), method=qtl_method, get.ests=TRUE)
-		saveRDS(scan.one.md, file=paste0(trait_subsubfolder_fpath,'/scanone.md.rds'),compress=T)
-		#stepwiseqtl model fitting
-		scan.sw <- readRDS(paste0(trait_subsubfolder_fpath, "/scansw.rds"))
-		print(paste0("Running fitqtl() (stepwiseqtl) with model: ",trait.cfg$model, " | trait: ", trait))
-		scan.sw.md  <- fitqtl(cross, pheno.col=c(trait), qtl=scan.sw, formula = formula(scan.sw), method=qtl_method, get.ests=TRUE)
-		saveRDS(scan.sw.md, file=paste0(trait_subsubfolder_fpath,'/scansw.md.rds'),compress=T)
-	}
+        scan.two.perms <- readRDS(paste0(trait.path, "/operms.2D.rds"))
+        trait_subsubfolder_fpath <- file.path(trait.path, trait);
+        #scanone build model, fit qtls
+        scanonefile <- paste0(trait_subsubfolder_fpath, "/scanone.qtl.rds")
+        if( file.exists(scanonefile) ) {
+            scan.one.qtl <- readRDS(file=scanonefile)
+            print(paste0("Running fitqtl() (scanone) with model: ",trait.cfg$model, " | trait: ", trait))
+            scan.one.md  <- fitqtl(cross, pheno.col=c(trait), qtl=scan.one.qtl, formula = formula(scan.one.qtl), method=qtl_method, get.ests=TRUE)
+            saveRDS(scan.one.md, file=paste0(trait_subsubfolder_fpath,'/scanone.md.rds'),compress=T)
+        }
+        #stepwiseqtl model fitting
+        swfile <- paste0(trait_subsubfolder_fpath, "/scansw.rds")
+        if( file.exists(swfile) ) {
+            scan.sw <- readRDS(file=swfile)
+            pLOD <- attr(scan.sw, "pLOD")
+            if( !is.infinite(pLOD) && !is.nan(pLOD) && (pLOD != 0) )
+            {
+                print(paste0("Running fitqtl() (stepwiseqtl) with model: ",trait.cfg$model, " | trait: ", trait))
+                scan.sw.md  <- fitqtl(cross, pheno.col=c(trait), qtl=scan.sw, formula = formula(scan.sw), method=qtl_method, get.ests=TRUE)
+                if( !is.infinite(scan.sw.md$lod) && !is.nan(scan.sw.md$lod) && (scan.sw.md$lod != 0) )
+                {
+                    saveRDS(scan.sw.md, file=paste0(trait_subsubfolder_fpath,'/scansw.md.rds'),compress=T)
+                }
+            }
+        }
+    }
 }
 
 #Loop through all legitimate traits and build collated qtl file.
