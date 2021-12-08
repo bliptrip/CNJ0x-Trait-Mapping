@@ -93,7 +93,7 @@ qtl.tb  <- read_csv(file=paste0(workflow,'/traits/qtl_collated.consensus.csv'), 
                     mutate(GxYLRpvalue = rep(min(GxYLRpvalue,na.rm=TRUE),length(GxYLRpvalue))) %>%
                     mutate(GxYZRpvalue = rep(min(GxYZRpvalue,na.rm=TRUE),length(GxYZRpvalue))) %>%
                     ungroup()
-colnames(qtl.tb) <- gsub('.','_',colnames(effs.tb),fixed=TRUE)
+colnames(qtl.tb) <- gsub('.','_',colnames(qtl.tb),fixed=TRUE)
 
 effs.tb <- generate_collated_effects(qtl.tb, num_top_qtls)
 colnames(effs.tb) <- gsub('.','_',colnames(effs.tb),fixed=TRUE)
@@ -108,7 +108,7 @@ effs.tb <- readRDS(paste0(workflow,'/traits/effects_collated.rds')) #We can star
 #Plot generation
 effs.1.tb <- effs.tb %>% 
                 group_by(method,trait,model) %>%
-                mutate(top_qtls = c(rep(TRUE,num_top_qtls),rep(FALSE,length(marker_variance)-num_top_qtls))) %>%
+                mutate(top_qtls = c(rep(TRUE,min(num_top_qtls,length(marker_variance))),rep(FALSE,length(marker_variance)-min(num_top_qtls,length(marker_variance))))) %>%
                 filter(top_qtls == TRUE) %>%
                 select(-top_qtls) %>%
                 unnest(data) %>%
@@ -145,7 +145,7 @@ effs.filtered1.tb <- effs.1.tb %>%
                                         })
 effs.2.tb <- effs.tb %>% 
                 group_by(method,trait,model) %>%
-                mutate(top_qtls = c(rep(TRUE,num_top_qtls),rep(FALSE,length(marker_variance)-num_top_qtls))) %>%
+                mutate(top_qtls = c(rep(TRUE,min(num_top_qtls,length(marker_variance))),rep(FALSE,length(marker_variance)-min(num_top_qtls,length(marker_variance))))) %>%
                 filter(top_qtls == TRUE) %>%
                 select(-top_qtls) %>%
                 unnest(data) %>%
@@ -238,7 +238,7 @@ generate_table <- function(tb, caption, meths) {
                        "Variance of model with all significant QTLs fitted.",
                        "QTL location \u00b1 1.5pLOD interval (cM)",
                        "Penalized LOD Score w/ significance codes for QTL appended",
-                       "Boxplots of nearest marker BLUPs grouped by genotypes.  Haplotypes A and B are from Mullica Queen (MQ), and haplotypes C and D are from Crimson Queen (CQ).",
+                       "Boxplots of nearest marker BLUPs grouped by genotypes.  Haplotypes A and B are from maternal parent P1, and haplotypes C and D are from paternal parent P2.",
                        "Effect differences for mean QTL effect size estimates for each progeny genotype.  A.-B. is the maternal effect, calculated as (AC+AD)-(BC+BD).  .C-.D is the paternal effect, calculated as (AC + BC) – (AD + BD).  Int is the interaction effect, calculated as (AC + BD)-(AD+BC) (Sewell et al., 2002)."))
 }
 
