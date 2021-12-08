@@ -4,7 +4,7 @@ author: "Andrew Maule"
 date: "3/24/2021"
 output: html_document
 params:
-  install_deps:  TRUE #Whether to install dependencies
+  install_deps: FALSE #Whether to install dependencies
   clean_traits: FALSE #Whether to run the code to clean up the trait data: Remove outliers, etc
   workflow: 9
   sandbox: sandbox #Name of folder to place circos files needed to render QTL circos plots.
@@ -25,11 +25,14 @@ Sys.setenv(SANDBOX=params$sandbox)
 setwd(rRoot)
 library(tidyverse)
 library(corrplot)
+library(ggcorrplot)
+library(magrittr)
+library(seriation)
 source("usefulFunctions.R")
 ```
 
 ## Install Package Dependencies
-```{r deps, include=FALSE}
+```{r deps, eval=params$install_deps, include=FALSE}
 setwd(rRoot)
 source('packagedeps.R', echo=TRUE)
 ```
@@ -124,12 +127,12 @@ cnj04.merged.mmeans.tb  <- cnjpop.pheno.p1.means.df %>%
 cnj02.bbi.diffs.tb <- cnj02.merged.mmeans.tb %>%
                         dplyr::select(c(year,accession,accession_name,row,column,total_berry_weight,TY,SFY)) %>%
                         pivot_wider(names_from=year, values_from=c(total_berry_weight:SFY)) %>%
-                        mutate( BBI_UTBM_2012=abs((total_berry_weight_2012-total_berry_weight_2011)/(total_berry_weight_2012+total_berry_weight_2011)),
-                                BBI_UTBM_2013=abs((total_berry_weight_2013-total_berry_weight_2012)/(total_berry_weight_2013+total_berry_weight_2012)),
-                                BBI_TY_2012=abs((TY_2012-TY_2011)/(TY_2012+TY_2011)),
-                                BBI_TY_2013=abs((TY_2013-TY_2012)/(TY_2013+TY_2012)),
-                                BBI_SFY_2012=abs((SFY_2012-SFY_2011)/(SFY_2012+SFY_2011)),
-                                BBI_SFY_2013=abs((SFY_2013-SFY_2012)/(SFY_2013+SFY_2012))) %>%
+                        mutate( BBI_UTBM_2011=abs((total_berry_weight_2012-total_berry_weight_2011)/(total_berry_weight_2012+total_berry_weight_2011)),
+                                BBI_UTBM_2012=abs((total_berry_weight_2013-total_berry_weight_2012)/(total_berry_weight_2013+total_berry_weight_2012)),
+                                BBI_TY_2011=abs((TY_2012-TY_2011)/(TY_2012+TY_2011)),
+                                BBI_TY_2012=abs((TY_2013-TY_2012)/(TY_2013+TY_2012)),
+                                BBI_SFY_2011=abs((SFY_2012-SFY_2011)/(SFY_2012+SFY_2011)),
+                                BBI_SFY_2012=abs((SFY_2013-SFY_2012)/(SFY_2013+SFY_2012))) %>%
                         pivot_longer(matches("(^BBI+)|(^total_berry_weight+)|(^TY+)|(^SFY+)"), names_pattern="(.+)_([^_]+$)", names_to=c(".value","year")) %>%
                         mutate( year = as.double(year) ) %>%
                         dplyr::select(!matches("(^total_berry_weight+)|(^TY+)|(^SFY+)")) %>%
@@ -139,16 +142,16 @@ cnj02.merged.mmeans.tb <- cnj02.bbi.diffs.tb
 cnj04.bbi.diffs.tb <- cnj04.merged.mmeans.tb %>%
                         dplyr::select(c(year,accession,accession_name,row,column,c(total_berry_weight,TY,SFY))) %>%
                         pivot_wider(names_from=year, values_from=c(total_berry_weight:SFY)) %>%
-                        mutate( BBI_UTBM_2012=abs((total_berry_weight_2012-total_berry_weight_2011)/(total_berry_weight_2012+total_berry_weight_2011)),
-                                BBI_TY_2012=abs((TY_2012-TY_2011)/(TY_2012+TY_2011)),
-                                BBI_SFY_2012=abs((SFY_2012-SFY_2011)/(SFY_2012+SFY_2011)) ) %>%
+                        mutate( BBI_UTBM_2011=abs((total_berry_weight_2012-total_berry_weight_2011)/(total_berry_weight_2012+total_berry_weight_2011)),
+                                BBI_TY_2011=abs((TY_2012-TY_2011)/(TY_2012+TY_2011)),
+                                BBI_SFY_2011=abs((SFY_2012-SFY_2011)/(SFY_2012+SFY_2011)) ) %>%
                         pivot_longer(matches("(^BBI+)|(^total_berry_weight+)|(^TY+)|(^SFY+)"), names_pattern="(.+)_([^_]+$)", names_to=c(".value","year")) %>%
                         mutate( year = as.double(year) ) %>%
                         dplyr::select(!matches("(^total_berry_weight+)|(^TY+)|(^SFY+)")) %>%
                         inner_join(cnj04.merged.mmeans.tb, by=c("year","accession","accession_name","row","column"))
 cnj04.merged.mmeans.tb <- cnj04.bbi.diffs.tb
 
-normalize <- function(vec) {
+standardize <- function(vec) {
   z <- (vec-mean(vec, na.rm=T))/sd(vec, na.rm=T)
   z[z < -3.0] <- NA
   z[z > 3.0] <- NA
@@ -157,52 +160,15 @@ normalize <- function(vec) {
 
 id_columns <- c("year","accession_name","accession","row","column")
 
-cnj02.merged.normalized.tb <- cbind(cnj02.merged.mmeans.tb %>% dplyr::select(all_of(id_columns)), apply(cnj02.merged.mmeans.tb %>% dplyr::select(!id_columns), 2, normalize))
-cnj02.merged.mmeans.tb[is.na(cnj02.merged.normalized.tb)] <- NA
-cnj04.merged.normalized.tb <- cbind(cnj04.merged.mmeans.tb %>% dplyr::select(all_of(id_columns)), apply(cnj04.merged.mmeans.tb %>% dplyr::select(!id_columns), 2, normalize))
-cnj04.merged.mmeans.tb[is.na(cnj04.merged.normalized.tb)] <- NA
+cnj02.merged.standardized.tb <- cbind(cnj02.merged.mmeans.tb %>% dplyr::select(all_of(id_columns)), apply(cnj02.merged.mmeans.tb %>% dplyr::select(!id_columns), 2, standardize))
+cnj02.merged.mmeans.tb[is.na(cnj02.merged.standardized.tb)] <- NA
+cnj04.merged.standardized.tb <- cbind(cnj04.merged.mmeans.tb %>% dplyr::select(all_of(id_columns)), apply(cnj04.merged.mmeans.tb %>% dplyr::select(!id_columns), 2, standardize))
+cnj04.merged.mmeans.tb[is.na(cnj04.merged.standardized.tb)] <- NA
 
 #Save the merged across-month average data
 write_csv(cnj02.merged.mmeans.tb, file=pheno_dpath2fpath("MergedData/CNJ02_PlotData.mmeans.csv"))
 write_csv(cnj04.merged.mmeans.tb, file=pheno_dpath2fpath("MergedData/CNJ04_PlotData.mmeans.csv"))
 
-```
-```{r plotdata-corrs-function, include=TRUE, echo=TRUE}
-gencorrplot <- function(data.tb, filename, width=1280, height=1024, method="square", type="lower", diag=FALSE, ...) {
-  png(filename=filename, bg="transparent", width=width, height=height, units='px')
-  corr.tb <- cor(data.tb, use="pairwise.complete.obs")
-  pvals <- tryCatch( {
-      ggcorrplot::cor_pmat(data.tb)
-    },
-    error = function(e) NULL
-  );
-  tryCatch( {
-    corrplot(corr.tb, p.mat=pvals, method=method, type=type, order="hclust", insig="blank", tl.col="black", diag=diag, col=col1(100), ...)
-    },
-    error = function(e) {
-      corrplot(corr.tb, p.mat=pvals, method=method, type=type, order="original", insig="blank", tl.col="black", diag=diag, col=col1(100), ...)
-    }
-  )
-  dev.off()
-}
-
-gencorrplot.mixed <- function(data.tb, filename, width=1280, height=1024, lower="square", upper="number", ...) {
-  png(filename=filename, bg="transparent", width=width, height=height, units='px')
-  corr.tb <- cor(data.tb, use="pairwise.complete.obs")
-  pvals <- tryCatch( {
-      ggcorrplot::cor_pmat(data.tb)
-    },
-    error = function(e) NULL
-  );
-  tryCatch( {
-    corrplot.mixed(corr.tb, p.mat=pvals, lower=lower, upper=upper, order="hclust", insig="blank", tl.col="black", lower.col=col1(100), upper.col=col1(100), ...)
-  },
-  error = function(e) {
-    corrplot.mixed(corr.tb, p.mat=pvals, lower=lower, upper=upper, order="original", insig="blank", tl.col="black", lower.col=col1(100), upper.col=col1(100), ...)
-    }
-  )
-  dev.off()
-}
 ```
 
 ### Read in the merged datasets, abbreviating year and month designators for compact graph display
@@ -228,14 +194,14 @@ for( i in 1:length(traits) ) {
   trait_label <- trait_labels[i]
   if( trait %in% trait_colnames_cnj02 ) {
     cnj02.merged.tb <- cnj02.merged.tb %>% rename_with(~ gsub(trait, trait_label, .x, fixed=TRUE), .cols=trait)
-    cnj02.merged.normalized.tb <- cnj02.merged.normalized.tb %>% rename_with(~ gsub(trait, trait_label, .x, fixed=TRUE), .cols=trait)
+    cnj02.merged.standardized.tb <- cnj02.merged.standardized.tb %>% rename_with(~ gsub(trait, trait_label, .x, fixed=TRUE), .cols=trait)
   }
   if( trait %in% trait_colnames_cnj02.mmeans ) {
     cnj02.merged.mmeans.tb <- cnj02.merged.mmeans.tb %>% rename_with(~ gsub(trait, trait_label, .x, fixed=TRUE), .cols=trait)
   }
   if( trait %in% trait_colnames_cnj04 ) {
     cnj04.merged.tb <- cnj04.merged.tb %>% rename_with(~ gsub(trait, trait_label, .x, fixed=TRUE), .cols=trait)
-    cnj04.merged.normalized.tb <- cnj04.merged.normalized.tb %>% rename_with(~ gsub(trait, trait_label, .x, fixed=TRUE), .cols=trait)
+    cnj04.merged.standardized.tb <- cnj04.merged.standardized.tb %>% rename_with(~ gsub(trait, trait_label, .x, fixed=TRUE), .cols=trait)
   }
   if( trait %in% trait_colnames_cnj02.mmeans ) {
     cnj04.merged.mmeans.tb <- cnj04.merged.mmeans.tb %>% rename_with(~ gsub(trait, trait_label, .x, fixed=TRUE), .cols=trait)
@@ -255,12 +221,18 @@ cnj04.merged.tb <- cnj04.merged.tb %>%
                   rename_with(~ gsub("October", "Oct", .x, fixed = TRUE))
 cnj02.merged.mmeans.tb <- cnj02.merged.mmeans.tb %>%
                             mutate(year = gsub("20([0-9]{2})", "\\1", year)) #Abbreviate the years for compact display of labels
-cnj02.merged.normalized.tb <- cnj02.merged.normalized.tb %>%
+cnj02.merged.standardized.tb <- cnj02.merged.standardized.tb %>%
                             mutate(year = gsub("20([0-9]{2})", "\\1", year)) #Abbreviate the years for compact display of labels
 cnj04.merged.mmeans.tb <- cnj04.merged.mmeans.tb %>%
                             mutate(year = gsub("20([0-9]{2})", "\\1", year)) #Abbreviate the years for compact display of labels
-cnj04.merged.normalized.tb <- cnj04.merged.normalized.tb %>%
+cnj04.merged.standardized.tb <- cnj04.merged.standardized.tb %>%
                             mutate(year = gsub("20([0-9]{2})", "\\1", year)) #Abbreviate the years for compact display of labels
+```
+
+#Use seriation package to generate simililarity matrix b/w genotypes and traits -- use standardized values for traits
+```{r plot-seriation, include=TRUE, echo=TRUE}
+d_cnj02 <- dist(cnj02.merged.standardized.tb %>% select(BBI_UTBM:PAC))
+dissplot(d_cnj02)
 ```
 
 ### Generate Density Graphs (Histograms) of All Traits and Plot
@@ -291,39 +263,169 @@ generateDensityPlots <- function(data, traits, filename) {
   ggsave(filename=paste0(workflow,"/traits/plots/",filename), dpi=150, width=50, height=20, units="cm", plot=g, device="png", bg="transparent")
 }
 
-workflow='../../Workflows/9'
-setwd(rRoot)
 upright_yield_traits = c("UBL","UBW","UBM","UTBM","UNS","UMFM","ULvW")
-generateDensityPlots(cnj02.merged.normalized.tb, upright_yield_traits, "phenotypes.upright_yield.density.cnj02.png")
-generateDensityPlots(cnj04.merged.normalized.tb, upright_yield_traits, "phenotypes.upright_yield.density.cnj04.png")
+generateDensityPlots(cnj02.merged.mmeans.tb, upright_yield_traits, "phenotypes.upright_yield.density.cnj02.png")
+generateDensityPlots(cnj04.merged.mmeans.tb, upright_yield_traits, "phenotypes.upright_yield.density.cnj04.png")
 
-bbi_traits = c("BBI_UTBM","BBI_TY","BBI_SFY","URB")
-generateDensityPlots(cnj02.merged.normalized.tb, bbi_traits, "phenotypes.bbi.density.cnj02.png")
-generateDensityPlots(cnj04.merged.normalized.tb, bbi_traits, "phenotypes.bbi.density.cnj04.png")
+setwd(rRoot)
+bbi_traits = c("BBITBM","BBITY","BBISFY","URB")
+generateDensityPlots(cnj02.merged.mmeans.tb, bbi_traits, "phenotypes.bbi.density.cnj02.png")
+generateDensityPlots(cnj04.merged.mmeans.tb, bbi_traits, "phenotypes.bbi.density.cnj04.png")
 
 upright_yield2_traits = c("UL","USL","UDM","URB")
-generateDensityPlots(cnj02.merged.normalized.tb, upright_yield2_traits, "phenotypes.upright_yield2.density.cnj02.png")
-generateDensityPlots(cnj04.merged.normalized.tb, upright_yield2_traits, "phenotypes.upright_yield2.density.cnj04.png")
+generateDensityPlots(cnj02.merged.mmeans.tb, upright_yield2_traits, "phenotypes.upright_yield2.density.cnj02.png")
+generateDensityPlots(cnj04.merged.mmeans.tb, upright_yield2_traits, "phenotypes.upright_yield2.density.cnj04.png")
 
 upright_ped_traits = c("UNP","UNB","UNAB","UN0","UNAF")
-generateDensityPlots(cnj02.merged.normalized.tb, upright_ped_traits, "phenotypes.upright_ped.density.cnj02.png")
-generateDensityPlots(cnj04.merged.normalized.tb, upright_ped_traits, "phenotypes.upright_ped.density.cnj04.png")
+generateDensityPlots(cnj02.merged.mmeans.tb, upright_ped_traits, "phenotypes.upright_ped.density.cnj02.png")
+generateDensityPlots(cnj04.merged.mmeans.tb, upright_ped_traits, "phenotypes.upright_ped.density.cnj04.png")
 
 upright_other_traits = c("UCD","UCLP","UCLS","UBBL")
-generateDensityPlots(cnj02.merged.normalized.tb, upright_other_traits, "phenotypes.upright_other.density.cnj02.png")
-generateDensityPlots(cnj04.merged.normalized.tb, upright_other_traits, "phenotypes.upright_other.density.cnj04.png")
+generateDensityPlots(cnj02.merged.mmeans.tb, upright_other_traits, "phenotypes.upright_other.density.cnj02.png")
+generateDensityPlots(cnj04.merged.mmeans.tb, upright_other_traits, "phenotypes.upright_other.density.cnj04.png")
 
 upright_chimera_shape_traits = c("UKLvW","UKEC","UKSO","UKTO", "UKUX", "UKUY")
-generateDensityPlots(cnj02.merged.normalized.tb, upright_chimera_shape_traits, "phenotypes.upright_shape.density.cnj02.png")
-generateDensityPlots(cnj04.merged.normalized.tb, upright_chimera_shape_traits, "phenotypes.upright_shape.density.cnj04.png")
+generateDensityPlots(cnj02.merged.mmeans.tb, upright_chimera_shape_traits, "phenotypes.upright_shape.density.cnj02.png")
+generateDensityPlots(cnj04.merged.mmeans.tb, upright_chimera_shape_traits, "phenotypes.upright_shape.density.cnj04.png")
 
 plot_traits = c("TY","SFY","MFM","PFR","Tacy","Brix","TA","PAC")
-generateDensityPlots(cnj02.merged.normalized.tb, plot_traits, "phenotypes.plot_traits.density.cnj02.png")
-generateDensityPlots(cnj04.merged.normalized.tb, plot_traits, "phenotypes.plot_traits.density.cnj04.png")
+generateDensityPlots(cnj02.merged.mmeans.tb, plot_traits, "phenotypes.plot_traits.density.cnj02.png")
+generateDensityPlots(cnj04.merged.mmeans.tb, plot_traits, "phenotypes.plot_traits.density.cnj04.png")
 ```
 
 ### Generate Scattermatrix 
-### Generate Plots of Correlation Matrices Across All Traits, Across Years
+
+### Define Functions to Generate Correlation Plots
+
+```{r plotdata-corrs-function, include=TRUE, echo=TRUE}
+dist2order = function(corr, method, ...) {
+  d_corr = as.dist(1 - corr)
+  if( method == "TSP" ) {
+    s = seriate(d_corr, method = method, control=list(method="repetitive_nn", start=1, two_opt=TRUE, rep=50))
+  } else {
+    s = seriate(d_corr, method = method, ...)
+  }
+  i = get_order(s)
+  return(i)
+}
+
+gencorrplot <- function(data.tb, data_is_cor=FALSE, filename=NULL, min_cor=0.0, width=1280, height=1024, seriate_method=NULL, method="square", type="lower", cl.pos='r', rect.spec=NULL, invert=FALSE, ...) {
+    if( !is.null(filename) ) {
+        png(filename=filename, bg="transparent", width=width, height=height, units='px')
+    }
+    col.gradient <- col1(100)
+    if( data_is_cor ) {
+        corr.tb <- data.tb$corr
+        pvals <- data.tb$p.mat
+    } else {
+        corr.tb <- cor(data.tb, use="pairwise.complete.obs") 
+        pvals <- tryCatch( {
+            ggcorrplot::cor_pmat(data.tb)
+        },
+        error = function(e) NULL
+        );
+    }
+    corr.tb.selected <- abs(corr.tb) > min_cor
+    corr.tb <- matrix(corr.tb[corr.tb.selected], nrow=nrow(corr.tb.selected), ncol=ncol(corr.tb.selected),dimnames=dimnames(corr.tb.selected))
+    if( !is.null(pvals) ) {
+        pvals <- matrix(pvals[corr.tb.selected], nrow=nrow(corr.tb.selected), ncol=ncol(corr.tb.selected), dimnames=dimnames(corr.tb.selected))
+    }
+    if( !is.null(seriate_method) )
+    {
+        if( invert == TRUE ) {
+            i = dist2order(-1.0 * corr.tb, seriate_method) #Flip the order -- put negative correlations closer to the diagonal
+        } else {
+            i = dist2order(corr.tb, seriate_method)
+        }
+        corr.tb = corr.tb[i,i]
+        if( !is.null(pvals) ) {
+            pvals = pvals[i,i]
+        }
+        p = corrplot(corr.tb, p.mat=pvals, order="original", insig="blank", tl.col="black", method=method, type=type, col=col.gradient, cl.pos=cl.pos, diag=FALSE, na.label=" ", ...)
+    } 
+    else if( data_is_cor ) {
+        p = corrplot(corr.tb, p.mat=pvals, order="original", insig="blank", tl.col="black", method=method, type=type, col=col.gradient, cl.pos=cl.pos, diag=FALSE, na.label=" ", ...)
+    }
+    else 
+    {
+        tryCatch( {
+            p = corrplot(corr.tb, p.mat=pvals, order="hclust", insig="blank", tl.col="black", method=method, type=type, col=col.gradient, cl.pos=cl.pos, diag=FALSE, na.label=" ", ...)
+        },
+        error = function(e) {
+            browser()
+            p = corrplot(corr.tb, p.mat=pvals, order="original", insig="blank", tl.col="black", method=method, type=type, col=col.gradient, cl.pos=cl.pos, diag=FALSE, na.label=" ", ...)
+        }
+        )
+    }
+    if( !is.null(rect.spec) ) {
+        p %>% corrRect(namesMat=rect.spec)
+    }
+    if( !is.null(filename) ) {
+        dev.off()
+    }
+    p$p.mat <- pvals
+    return(p)
+}
+
+gencorrplot.mixed <- function(data.tb, data_is_cor=FALSE, filename=NULL, min_cor=0.0, width=1280, height=1024, seriate_method=NULL, lower="square", upper="number", cl.pos='r', na.label = " ", invert=FALSE, rect.spec=NULL, ...) {
+    if( !is.null(filename) ) {
+        png(filename=filename, bg="transparent", width=width, height=height, units='px')
+    }
+    col.gradient <- col1(100)
+    if( data_is_cor ) {
+        corr.tb <- data.tb$corr
+        pvals <- data.tb$p.mat
+    } else {
+        corr.tb <- cor(data.tb, use="pairwise.complete.obs") 
+        pvals <- tryCatch( {
+            ggcorrplot::cor_pmat(data.tb)
+        },
+        error = function(e) NULL
+        );
+    }
+    corr.tb.selected <- abs(corr.tb) > min_cor
+    corr.tb <- matrix(corr.tb[corr.tb.selected], nrow=nrow(corr.tb.selected), ncol=ncol(corr.tb.selected),dimnames=dimnames(corr.tb.selected))
+    if( !is.null(pvals) ) {
+        pvals <- matrix(pvals[corr.tb.selected], nrow=nrow(corr.tb.selected), ncol=ncol(corr.tb.selected), dimnames=dimnames(corr.tb.selected))
+    }
+    if( !is.null(seriate_method) )
+    {
+        if( invert == TRUE ) {
+            i = dist2order(-1.0 * corr.tb, seriate_method)
+        } else {
+            i = dist2order(corr.tb, seriate_method)
+        }
+        corr.tb = corr.tb[i,i]
+        if( !is.null(pvals) ) {
+            pvals = pvals[i,i]
+        }
+        p = corrplot.mixed(corr.tb, p.mat=pvals, order="original", insig="blank", tl.col="black", lower=lower, upper=upper, lower.col=col.gradient, upper.col=col.gradient, na.label = " ", ...)
+    } 
+    else if( data_is_cor ) {
+        p = corrplot.mixed(corr.tb, p.mat=pvals, order="original", insig="blank", tl.col="black", lower=lower, upper=upper, lower.col=col.gradient, upper.col=col.gradient, na.label = " ", ...)
+    }
+    else 
+    {
+        tryCatch( {
+            p = corrplot.mixed(corr.tb, p.mat=pvals, order="hclust", insig="blank", tl.col="black", lower=lower, upper=upper, lower.col=col.gradient, upper.col=col.gradient, na.label = " ", ...)
+        },
+        error = function(e) {
+            p = corrplot.mixed(corr.tb, p.mat=pvals, order="original", insig="blank", tl.col="black", lower=lower, upper=upper, lower.col=col.gradient, upper.col=col.gradient, na.label = " ", ...)
+        }
+        )
+    }
+    if( !is.null(rect.spec) ) {
+        p %>% corrRect(namesMat=rect.spec)
+    }
+    if( !is.null(filename) ) {
+        dev.off()
+    }
+    p$p.mat <- pvals
+    return(p)
+}
+```
+
+## Generate Plots of Correlation Matrices Across All Traits, Across Years
 
 
 ```{r plotdata-corrs, include=TRUE, echo=TRUE}
@@ -332,25 +434,24 @@ cnj02.alltraits.pw.tb <- cnj02.merged.mmeans.tb %>%
                                   mutate(year = paste0("y",year)) %>%
                                   pivot_longer(cols=BBITBM:PAC, names_to='trait', values_to='value') %>% 
                                   pivot_wider(names_from=year, values_from=value)
-gencorrplot(cnj02.alltraits.pw.tb %>% select(!c(accession_name, accession, row, column, trait)), filename=paste0(workflow,"/traits/plots/corrplot.cnj02.alltraits.png"), method="number", cl.pos = "n")
+gencorrplot(cnj02.alltraits.pw.tb %>% select(!c(accession_name, accession, row, column, trait)), filename=paste0(workflow,"/traits/plots/corrplot.cnj02.alltraits.png"), method="number", cl.pos='n')
 
 cnj04.alltraits.pw.tb <- cnj04.merged.mmeans.tb %>% 
                                   filter(year != '13') %>% #Filter out 2013, as data does not overlap with other datasets
                                   mutate(year = paste0("y",year)) %>%
                                   pivot_longer(cols=BBITBM:PAC, names_to='trait', values_to='value') %>% 
                                   pivot_wider(names_from=year, values_from=value)
-gencorrplot(cnj04.alltraits.pw.tb %>% select(!c(accession_name, accession, row, column, trait)), filename=paste0(workflow,"/traits/plots/corrplot.cnj04.alltraits.png"), method="number", cl.pos = "n")
+gencorrplot(cnj04.alltraits.pw.tb %>% select(!c(accession_name, accession, row, column, trait)), filename=paste0(workflow,"/traits/plots/corrplot.cnj04.alltraits.png"), method="number", cl.pos='n')
 ```
-### Generate Correlation Matrices Across Months and Years
+    ### Generate Correlation Matrices Across Months and Years
 
 ```{r include=TRUE, warning=FALSE, echo=FALSE}
 setwd(rRoot)
-cnj02.merged.wider.tb <- pivot_wider(cnj02.merged.tb, names_from=c(year), values_from=UBL:PACOct, names_sep="")
+cnj02.merged.wider.tb <- pivot_wider(cnj02.merged.tb, names_from=c(year), values_from=UNP:PACOct, names_sep="")
 gencorrplot(cnj02.merged.wider.tb %>% select(!c(accession_name, accession, row, column)), filename=paste0(workflow,"/traits/plots/corrplot.cnj02.ym.png"), width=2560, height=2048, tl.srt=45, tl.cex=2, cl.cex=2)
 
-cnj04.merged.wider.tb <- pivot_wider(cnj04.merged.tb %>% filter(year != 13), names_from=c(year), values_from=UBL:PACOct, names_sep="") #Filter out 2013 b/c it is only represented for parents of plot dataset -- no equivalent in other data
+cnj04.merged.wider.tb <- pivot_wider(cnj04.merged.tb %>% filter(year != 13), names_from=c(year), values_from=UNP:PACOct, names_sep="") #Filter out 2013 b/c it is only represented for parents of plot dataset -- no equivalent in other data
 setwd(rRoot)
-corr.tb <- cor(cnj04.merged.wider.tb %>% select(!c(accession_name, accession, row, column)), use="pairwise.complete.obs")
 gencorrplot(cnj04.merged.wider.tb %>% select(!c(accession_name, accession, row, column)), filename=paste0(workflow,"/traits/plots/corrplot.cnj04.ym.png"), width=2560, height=2048, tl.srt=45, tl.cex=2, cl.cex=2)
 ```
 ### Generate Correlation Matrices Across Years
@@ -364,6 +465,7 @@ cnj04.merged.mmeans.wider.tb <- cnj04.merged.mmeans.tb %>%
                                 filter(year != '13') %>%
                                 pivot_wider(names_from=c(year), values_from=BBITBM:PAC, names_sep="")
 gencorrplot(cnj04.merged.mmeans.wider.tb %>% select(!c(accession_name, accession, row, column)), filename=paste0(workflow,"/traits/plots/corrplot.cnj04.y.png"), width=2048, height=2200, tl.srt=45, tl.cex=1.8, cl.cex=1.8)
+
 ```
 ### Generate Correlation Matrices With Traits Averaged Across Months and Years
 
@@ -374,7 +476,7 @@ cnj02.merged.means.tb <- cnj02.merged.mmeans.tb %>%
                           group_by(accession_name, row, column) %>%
                           summarise(across(.cols=BBITBM:PAC, mean, na.rm=TRUE)) %>%
                           ungroup()
-cnj02.merged.means.cor <- cor(cnj02.merged.means.tb %>% select(!c(accession_name, row, column)), use="pairwise.complete.obs");
+cnj02.merged.means.cor <- cor(cnj02.merged.means.tb %>% select(!c(accession_name, row, column)), use="pairwise.complete.obs")
 write.csv(cnj02.merged.means.cor, file=paste0(workflow,"/traits/plots/corrplot.cnj02.csv"))
 gencorrplot.mixed(cnj02.merged.means.tb %>% select(!c(accession_name, row, column)), filename=paste0(workflow,"/traits/plots/corrplot.cnj02.png"), width=2048, height=2048, tl.cex=1, cl.cex=1, number.cex=1.5)
 
@@ -388,6 +490,78 @@ write.csv(cnj04.merged.means.cor, file=paste0(workflow,"/traits/plots/corrplot.c
 ```
 
 ------------------------------------------------------------------------
+
+## A different approach, but see if seriation of data based on raw trait values offers any insights into trait/genotype structure.
+
+Run the following repeatedly until you like how the graph looks.  This is because th results are not determinisitic.
+
+```{r seriation-cnj02-pre, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+p.cnj02 = gencorrplot.mixed(cnj02.merged.means.tb %>% select(!c(accession_name, row, column)), width=2048, height=2048, tl.cex=0.75, cl.cex=0.75, number.cex=0.75,seriate_method="TSP")
+saveRDS(p.cnj02, file=paste0(workflow,"/traits/plots/corrplot.cnj02.rds"))
+```
+
+```{r seriation-cnj02-inv-pre, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+p.cnj02.inv = gencorrplot.mixed(cnj02.merged.means.tb %>% select(!c(accession_name, row, column)), width=2048, height=2048, tl.cex=0.75, cl.cex=0.75, number.cex=0.75,seriate_method="TSP", invert=TRUE)
+saveRDS(p.cnj02.inv, file=paste0(workflow,"/traits/plots/corrplot.cnj02.inv.rds"))
+```
+ ```{r seriation-cnj04-pre, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+p.cnj04 = gencorrplot.mixed(cnj04.merged.means.tb %>% select(!c(accession_name, row, column)), width=2048, height=2048, tl.cex=0.75, cl.cex=0.75, number.cex=0.75, seriate_method="TSP")
+saveRDS(p.cnj04, file=paste0(workflow,"/traits/plots/corrplot.cnj04.rds"))
+```
+
+```{r seriation-cnj04-inv-pre, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+p.cnj04.inv = gencorrplot.mixed(cnj04.merged.means.tb %>% select(!c(accession_name, row, column)), width=2048, height=2048, tl.cex=0.75, cl.cex=0.75, number.cex=0.75, seriate_method="TSP",invert=TRUE)
+saveRDS(p.cnj04.inv, file=paste0(workflow,"/traits/plots/corrplot.cnj04.inv.rds"))
+```
+
+```{r seriation, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+p.cnj02 = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj02.rds"))
+gencorrplot.mixed(p.cnj02, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj02.ts.png"), width=2048, height=2048, tl.cex=1, cl.cex=1, number.cex=1.5, rect.spec=rbind(c("UKUX","UKUX","UBL","UBL"),c("UBL","UBL","UTBM","UTBM"),c("UTBM","UTBM","UNB","UNB"),c("UBL","TA","UNP","UNS"),c("TA","UBL","UNS","UNP")))
+p.cnj02.inv = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj02.inv.rds"))
+setwd(rRoot)
+gencorrplot.mixed(p.cnj02.inv, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj02.ts.inv.png"), width=2048, height=2048, tl.cex=1, cl.cex=1, number.cex=1.5, rect.spec=rbind(c("PAC","PAC","TY","TY"),c("UCLP","UCLP","UCLS","UCLS"),c("ULvW","ULvW","UKTO","UKTO"),c("Brix","Brix","MFM","MFM"),c("Brix","Brix","Brix","UMFM"),c("Brix","UMFM","UMFM","UMFM")))
+p.cnj04 = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj04.rds"))
+gencorrplot.mixed(p.cnj04, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj04.ts.png"), width=2048, height=2048, tl.cex=1, cl.cex=1, number.cex=1.5, rect.spec=rbind(c("UTBM","UTBM","UBL","UBL"),c("UBL","UBL","UKUX","UKUX")))
+p.cnj04.inv = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj04.inv.rds"))
+gencorrplot.mixed(p.cnj04.inv, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj04.ts.inv.png"), width=2048, height=2048, tl.cex=1, cl.cex=1, number.cex=1.5, rect.spec=rbind(c("UBL","UBL","UBM","UBM"),c("PAC","PAC","TY","TY"),c("UCLP","UCLP","UCLS","UCLS"),c("UNB","UNB","PFR","PFR"),c("URB","URB","UNS","UNS"),c("MFM","MFM","UBW","UBW"),c("UNP","UNP","TA","TA")))
+```
+```{r seriation-cnj02-pre-refined, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+p.cnj02.refined = gencorrplot.mixed(cnj02.merged.means.tb %>% select(!c(accession_name, row, column)) %>% select(c(UKUX,UKLvW,UKEC,ULvW,UBL,MFM,UMFM,UBM,UBW,UTBM,UNB,UNP,TA,TY,SFY,UNAB,UNS)), width=2048, height=2048, tl.cex=0.75, cl.cex=0.75, number.cex=0.75,seriate_method="TSP")
+saveRDS(p.cnj02.refined, file=paste0(workflow,"/traits/plots/corrplot.cnj02.refined.rds"))
+```
+```{r seriation-cnj02-inv-pre-refined, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+p.cnj02.inv.refined = gencorrplot.mixed(cnj02.merged.means.tb %>% select(!c(accession_name, row, column)) %>% select(c(PAC,TY,UCLP,UCLS,ULvW,UKTO,Brix,MFM,UMFM)), width=2048, height=2048, tl.cex=0.75, cl.cex=0.75, number.cex=0.75,seriate_method="TSP", invert=TRUE)
+saveRDS(p.cnj02.inv.refined, file=paste0(workflow,"/traits/plots/corrplot.cnj02.inv.refined.rds"))
+```
+```{r seriation-cnj04-pre-refined, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+p.cnj04.refined = gencorrplot.mixed(cnj04.merged.means.tb %>% select(!c(accession_name, row, column)) %>% select(c(UTBM,UBW,MFM,UMFM,UBM,UBL,ULvW,UKEC,UKLvW,UKUX)), width=2048, height=2048, tl.cex=0.75, cl.cex=0.75, number.cex=0.75,seriate_method="TSP")
+saveRDS(p.cnj04.refined, file=paste0(workflow,"/traits/plots/corrplot.cnj04.refined.rds"))
+```
+```{r seriation-cnj04-inv-pre-refined, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+p.cnj04.inv.refined = gencorrplot.mixed(cnj04.merged.means.tb %>% select(!c(accession_name, row, column)) %>% select(c(URB,USL,UNS,MFM,BBITBM,UBW,UCLP,UCLS,UNB,PFR,PAC,TY,UBL,Brix,UBM)), width=2048, height=2048, tl.cex=0.75, cl.cex=0.75, number.cex=0.75,seriate_method="TSP", invert=TRUE)
+saveRDS(p.cnj04.inv.refined, file=paste0(workflow,"/traits/plots/corrplot.cnj04.inv.refined.rds"))
+```
+
+```{r seriation-refined, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+p.cnj02.refined = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj02.refined.rds"))
+gencorrplot.mixed(p.cnj02.refined, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj02.refined.png"), width=2048, height=2048, tl.cex=1, cl.cex=1, number.cex=1.5)
+p.cnj02.inv.refined = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj02.inv.refined.rds"))
+gencorrplot.mixed(p.cnj02.inv.refined, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj02.inv.refined.png"), width=2048, height=2048, tl.cex=1, cl.cex=1, number.cex=1.5, invert=TRUE)
+p.cnj04.refined = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj04.refined.rds"))
+gencorrplot.mixed(p.cnj04.refined, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj04.refined.png"), width=2048, height=2048, tl.cex=1, cl.cex=1, number.cex=1.5)
+p.cnj04.inv.refined = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj04.inv.refined.rds"))
+gencorrplot.mixed(p.cnj04.inv.refined, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj04.inv.refined.png"), width=2048, height=2048, tl.cex=1, cl.cex=1, number.cex=1.5, invert=TRUE)
+```
 
 ## Fit and Analyze Models
 
@@ -409,6 +583,7 @@ source('qtl_pipeline_01_analyzemodels.R', echo=FALSE);
 
 ```{r model-plots}
 setwd(rRoot);
+#source('qtl_pipeline_01_02_genh2plots.R', echo=FALSE); 
 source('qtl_pipeline_01_03_genBLUPplots.R', echo=FALSE); 
 ```
 
