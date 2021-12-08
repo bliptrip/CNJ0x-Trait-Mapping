@@ -4,6 +4,8 @@
     workflow="../Workflows/9"
 ```
 
+## Upright-Sampled Yield Trait Density Plots
+
 ```{r trait-uprightyield-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for upright yield traits in CNJ02 population (A) and CNJ04 population (B)."}
     imageA = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj02.png")
     imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj02.A.png")
@@ -16,17 +18,22 @@
     knitr::include_graphics(imageCombined)
 ```
 
-```{r trait-uprightother-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for other upright yield traits in CNJ02 population (A) and CNJ04 population (B)."}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj0x.png")
+## Upright Tangential Yield Trait Density Plots
+
+```{r trait-uprightyield2-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for tangentially-related yield traits in CNJ02 population (A) and CNJ04 population (B)."}
+    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj02.png")
+    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj02.A.png")
+    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj04.png")
+    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj04.B.png")
+    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj0x.png")
     system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
     system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
     system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
     knitr::include_graphics(imageCombined)
 ```
+
+
+## Plot-Sampled Trait Density Plots
 
 ```{r trait-plot-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for plot-sampled traits in CNJ02 (A) and CNJ04 (B) populations."}
     imageA = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj02.png")
@@ -40,9 +47,91 @@
     knitr::include_graphics(imageCombined)
 ```
 
-```{r trait-corrplots, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for populations CNJ02 (A) and CNJ04 (B)."}
-    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj02.png"),"A"))
-    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj04.png"),"B"))
-    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","2x1",paste0(workflow,"/traits/plots/corrplot.cnj02.A.png"), paste0(workflow,"/traits/plots/corrplot.cnj04.B.png"), paste0(workflow,"/traits/plots/corrplot.cnj0x.png")))
-    knitr::include_graphics(paste0(workflow,"/traits/plots/corrplot.cnj0x.png"))
+## Biennial-Bearing and Rebud Trait Density Plots
+
+```{r trait-bbi-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for plot-sampled traits in CNJ02 (A) and CNJ04 (B) populations."}
+    imageA = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj02.png")
+    imageAA = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj02.A.png")
+    imageB = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj04.png")
+    imageBA = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj04.B.png")
+    imageCombined = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj0x.png")
+    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
+    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
+    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
+    knitr::include_graphics(imageCombined)
+```
+
+## Upright Pedicel Trait Density Plots
+
+```{r trait-uprightped-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for upright pedicel characteristics in CNJ02 population (A) and CNJ04 population (B)."}
+    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj02.png")
+    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj02.A.png")
+    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj04.png")
+    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj04.B.png")
+    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj0x.png")
+    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
+    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
+    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
+    knitr::include_graphics(imageCombined)
+```
+
+## Upright Berry Bloom and Calyx Trait Density Plots
+
+```{r trait-uprightother-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for upright berry bloom and calyx traits in CNJ02 population (A) and CNJ04 population (B)."}
+    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj02.png")
+    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj02.A.png")
+    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj04.png")
+    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj04.B.png")
+    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj0x.png")
+    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
+    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
+    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
+    knitr::include_graphics(imageCombined)
+```
+
+## Upright Largest Berry Shape Trait Density Plots
+```{r trait-uprightshape-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for upright shape traits in CNJ02 population (A) and CNJ04 population (B)."}
+    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj02.png")
+    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj02.A.png")
+    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj04.png")
+    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj04.B.png")
+    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj0x.png")
+    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
+    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
+    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
+    knitr::include_graphics(imageCombined)
+```
+
+## Trait Correlation Plots
+
+### CNJ02
+```{r trait-corrplots-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for population CNJ02, ordered by A) positive correlations and B) negative correlations.  The trait relationships are calculated as Pearson's correlation coefficients, averaged over all years of data."}
+    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj02.ts.png"),"A"))
+    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj02.ts.inv.png"),"B"))
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","2x1",paste0(workflow,"/traits/plots/corrplot.cnj02.ts.A.png"), paste0(workflow,"/traits/plots/corrplot.cnj02.ts.inv.B.png"), paste0(workflow,"/traits/plots/corrplot.cnj02.ts.combined.png")))
+    knitr::include_graphics(paste0(workflow,"/traits/plots/corrplot.cnj02.ts.combined.png"))
+```
+
+### CNJ02-refined
+```{r trait-corrplots-cnj02-refined, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for boxed traits in population CNJ02, ordered by A) positive correlations and B) negative correlations."}  
+    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj02.refined.png"),"A"))
+    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj02.inv.refined.png"),"B"))
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","2x1",paste0(workflow,"/traits/plots/corrplot.cnj02.refined.A.png"), paste0(workflow,"/traits/plots/corrplot.cnj02.inv.refined.B.png"), paste0(workflow,"/traits/plots/corrplot.cnj02.refined.combined.png")))
+    knitr::include_graphics(paste0(workflow,"/traits/plots/corrplot.cnj02.refined.combined.png"))
+```
+
+### CNJ04
+```{r trait-corrplots-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap=""Trait phenotype correlation heatmaps for population CNJ04, ordered by A) positive correlations and B) negative correlations.  The trait relationships are calculated as Pearson's correlation coefficients, averaged over all years of data."}
+    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj04.ts.png"),"A"))
+    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj04.ts.inv.png"),"B"))
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","2x1",paste0(workflow,"/traits/plots/corrplot.cnj04.ts.A.png"), paste0(workflow,"/traits/plots/corrplot.cnj04.ts.inv.B.png"), paste0(workflow,"/traits/plots/corrplot.cnj04.ts.combined.png")))
+    knitr::include_graphics(paste0(workflow,"/traits/plots/corrplot.cnj04.ts.combined.png"))
+```
+
+### CNJ04-refined
+```{r trait-corrplots-cnj04-refined, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for boxed traits in population CNJ04, ordered by A) positive correlations and B) negative correlations."}
+    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj04.refined.png"),"A"))
+    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj04.inv.refined.png"),"B"))
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","2x1",paste0(workflow,"/traits/plots/corrplot.cnj04.refined.A.png"), paste0(workflow,"/traits/plots/corrplot.cnj04.inv.refined.B.png"), paste0(workflow,"/traits/plots/corrplot.cnj04.refined.combined.png")))
+    knitr::include_graphics(paste0(workflow,"/traits/plots/corrplot.cnj04.refined.combined.png"))
 ```
