@@ -6,6 +6,9 @@ HTCONDOR=HTCondorFiles
 SANDBOX=../../sandbox
 
 export WORKFLOW ?= ../../Workflows/1
+export P1_Name ?= Mullica_Queen
+export P2_Name ?= Crimson_Queen
+export POP_Name ?= CNJ02
 export RDS_DIR ?= "../../Data/phenotypic\ data/DerivedData/cleanup_data.R.output/Robjs"
 
 #Set the following for configuring the BLUPs summary table in target GenQTLTable: NUM_TOP configures how many of the top-ranked QTLs to display per trait:model combination
@@ -27,13 +30,16 @@ genmodels:
 genanalyses:
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_analyzemodels.R
 
-genh2plot:
-		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_02_genh2plots.R
-
 genblupplots:
 		touch "$(WORKFLOW)/traits/blups.summary.table.png"
 		touch "$(WORKFLOW)/traits/raw.summary.table.png"
-		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_03_genBLUPplots.R
+		R CMD BATCH '--args workflow="$(WORKFLOW)" P1_Name="$(P1_Name)" P2_Name="$(P2_Name)" POP_Name="$(POP_Name)"' qtl_pipeline_01_03_genBLUPplots.R
+
+genh2plot:
+		R CMD BATCH '--args workflow="$(WORKFLOW)" POP_Name="$(POP_Name)"' qtl_pipeline_01_04_genh2plots.R
+
+genbrcorrs:
+		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_05_genBLUPCorrPlots.R
 
 #Rbuild tars up the packages necessary for installing an R-build and then transferring to submit server.  Untar Rpackage.tgz, submit an interactive session using
 #condor_submit -i Rpackage.sub
@@ -96,7 +102,7 @@ CollateQTL:
 
 #Generate QTL table
 GenQTLTable:
-		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_method="$(QTL_METHOD)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_10_01_genQTLtables.R
+		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_scan_method="$(QTL_METHOD)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_10_01_genQTLtables.R
 
 #Collate all QTL info into one file
 GenConsensus:
