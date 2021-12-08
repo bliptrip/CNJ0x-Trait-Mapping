@@ -6,6 +6,7 @@ install.packages(c("tidyverse"), repos = "http://mirror.las.iastate.edu/CRAN/", 
 install.packages(c("pryr"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("car","openxlsx","RColorBrewer"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("lm"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+install.packages(c("seriation"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 #
 ###### For qtl pipeline #####
 ##Only install the following packages when running for the first time
