@@ -39,6 +39,7 @@ generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, trait, lo
     qtl.model.terms  <- deconstruct_qtl_formula(formula(qtl))
     qtl.num          <- length(qtl.model.terms)
     #Now add in anova p-values for genotype effects (BLUPs), and if applicable, for GxE
+	cat(paste0("Collated QTLs for trait: ",trait,", model: ", model, ", method: ",method,",", "formula: ",formula(qtl),".\n"))
     anova.df <- read.csv(file=paste0(workflow,'/traits/',model,'--',trait,'/anova.csv'), header=TRUE, row.names=2)
     GLRpvalue    <- anova.df['vs(id, Gu = A)','PrChisq']
     GZRpvalue    <- anova.df['vs(id, Gu = A)','PrNorm']
@@ -117,13 +118,21 @@ collateQtlCB      <- function(trait.cfg, trait.path, loopArgs) {
         if( any(cross$pheno[trait] != 0) ) {
             trait_subsubfolder_fpath <- file.path(trait.path, trait)
             #scanone-derived results
-            scan.one.qtl <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scanone.qtl.rds'))
-            scan.one.md  <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scanone.md.rds'))
-            generate_qtl_collate(cross, scan.one.qtl, scan.one.md, "scanone", model, trait, loopArgs)
+            sofile <- paste0(trait_subsubfolder_fpath,'/scanone.qtl.rds')
+            somdfile <- paste0(trait_subsubfolder_fpath,'/scanone.md.rds')
+            if( file.exists(sofile) && file.exists(somdfile) ) {
+                scan.one.qtl <- readRDS(file=sofile)
+                scan.one.md  <- readRDS(file=somdfile)
+                generate_qtl_collate(cross, scan.one.qtl, scan.one.md, "scanone", model, trait, loopArgs)
+            }
             #stepwiseqtl-derived results
-            scan.sw.qtl <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scansw.rds'))
-            scan.sw.md  <- readRDS(file=paste0(trait_subsubfolder_fpath,'/scansw.md.rds'))
-            generate_qtl_collate(cross, scan.sw.qtl, scan.sw.md, "stepwiseqtl", model, trait, loopArgs)
+            swfile <- paste0(trait_subsubfolder_fpath,'/scansw.rds')
+            swmdfile <- paste0(trait_subsubfolder_fpath,'/scansw.md.rds')
+            if( file.exists(swfile) && file.exists(swmdfile) ) {
+                scan.sw.qtl <- readRDS(file=swfile)
+                scan.sw.md  <- readRDS(file=swmdfile)
+                generate_qtl_collate(cross, scan.sw.qtl, scan.sw.md, "stepwiseqtl", model, trait, loopArgs)
+            }
         }
     }
 }
