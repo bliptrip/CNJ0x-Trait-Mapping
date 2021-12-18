@@ -141,12 +141,19 @@ GenReactSandbox:
 		cp -r $(WORKFLOW)/traits/blups_collated.wide.json $(SANDBOX)/public/configs/
 		cp -r $(WORKFLOW)/traits/plots/corrplot.cnj02.csv $(SANDBOX)/public/configs/
 		cp -r $(WORKFLOW)/traits/plots/corrplot.cnj04.csv $(SANDBOX)/public/configs/
-		cp -r $(WORKFLOW)/traits/qtl_collated.csv $(SANDBOX)/public/configs/
-		cp -r $(WORKFLOW)/traits/qtl_collated.consensus.csv $(SANDBOX)/public/configs/
 		cp -r $(WORKFLOW)/traits/effects_collated.json $(SANDBOX)/public/configs/
 		cp -r $(WORKFLOW)/traits/lod_profiles.json $(SANDBOX)/public/configs/
 		cd $(SANDBOX) && npm install
 
+GenReactSandboxConfigs:
+		cp -r ../../Workflows/templates/traits/plots/circos/circos-viewer/public  $(SANDBOX)
+		cp -r $(WORKFLOW)/configs $(SANDBOX)/public/
+		cp -r $(WORKFLOW)/traits/blups_collated.wide.json $(SANDBOX)/public/configs/
+		cp -r $(WORKFLOW)/traits/plots/corrplot.cnj02.csv $(SANDBOX)/public/configs/
+		cp -r $(WORKFLOW)/traits/plots/corrplot.cnj04.csv $(SANDBOX)/public/configs/
+		cp -r $(WORKFLOW)/traits/effects_collated.json $(SANDBOX)/public/configs/
+		cp -r $(WORKFLOW)/traits/lod_profiles.json $(SANDBOX)/public/configs/
+		cd $(SANDBOX) && npm install
 LaunchReactSandbox:
 		cd $(SANDBOX) && npm start
 
