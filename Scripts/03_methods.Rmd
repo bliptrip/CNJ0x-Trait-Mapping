@@ -17,25 +17,36 @@ upright: length (BL), width (BW), weight (BM), calyx diameter (CD), calyx lobe c
 characteristics (S), amount of fruit bloom or bloom rating (BR), and number of developed seeds (NS).  A summary of
 traits collected is displayed in Table \@ref(tab:trait-tab).
 
-```{r trait-tab, echo=FALSE, message=FALSE, include=TRUE, results='asis'}
+```{r trait-tab, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="Traits collected from populations CNJ02 and CNJ04 in years 2011-2014."}
 library(tidyverse)
 library(kableExtra)
 trait_tab <- readr::read_csv("../Data/publication/tables/trait_description_table.csv", na=c("NA")) 
 trait_tab_cat <- trait_tab %>% 
     mutate(category_repeat=(Category == c("",Category[-length(Category)]))) %>%
-	  mutate(Category = ifelse(category_repeat, "", Category)) %>%
-    mutate(Units=ifelse(Units != "",paste0("$",Units,"$"),Units)) %>%
-    dplyr::select(Category,Trait,Abbreviation,Units,Description) %>%
-    rename('Category[note]'=Category,'Abbreviation[note]'=Abbreviation)
-kable(trait_tab_cat, 
-      "html",  
-      booktabs=TRUE, 
-      escape = FALSE,
-      caption="Traits collected from populations CNJ02 and CNJ04 in years 2011-2014.") %>%
-    column_spec(1, bold=TRUE) %>%
-    row_spec(row=which(trait_tab_cat["Category[note]"] != ""), extra_css = "border-top: 1px solid #ddd") %>%
-    kable_paper("striped", full_width=FALSE) %>%
-    add_footnote(c("Upright traits were collected on a per fruiting upright basis.  Largest berry traits represent that phenotypic values of the largest berry sampled on a given fruiting upright.  Plot traits were collected by harvesting berries from square foot samples of plots and running appropriate assays.  All plot traits were collected amd assayed onsite at NJAES.  Upright and largest berry traits were collected at NJAES, but assayed at UW-Madison.","Trait abbreviations are used to label subsequent figures."))
+	mutate(Category = ifelse(category_repeat, "", Category)) %>%
+    dplyr::select(Category,Trait,Abbreviation,Units,Description)
+ftrait_tab_cat <-   flextable(trait_tab_cat) %>%
+                    mk_par(j = "Units", part="body", value=as_paragraph(as_equation(., width=1, height=0.2)), use_dot=TRUE) %>%
+                    flextable::footnote(i = 1, 
+                            j = ~ Category + Abbreviation,
+                            value = as_paragraph(c("Upright traits were collected on a per fruiting upright basis.  Largest berry traits represent that phenotypic values of the largest berry sampled on a given fruiting upright.  Plot traits were collected by harvesting berries from square foot samples of plots and running appropriate assays.  All plot traits were collected amd assayed onsite at NJAES.  Upright and largest berry traits were collected at NJAES, but assayed at UW-Madison.",
+                                                    "Trait abbreviations are used to label subsequent figures.")),
+                            ref_symbols = c("a","b"),
+                            part = "header") %>%
+                    theme_booktabs() %>%
+                    hline( i = (which(trait_tab_cat$Category != "")-1)[-1], part="body") %>%
+                    set_table_properties(width=table.width)
+#ktrait_tab_cat <- rename(trait_tab_cat,'Category[note]'=Category,'Abbreviation[note]'=Abbreviation) %>%
+#    mutate(Units=ifelse(Units != "",paste0("$",Units,"$"),Units)) %>%
+#    kable(  booktabs=TRUE, 
+#            escape = FALSE,
+#            caption="Traits collected from populations CNJ02 and CNJ04 in years 2011-2014.") %>%
+#    column_spec(1, bold=TRUE) %>%
+#    row_spec(row=(which(trait_tab_cat["Category"] != "")-1), hline_after = TRUE) %>%
+#    kable_paper("striped", "scale_down", font_size=table.font_size, full_width=FALSE) %>%
+#    add_footnote(c("Upright traits were collected on a per fruiting upright basis.  Largest berry traits represent that phenotypic values of the largest berry sampled on a given fruiting upright.  Plot traits were collected by harvesting berries from square foot samples of plots and running appropriate assays.  All plot traits were collected amd assayed onsite at NJAES.  Upright and largest berry traits were collected at NJAES, but assayed at UW-Madison.","Trait abbreviations are used to label subsequent figures."))
+#print(ktrait_tab_cat) #Render
+knitr::knit_print(ftrait_tab_cat)
 ```
 
 ```{r berry-shape-template, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="50%", fig.cap="Examples of categories of berry shape parameters, used to help classify cranberry shape [@Franklin1958]."}
@@ -58,19 +69,27 @@ between genotypes [@Li2018;@Diaz-Garcia2018a].  In brief, shape templates presen
 then recorded shape traits were mapped to these template PTVs.  For all other categorical traits, numeric values were
 chosen such that larger values represented more desirable breeding attributes, as shown in Table \@ref(tab:cat-trait-tab).
 
-```{r cat-trait-tab, echo=FALSE, message=FALSE, include=TRUE, results='asis'}
+```{r cat-trait-tab, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="List of categorical traits and their mapped numeric values.  Generally, numeric values were chosen such that larger values represented more desirable breeding attributes."}
 cat_trait_tab <- readr::read_csv("../Data/publication/tables/categorical_traits.csv", na=c("NA")) %>%
                     mutate(trait_repeat=(Trait== c("",Trait[-length(Trait)]))) %>%
                 	mutate(Trait = ifelse(trait_repeat, "", Trait))
-kable(cat_trait_tab %>% dplyr::select(Trait,'Categorical Value','Numeric Value'), 
-        "html",  
-        booktabs=TRUE, 
-        escape = FALSE,
-        align="llr",
-        caption="List of categorical traits and their mapped numeric values.  Generally, numeric values were chosen such that larger values represented more desirable breeding attributes.") %>%
-        column_spec(1, bold=TRUE) %>%
-        row_spec(row=which(cat_trait_tab$Trait != ""), extra_css = "border-top: 1px solid #ddd") %>%
-        kable_paper("striped", full_width=FALSE)
+
+ftrait_tab_cat <-   flextable(cat_trait_tab %>% dplyr::select(Trait,'Categorical Value','Numeric Value')) %>%
+				    align(j=c(1,2), align="left", part="body") %>%
+				    align(j=c(3), align="center", part="body") %>%
+				    bold(j=1, bold=TRUE) %>%
+                    theme_booktabs() %>%
+                    hline( i = (which(cat_trait_tab$trait != "")-1)[-1], part="body") %>%
+                    set_table_properties(width=table.width)
+
+#ktrait_tab_cat <- kable(cat_trait_tab %>% dplyr::select(Trait,'Categorical Value','Numeric Value'), 
+#    booktabs=TRUE, 
+#    escape = FALSE,
+#    align="llr") %>%
+#    column_spec(1, bold=TRUE) %>%
+#    row_spec(row=(which(cat_trait_tab$Trait != "")-1), hline_after = TRUE) %>%
+#    kable_paper("striped", "scale_down", font_size=table.font_size, full_width=FALSE)
+knitr::knit_print(ftrait_tab_cat)
 ```
 
 All traits were curated by removing entries marked as rotten, and outliers were detected and trimmed by assessing residuals of each trait regressed by population, genotype, and year.
