@@ -12,7 +12,6 @@ Encoding: UTF-8
 RnwWeave: knitr
 LaTeX: XeLaTeX
 
-BuildType: Website
-WebsitePath: Scripts
+BuildType: Makefile
 
 MarkdownReferences: Document
