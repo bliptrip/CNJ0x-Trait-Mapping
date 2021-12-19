@@ -1,5 +1,14 @@
-bookdown::html_document2: default
+bookdown::html_document2:
+    toc: TRUE
 bookdown::pdf_document2:
-    keep_tex: true
-bookdown::word_document2:
-    toc: true
+    latex_engine: xelatex
+    keep_tex: TRUE
+    toc: TRUE
+bookdown::word_document:
+    toc: TRUE
+officedown::rdocx_document:
+    tables:
+        style: Table
+        layout: autofit
+        width: 0.85
+
