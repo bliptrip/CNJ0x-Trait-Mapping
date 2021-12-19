@@ -197,6 +197,12 @@ siginfo <- function(x){
 round.digits <- function(values,digits) {
 	rvalue <- gsub("NA", "", format(round(values,digits=digits),nsmall=digits))
 }
+
+signif.digits <- function(values,digits) {
+	rvalue <- gsub("NA", "", format(round(values,digits=digits),nsmall=digits))
+}
+
+
 									
 #Function for looping through all unmasked traits in the configs/model-traits.cfg.csv file.
 
@@ -279,3 +285,17 @@ assign.pointer<-function(object, value, pos) {
     }
     return(object)
 }
+
+#The following functions can only be used within knitr renderings
+is_word_output = function() {
+    return(knitr::opts_knit$get("rmarkdown.pandoc.to") == "docx")
+}
+
+is_pdf_output = function() {
+    return(knitr::opts_knit$get("rmarkdown.pandoc.to") == "latex")
+}
+
+is_html_output = function() {
+    return(knitr::opts_knit$get("rmarkdown.pandoc.to") == "html")
+}
+
