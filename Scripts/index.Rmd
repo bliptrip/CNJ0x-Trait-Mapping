@@ -1,15 +1,63 @@
 --- 
-title: "Quantitative Trait Loci for Yield, Shape, and Biennial Bearing Parameters in American Cranberry (_Vaccinium macrocarpon Ait._) using Conventional Phenotype Measurement Methods"
+title: "Classical versus Modern: A Comparative Study of Phenotyping Methods and their Utility in Mapping Quantitative Trait Loci for the Advancement of _Vaccinium macrocarpon Ait._ Breeding Germplasm"
 author: "Andrew Maule"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
-output: bookdown::html_document2
-documentclass: book
+documbookentclass: article
+always_allow_html: true
 bibliography: [book.bib] 
 biblio-style: apalike
 link-citations: yes
 github-repo: bliptrip/CNJ0x-Trait-Mapping
 description: "QTL mapping paper for cranberry upright phenotypic data taken from 2011-2014.  Uprights came from Rutgers University P.E. Marucci Center in Chatsworth, NJ, USA"
-workflow: 9 #Workflow number to use for graphs/etc in this document
-sandbox: sandbox #Name of folder to place circos files needed to render QTL circos plots.
+params:
+    workflow: 9
+    sandbox: "sandbox"
+    cnj02_workflow: 9
+    cnj04_workflow: 10
+    fig_gen_annotations: FALSE
+    fig_gen_montages: FALSE
+    install_deps: FALSE
 ---
+
+```{r lib-deps, echo=FALSE, message=FALSE, include=FALSE, eval=params$install_deps}
+install.packages(c("tidyverse",
+                   "flextable",
+                   "kableExtra",
+                   "ggcorrplot",
+                   "corrplot",
+                   "formattable",
+                   "equatags"), 
+                 repos = "http://mirror.las.iastate.edu/CRAN/", 
+                 dependencies = TRUE)
+library(equatags)
+equatags::mathjax_install() #Needed for flextable to render mathjax properly
+```
+
+```{r lib-setup, echo=FALSE, message=FALSE, include=FALSE}
+library(corrplot)
+library(flextable)
+library(formattable)
+library(ggcorrplot)
+library(kableExtra)
+library(knitr)
+library(officedown)
+library(tidyverse)
+
+#source('./R/usefulFunctions.R')
+```
+
+```{r style-defs, echo=FALSE, message=FALSE, include=FALSE}
+options(knitr.kable.NA='') #So we don't display NA's in kable table renderings.
+table.font_size =10
+table.width = 0.85
+set_flextable_defaults( font.size=table.font_size,
+                        table.layout="autofit"
+                      )
+workflow="../Workflows/9"
+cnj02_workflow = "../Workflows/9"
+cnj04_workflow = "../Workflows/10"
+library(formattable)
+library(kableExtra)
+library(tidyverse)
+```
