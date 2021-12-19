@@ -403,6 +403,8 @@ generateTableRemoveRepeats <- function(values.collated.tb) {
 generateFullTableHelper <- function(values.collated.tb) {
     tbl1 <- values.collated.tb %>%
         arrange(trait,model) %>%
+        mutate(label = as.character(label),
+               model_label = as.character(model_label)) %>% #Necessary for trait_repeat and model_repeat to be calculated correctly
         mutate(trait_repeat=(label == c("",label[-length(label)])),
                 model_repeat=(model_label == c("",model_label[-length(model_label)]))) %>%
         mutate(min_Raw=signif.digits(min_Raw,3)) %>%
@@ -420,15 +422,15 @@ generateFullTableHelper <- function(values.collated.tb) {
         mutate(vg=signif.digits(vg,3)) %>%
         mutate(vge=signif.digits(vge,3)) %>%
         mutate(ve=signif.digits(ve,3)) %>%
-        mutate(h2=signif.digits(h2,3)) %>%
-        dplyr::select(label,model_label,vg,vge,ve,h2,min_Raw,min_BLUPs,mean_Raw,mean_BLUPs,max_Raw,max_BLUPs,range_Raw,range_BLUPs,min_geno_Raw,min_geno_BLUPs,max_geno_Raw,max_geno_BLUPs,P1_Raw,P1_BLUPs,P2_Raw,P2_BLUPs,'Parent Range_Raw','Parent Range_BLUPs')
+        mutate(h2=signif.digits(h2,3))
     return(tbl1)
 }
 
 generateFullTable <- function(values.collated.tb) {
     tbl1 <- generateFullTableHelper(values.collated.tb) %>%
                 generateTableSignifSymbols() %>%
-                generateTableRemoveRepeats()
+                generateTableRemoveRepeats() %>%
+                dplyr::select(label,model_label,vg,vge,ve,h2,min_Raw,min_BLUPs,mean_Raw,mean_BLUPs,max_Raw,max_BLUPs,range_Raw,range_BLUPs,min_geno_Raw,min_geno_BLUPs,max_geno_Raw,max_geno_BLUPs,P1_Raw,P1_BLUPs,P2_Raw,P2_BLUPs,'Parent Range_Raw','Parent Range_BLUPs')
     if( is_html_output() ) {
         tbl2 <- tbl1 %>%
             rename("Trait[note]"=label,"Model[note]"=model_label,'$σ_{g}^{2}$[note]'=vg,'$σ_{g ε}^{2}$[note]'=vge,'$σ_{ε}^{2}$[note]'=ve,'$h^{2}$[note]'=h2,'$Min_r$'=min_Raw,'$Min_b$'=min_BLUPs,'$Max_r$'=max_Raw,'$Max_b$'=max_BLUPs,"$Mean_r$ \u00b1 $SE$"=mean_Raw,"$Mean_b$ \u00b1 $SE$"=mean_BLUPs,'$Range_r$'=range_Raw,'$Range_b$'=range_BLUPs,'$Min Geno_r$[note]'=min_geno_Raw,'$Min Geno_b$'=min_geno_BLUPs,'$Max Geno_r$[note]'=max_geno_Raw,'$Max Geno_b$'=max_geno_BLUPs,'$P_{1r}$[note]'=P1_Raw,'$P_{1b}$'=P1_BLUPs,'$P_{2r}$[note]'=P2_Raw,'$P_{2b}$'=P2_BLUPs,'$PRange_r$'='Parent Range_Raw','$PRange_b$'='Parent Range_BLUPs') %>%
@@ -463,6 +465,7 @@ generateFullTable <- function(values.collated.tb) {
 
 generateReducedTableFlex <- function(values.collated.tb) {
     tbl1 <- generateFullTableHelper(values.collated.tb) %>%
+                dplyr::select(label,model_label,vg,vge,ve,h2,min_Raw,min_BLUPs,mean_Raw,mean_BLUPs,max_Raw,max_BLUPs,range_Raw,range_BLUPs,min_geno_Raw,min_geno_BLUPs,max_geno_Raw,max_geno_BLUPs,P1_Raw,P1_BLUPs,P2_Raw,P2_BLUPs,'Parent Range_Raw','Parent Range_BLUPs') %>%
                 select(!model_label)
     tbl2 <- flextable(tbl1) %>%
         align(align="center", part="header") %>%
@@ -526,6 +529,7 @@ generateFullTableFlex <- function(values.collated.tb) {
                 mutate(label=gsub(" ",'\\ ',label,fixed=TRUE)) %>%
                 mutate(model_label=gsub("$","",model_label,fixed=TRUE)) %>%
                 mutate(model_label=gsub(" ",'\\ ',model_label,fixed=TRUE)) %>%
+                dplyr::select(label,model_label,vg,vge,ve,h2,min_Raw,min_BLUPs,mean_Raw,mean_BLUPs,max_Raw,max_BLUPs,range_Raw,range_BLUPs,min_geno_Raw,min_geno_BLUPs,max_geno_Raw,max_geno_BLUPs,P1_Raw,P1_BLUPs,P2_Raw,P2_BLUPs,'Parent Range_Raw','Parent Range_BLUPs') %>%
                 rename(`Trait`=label,`Model`=model_label,`σ_g^2`=vg,`σ_{gε}^2`=vge,`σ_{ε}^2`=ve,`h^2`=h2,`Min_r`=min_Raw,`Min_b`=min_BLUPs,`Max_r`=max_Raw,`Max_b`=max_BLUPs,`Mean_r ± SE`=mean_Raw,`Mean_b ± SE`=mean_BLUPs,`Range_r`=range_Raw,`Range_b`=range_BLUPs,`Min\\ Geno_r`=min_geno_Raw,`Min\\ Geno_b`=min_geno_BLUPs,`Max\\ Geno_r`=max_geno_Raw,`Max\\ Geno_b`=max_geno_BLUPs,`P_{1r}`=P1_Raw,`P_{1b}`=P1_BLUPs,`P_{2r}`=P2_Raw,`P_{2b}`=P2_BLUPs,`PRange_r`=`Parent Range_Raw`,`PRange_b`=`Parent Range_BLUPs`)
     tbl2 <- flextable(tbl1) %>%
         align(align="center", part="header") %>%
