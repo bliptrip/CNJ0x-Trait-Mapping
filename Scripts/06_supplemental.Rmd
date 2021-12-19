@@ -5,44 +5,44 @@
 ### CNJ02 -- All Traits
 
 ```{r trait-corrplots-cnj02-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj02.ts.png"),"A"))
-    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj02.ts.inv.png"),"B"))
+    system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj02.ts.png"),"A"))
+    system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj02.ts.inv.png"),"B"))
 ```
 
 ```{r trait-corrplots-cnj02-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","1x2",paste0(workflow,"/traits/plots/corrplot.cnj02.ts.A.png"), paste0(workflow,"/traits/plots/corrplot.cnj02.ts.inv.B.png"), paste0(workflow,"/traits/plots/corrplot.cnj02.ts.combined.png")))
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","1x2",paste0(params$workflow,"/traits/plots/corrplot.cnj02.ts.A.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj02.ts.inv.B.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj02.ts.combined.png")))
 ```
 
 ```{r trait-corrplots-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for population CNJ02, ordered by A) positive correlations and B) negative correlations.  The trait relationships are calculated as Pearson's correlation coefficients, averaged over all years of data."}
-    knitr::include_graphics(paste0(workflow,"/traits/plots/corrplot.cnj02.ts.combined.png"))
+    knitr::include_graphics(paste0(params$workflow,"/traits/plots/corrplot.cnj02.ts.combined.png"))
 ```
 
 ### CNJ04 -- All Traits
 ```{r trait-corrplots-cnj04-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj04.ts.png"),"A"))
-    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj04.ts.inv.png"),"B"))
+    system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj04.ts.png"),"A"))
+    system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj04.ts.inv.png"),"B"))
 ```
 
 ```{r trait-corrplots-cnj04-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","1x2",paste0(workflow,"/traits/plots/corrplot.cnj04.ts.A.png"), paste0(workflow,"/traits/plots/corrplot.cnj04.ts.inv.B.png"), paste0(workflow,"/traits/plots/corrplot.cnj04.ts.combined.png")))
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","1x2",paste0(params$workflow,"/traits/plots/corrplot.cnj04.ts.A.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj04.ts.inv.B.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj04.ts.combined.png")))
 ```
 
 ```{r trait-corrplots-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for population CNJ04, ordered by A) positive correlations and B) negative correlations.  The trait relationships are calculated as Pearson's correlation coefficients, averaged over all years of data."}
-    knitr::include_graphics(paste0(workflow,"/traits/plots/corrplot.cnj04.ts.combined.png"))
+    knitr::include_graphics(paste0(params$workflow,"/traits/plots/corrplot.cnj04.ts.combined.png"))
 ```
 
 ## BLUP Tables
 
 ### CNJ02 - BLUP Summary Statistics - Complete
 ```{r blups-table-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%", tab.cap="CNJ02 Population Complete Trait and BLUP Summary."}
-load(file=paste0(cnj02_workflow,"/.RData.01_genBLUP"))
+load(file=paste0(params$cnj02_workflow,"/.RData.01_genBLUP"))
 full_tbl_all_flex  <- generateFullTableFlex(model.collated.summary.wide.tb)
 knitr::knit_print(full_tbl_all_flex)
 ```
 
 ### CNJ04 - BLUP Summary Statistics - Complete
 ```{r blups-table-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%", tab.cap="CNJ04 Population Complete Trait and BLUP Summary."}
-load(file=paste0(cnj04_workflow,"/.RData.01_genBLUP"))
+load(file=paste0(params$cnj04_workflow,"/.RData.01_genBLUP"))
 full_tbl_all_flex  <- generateFullTableFlex(model.collated.summary.wide.tb)
 knitr::knit_print(full_tbl_all_flex)
 ```
@@ -51,22 +51,22 @@ knitr::knit_print(full_tbl_all_flex)
 
 ### CNJ02 - Scanone
 ```{r qtl-table-scanone-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-load(file=paste0(cnj02_workflow,"/.RData.10_01.genQTLtable.scanone.2"))
+load(file=paste0(params$cnj02_workflow,"/.RData.10_01.genQTLtable.scanone.2"))
 print(mtable)
 ```
 ### CNJ02 - Stepwiseqtl
 ```{r qtl-table-stepwiseqtl-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-load(file=paste0(cnj02_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
+load(file=paste0(params$cnj02_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
 print(mtable)
 ```
 
 ### CNJ04 - Scanone
 ```{r qtl-table-scanone-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-load(file=paste0(cnj04_workflow,"/.RData.10_01.genQTLtable.scanone.2"))
+load(file=paste0(params$cnj04_workflow,"/.RData.10_01.genQTLtable.scanone.2"))
 print(mtable)
 ```
 ### CNJ04 - Stepwiseqtl
 ```{r qtl-table-stepwiseqtl-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-load(file=paste0(cnj04_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
+load(file=paste0(params$cnj04_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
 print(mtable)
 ```

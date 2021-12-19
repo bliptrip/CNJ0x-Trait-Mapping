@@ -4,30 +4,30 @@
 
 ### CNJ02
 ```{r trait-corrplots-cnj02-refined-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj02.refined.png"),"A"))
-    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj02.inv.refined.png"),"B"))
+    system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.png"),"A"))
+    system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj02.inv.refined.png"),"B"))
 ```
 
 ```{r trait-corrplots-cnj02-refined-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","2x1",paste0(workflow,"/traits/plots/corrplot.cnj02.refined.A.png"), paste0(workflow,"/traits/plots/corrplot.cnj02.inv.refined.B.png"), paste0(workflow,"/traits/plots/corrplot.cnj02.refined.combined.png")))
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","2x1",paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.A.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj02.inv.refined.B.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.combined.png")))
 ```
 
 ```{r trait-corrplots-cnj02-refined, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for boxed traits in population CNJ02, ordered by A) positive correlations and B) negative correlations."}  
-    knitr::include_graphics(paste0(workflow,"/traits/plots/corrplot.cnj02.refined.combined.png"))
+    knitr::include_graphics(paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.combined.png"))
 ```
 
 ### CNJ04-refined
 ```{r trait-corrplots-cnj04-refined-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj04.refined.png"),"A"))
-    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj04.inv.refined.png"),"B"))
+    system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj04.refined.png"),"A"))
+    system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj04.inv.refined.png"),"B"))
 ```
 
 ```{r trait-corrplots-cnj04-refined-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","2x1",paste0(workflow,"/traits/plots/corrplot.cnj04.refined.A.png"), paste0(workflow,"/traits/plots/corrplot.cnj04.inv.refined.B.png"), paste0(workflow,"/traits/plots/corrplot.cnj04.refined.combined.png")))
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","2x1",paste0(params$workflow,"/traits/plots/corrplot.cnj04.refined.A.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj04.inv.refined.B.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj04.refined.combined.png")))
 ```
 
 ```{r trait-corrplots-cnj04-refined, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for boxed traits in population CNJ04, ordered by A) positive correlations and B) negative correlations."}
-    knitr::include_graphics(paste0(workflow,"/traits/plots/corrplot.cnj04.refined.combined.png"))
+    knitr::include_graphics(paste0(params$workflow,"/traits/plots/corrplot.cnj04.refined.combined.png"))
 ```
 
 ## Trait Distribution Plots

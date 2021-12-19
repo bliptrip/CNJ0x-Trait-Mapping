@@ -11,10 +11,10 @@ link-citations: yes
 github-repo: bliptrip/CNJ0x-Trait-Mapping
 description: "QTL mapping paper for cranberry upright phenotypic data taken from 2011-2014.  Uprights came from Rutgers University P.E. Marucci Center in Chatsworth, NJ, USA"
 params:
-    workflow: 9
+    workflow: "../Workflows/9"
     sandbox: "sandbox"
-    cnj02_workflow: 9
-    cnj04_workflow: 10
+    cnj02_workflow: "../Workflows/9"
+    cnj04_workflow: "../Workflows/10"
     fig_gen_annotations: FALSE
     fig_gen_montages: FALSE
     install_deps: FALSE
@@ -54,9 +54,9 @@ table.width = 0.85
 set_flextable_defaults( font.size=table.font_size,
                         table.layout="autofit"
                       )
-workflow="../Workflows/9"
-cnj02_workflow = "../Workflows/9"
-cnj04_workflow = "../Workflows/10"
+workflow=params$workflow
+cnj02_workflow = params$cnj02_workflow
+cnj04_workflow = params$cnj04_workflow
 library(formattable)
 library(kableExtra)
 library(tidyverse)
