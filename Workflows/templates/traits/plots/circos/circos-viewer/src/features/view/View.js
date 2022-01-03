@@ -134,8 +134,8 @@ export default function View() {
         models.forEach( (model,i) => {
             //scanone normal
             var stack_trait_data = qtls.filter( d => (d.trait === trait) )
-                                        .filter( d => (d.model === model) )
-                                        .filter( d => ((d.method === "scanone") || (d.method === "fakeqtl")) )
+                                        .filter( d => (models.includes(d.model)) )
+                                        .filter( d => ((d.method === method) || (d.method === "fakeqtl")) )
                                         .map( d => ({ ...d,
                                                         block_id: "vm" + d.chr,
                                                         color: blipColors((((trait_idx+1) * models.length) + models.indexOf(d.model))/(1.2*(traits.length * models.length))),
@@ -143,8 +143,11 @@ export default function View() {
                                                         end: (+(consensus === "consensus" ? d.position_consensus : d.position) + (+d.interval/2))*1000
                                                     }))
                                         .filter( d => (linkage_groups.includes(d.block_id)) );
-            stack_trait_data = stack_trait_data.sort( (a,b) => (b.marker_variance - a.marker_variance) )
-                                               .slice(0,qtlModelCount+linkage_groups.length); //Add one so that 'fake' qtls render
+            stack_trait_data = d3.rollup( stack_trait_data, 
+                                            v => (v.sort( (a,b) => (b.marker_variance - a.marker_variance) )
+                                            .slice(0,qtlModelCount+linkage_groups.length)), //Add one so that 'fake' qtls render
+                                            d => d.model );
+            stack_trait_data = d3.merge(Array.from(stack_trait_data.values()));
             if( stack_trait_data.length > 0 ) {
                 var trait_class = "stacks-"+method+"-"+consensus+"--"+model+"--"+trait;
                 circosScatter.stack(trait_class, stack_trait_data, config[i]);
