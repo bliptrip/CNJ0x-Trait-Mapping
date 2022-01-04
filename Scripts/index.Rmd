@@ -1,5 +1,5 @@
 --- 
-title: "Classical versus Modern: A Comparative Study of Phenotyping Methods and their Utility in Mapping Quantitative Trait Loci for the Advancement of _Vaccinium macrocarpon Ait._ Breeding Germplasm"
+title: "A Comparative Study of Phenotyping Methods and their Utility in Mapping Quantitative Trait Loci for the Advancement of _Vaccinium macrocarpon Ait._ Breeding Germplasm"
 author: "Andrew Maule"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
@@ -15,6 +15,8 @@ params:
     sandbox: "sandbox"
     cnj02_workflow: "../Workflows/9"
     cnj04_workflow: "../Workflows/10"
+    trait_tab_flex: FALSE
+    table_gen_berry_chimera: FALSE
     fig_gen_annotations: FALSE
     fig_gen_montages: FALSE
     install_deps: FALSE
@@ -36,6 +38,8 @@ equatags::mathjax_install() #Needed for flextable to render mathjax properly
 
 ```{r lib-setup, echo=FALSE, message=FALSE, include=FALSE}
 library(corrplot)
+library(cowplot)
+library(equatags)
 library(flextable)
 library(formattable)
 library(ggcorrplot)
@@ -57,7 +61,4 @@ set_flextable_defaults( font.size=table.font_size,
 workflow=params$workflow
 cnj02_workflow = params$cnj02_workflow
 cnj04_workflow = params$cnj04_workflow
-library(formattable)
-library(kableExtra)
-library(tidyverse)
 ```
