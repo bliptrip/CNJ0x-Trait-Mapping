@@ -19,6 +19,10 @@ fi
 
 text_offset="$OFFSET,$((OFFSET+((POINTSIZE*2)/3)))"
 
-cmd="convert -fill black -font Roboto -weight Bold -pointsize $POINTSIZE -draw \"text $text_offset '$2' gravity 'Center'\" $1 ${basename}.$2.${extension}"
+cmd="convert -bordercolor white -border 2 $1 ${basename}.$2.tmp.${extension}"
 echo $cmd
 eval $cmd
+cmd="convert -fill black -font Roboto -weight Bold -pointsize $POINTSIZE -draw \"text $text_offset '$2' gravity 'Center'\" -bordercolor black -border 2 ${basename}.$2.tmp.${extension} ${basename}.$2.${extension}"
+echo $cmd
+eval $cmd
+rm ${basename}.$2.tmp.${extension} 
