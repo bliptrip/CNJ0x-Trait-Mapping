@@ -16,3 +16,6 @@ rh: render_html
 render_pdf:
 		@./renderPDF.R
 rp: render_pdf
+
+scpvh:
+	scp -r -P 7262 _main.html maule@vaccinium.vcru.wisc.edu:~/
