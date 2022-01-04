@@ -299,3 +299,13 @@ is_html_output = function() {
     return(knitr::opts_knit$get("rmarkdown.pandoc.to") == "html")
 }
 
+#Shamelessly taken from http://www.sthda.com/english/wiki/correlation-matrix-formatting-and-visualization
+flattenCorrMatrix <- function(cormat, pmat) {
+    ut <- upper.tri(cormat)
+    data.frame(
+        row = rownames(cormat)[row(cormat)[ut]],
+        column = rownames(cormat)[col(cormat)[ut]],
+        cor  =(cormat)[ut],
+        p = pmat[ut]
+    )
+}
