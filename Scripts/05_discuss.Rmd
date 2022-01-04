@@ -1,1 +1,42 @@
 # Discussion {#discuss}
+
+
+For CNJ02 population:
+
+Tacy and PAC inversely correlated with SFY and positively correlated with PFR could mean that fruit rot is undesirably 
+linked with higher levels of Tacy/PAC (desirable traits), or could simply be an indicator that these genotypes undergo 
+berry development and ripening sooner than the others (since everything harvested at the same time).  A few additional
+indicators of this relationship between sound fruit yield and Tacy/PAC can be found in the modestly negative
+correlations of *SFY × PAC* ($\rho =  `r p.cnj02.c['SFY','PAC']`$), *SFY × Tacy* ($\rho =  `r p.cnj02.c['SFY','Tacy']`$), 
+*UNAB × PAC* ($\rho =  `r p.cnj02.c['UNAB','PAC']`$), *MFM × PAC* ($\rho =  `r p.cnj02.c['MFM','PAC']`$), 
+*MFM × UNAF* ($\rho =  `r p.cnj02.c['MFM','UNAF']`$), and *MFM × UBBL* ($\rho =  `r p.cnj02.c['MFM','UBBL']`$).
+
+Compared to CNJ02, CNJ04 has  weaker correlations for traits
+*UBM x UBW* (`r p.cnj04.c['UBM','UBW']` vs. `r p.cnj02.c['UBM','UBW']`) and *UBM × UBL* (`r p.cnj04.c['UBM','UBL']` vs. `r p.cnj02.c['UBM','UBL']`). - Due to less variation/segregation in width and length 
+in berries found in CNJ04?  Look at BLUP and trait summary stats tables
+
+Comment and conjecture on noteworthy correlations discussed in results:
+
+For CNJ04, there appears to be a modest negative correlation between berry size and Brix.  This could represent some
+form of linkage drag in this population, as seen in other progeny derived from a Steven's parent (Sweetie, progeny of a
+cross of Stevens × Ben Lear).
+
+
+*UCLP x UCLS* is interesting in that calyx lobe fold pattern could have more to do developmentally with calyx lobe size
+(pleiotropy), or the genes are strongly linked.
+
+It would be interesting to compare differential fruit coloring/Tacy with differential fruit rot (check out Luis' paper)
+-- this could allow us to decouple ripening stage from negatively linked sound fruit yield with Tacy/PAC levels.
+
+##Heritabilities
+
+High heritability of berry length in both populations would seem to indicate that this would be a good way of selecting
+for larger berries.  Even higher heritabilities in berry length vs. width indicates that this is a great trait to breed
+for when selecting for particular berry shape characteristics important for processing (rounder berries preferred).  If
+it is possible to select genotypes with larger berry length and low LvW, along with low rot rates, this could be a good
+way to produce genotypes with good processing abilities.
+
+Evidence of very low heritabilities in traits such as *Brix* and *TA* in population CNJ02 over CNJ04 could simply
+indicate less genetic variation for these traits in CNJ02, but the baseline could be higher -- show a figure of 
+inter-population BLUPS side-by-side to get a good perspective on the absolute amount of selectable additive genetic variation 
+b/w populations.
