@@ -202,7 +202,7 @@ mixed_model_analyze <- function(trait.cfg, pheno, geno) {
     #Generate a grid of all possible random model terms, but always include first term -- Define the first term as always being the genotype
     randomtermss_combos = expand.grid(c(TRUE,rep(list(c(FALSE,TRUE)),length(randomtermss)-1)))
     AICs                = rep(Inf, nrow(randomtermss_combos)) # All the AIC terms -- the model with minimum AIC is the winner
-    LogLikelihoods      = rep(-Inf, nrow(randomtermss_combos)) # All the AIC terms -- the model with minimum AIC is the winner
+    LogLikelihoods      = rep(-Inf, nrow(randomtermss_combos)) # All the LogLikelihoods terms
     randomfs            = rep("", nrow(randomtermss_combos))
     models              = list()
     print(paste0("Running trait \"", trait, "\" and model \"",trait.cfg$model,"\" analysis."))
