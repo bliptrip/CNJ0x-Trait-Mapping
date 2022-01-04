@@ -27,8 +27,6 @@ def parse_args():
     parser.add_argument('--audit-path', action='store', type=str, help="If --audit-path is defined, this is where the chimeric binary images and their contours will be stored for subsequent auditing.")
     parser.add_argument('--min_area', '--mina', '--minArea', dest='mina', type=int, default='100', help="Remove foreground blobs (fruit) less than this size.")
     parser.add_argument('--max_area', '--maxa', '--maxArea', dest='maxa', type=int, default='3000000', help="Remove foreground blobs (fruit) greather than this size.")
-    parser.add_argument('-m', '--map', action='store', default="{'round': '*round_binary.png', 'oblong': '*oblong_binary.png', 'oval': '*oval_binary.png', 'pyriform': '*pyriform_binary.png', 'spindle': '*spindle_binary.png'}", help="Dictionary mapping shape categories to template binary image file (glob-patterns allowed).")
-    parser.add_argument('--map-path', dest='mapp', action='store', default="../../Data/phenotypic data/DerivedData/berry_templates/", help="Dictionary mapping shape categories to template binary image file (glob-patterns allowed).")
     parsed = parser.parse_args(sys.argv[1:])
     return(parsed)
 
