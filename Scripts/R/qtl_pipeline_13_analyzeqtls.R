@@ -40,8 +40,8 @@ circostraits.models.df <- circostraits.cfg.df %>% group_by(model) %>% summarize(
 
 #filter out models of all-years
 qtl.collated.df   <-  read.csv(file=paste0(workflow,"/traits/qtl_collated.consensus.csv"),header=T) %>%
-						left_join(circostraits.labels.df, by="trait") %>%
-						left_join(circostraits.models.df, by="model")
+                        left_join(circostraits.labels.df, by="trait") %>%
+                        left_join(circostraits.models.df, by="model")
 
 #qtl.ay.df         <- qtl.collated.df %>%
 #                        filter((model=="all-years") & (method=="stepwiseqtl")) %>%
@@ -110,7 +110,7 @@ grid_data=grid_data[-1,]
 
 # Make the plot
 p = ggplot(data, aes(x=as.factor(id), y=value, fill=group)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
-			geom_bar(stat="identity", alpha=0.5) +
+            geom_bar(stat="identity", alpha=0.5) +
             # Add a val=100/75/50/25 lines. I do it at the beginning to make sur barplots are OVER it.
             geom_segment(data=grid_data, aes(x = end, y = 40, xend = start, yend = 40), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
             geom_segment(data=grid_data, aes(x = end, y = 30, xend = start, yend = 30), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
@@ -140,40 +140,40 @@ ggsave(filename=paste0(workflow,"/traits/plots/all-years_trait_marker_variance_b
 
 #Now try to summarize and display variance of stepwise-qtl on each year separately, and put in a bar plot.
 generateTotalLGVariancePlots <- function(qtl.df, qtl.method, traits) {
-	qtl.ey.sw.summary.df <-    qtl.df %>%
-									filter(method==qtl.method) %>%
-									filter(trait %in% traits) %>%
-									group_by(label_short, model_label, chr) %>%
-									summarize(chr_qtl_var=sum(marker.variance))
-	qtl.ey.sw.summary.df$chr <-    as.factor(qtl.ey.sw.summary.df$chr)
+    qtl.ey.sw.summary.df <-    qtl.df %>%
+                                    filter(method==qtl.method) %>%
+                                    filter(trait %in% traits) %>%
+                                    group_by(label_short, model_label, chr) %>%
+                                    summarize(chr_qtl_var=sum(marker.variance))
+    qtl.ey.sw.summary.df$chr <-    as.factor(qtl.ey.sw.summary.df$chr)
 
-	o = ggplot(qtl.ey.sw.summary.df) +
-			geom_bar(aes(x=as.factor(chr),y=chr_qtl_var,fill=chr), stat="identity", color='black', alpha=1.0, show.legend=FALSE) +
-			scale_fill_manual(values=brewer.pal(12,"Paired")) +
-			ylab("Total QTL Variance") +
-			xlab("Chromosome") +
-			theme_minimal() +
-			theme(axis.title = element_text(face="bold",size=16),
-				axis.text.x  = element_text(size=14,angle=60),
-				axis.text.y  = element_text(size=14),
-				strip.text = element_text(face="bold",size=18)) +
-			facet_grid(model_label ~ label_short)
+    o = ggplot(qtl.ey.sw.summary.df) +
+            geom_bar(aes(x=as.factor(chr),y=chr_qtl_var,fill=chr), stat="identity", color='black', alpha=1.0, show.legend=FALSE) +
+            scale_fill_manual(values=brewer.pal(12,"Paired")) +
+            ylab("Total QTL Variance") +
+            xlab("Chromosome") +
+            theme_minimal() +
+            theme(axis.title = element_text(face="bold",size=16),
+                axis.text.x  = element_text(size=14,angle=60),
+                axis.text.y  = element_text(size=14),
+                strip.text = element_text(face="bold",size=18)) +
+            facet_grid(model_label ~ label_short)
 
-	ggsave(filename=paste0(workflow,"/traits/plots/each-year_trait_marker_variance_barplot.",qtl.method,".png"), plot=o, device="png", bg="white", width=33, height=25, units="cm", dpi=300)
+    ggsave(filename=paste0(workflow,"/traits/plots/each-year_trait_marker_variance_barplot.",qtl.method,".png"), plot=o, device="png", bg="white", width=33, height=25, units="cm", dpi=300)
 
-	nchr = nlevels(qtl.ey.sw.summary.df$chr)
-	p = ggplot(qtl.ey.sw.summary.df) +
-			geom_bar(aes(x=as.factor(chr),y=chr_qtl_var,fill=chr), stat="identity", color='black', alpha=1.0, show.legend=FALSE) +
-			scale_fill_manual(values=brewer.pal(12,"Paired")) +
-			coord_polar(start=(pi/nchr),direction=1) +
-			theme_minimal() +
-			theme(axis.title = element_blank(),
-				axis.text.x  = element_text(size=14,angle=60),
-				axis.text.y  = element_text(size=14),
-				strip.text = element_text(face="bold",size=18)) +
-			facet_grid(model_label ~ label_short)
+    nchr = nlevels(qtl.ey.sw.summary.df$chr)
+    p = ggplot(qtl.ey.sw.summary.df) +
+            geom_bar(aes(x=as.factor(chr),y=chr_qtl_var,fill=chr), stat="identity", color='black', alpha=1.0, show.legend=FALSE) +
+            scale_fill_manual(values=brewer.pal(12,"Paired")) +
+            coord_polar(start=(pi/nchr),direction=1) +
+            theme_minimal() +
+            theme(axis.title = element_blank(),
+                axis.text.x  = element_text(size=14,angle=60),
+                axis.text.y  = element_text(size=14),
+                strip.text = element_text(face="bold",size=18)) +
+            facet_grid(model_label ~ label_short)
 
-	ggsave(filename=paste0(workflow,"/traits/plots/each-year_trait_marker_variance_barplot_polar.",qtl.method,".png"), plot=p, device="png", bg="white", width=33, height=25, units="cm", dpi=300)
+    ggsave(filename=paste0(workflow,"/traits/plots/each-year_trait_marker_variance_barplot_polar.",qtl.method,".png"), plot=p, device="png", bg="white", width=33, height=25, units="cm", dpi=300)
 }
 
 yield.traits <- c("berry_length","berry_width","berry_weight","total_berry_weight")
