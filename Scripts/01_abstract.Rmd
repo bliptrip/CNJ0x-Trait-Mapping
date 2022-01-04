@@ -1,13 +1,12 @@
 # Abstract {-}
 
 The American cranberry (_Vaccinium macrocarpon Ait._) was domesticated around 200 years ago and since 
-the beginning of domestication, breeders have used a number of traditional traits based on “upright” 
+the beginning of domestication, breeders have collected traits classically based on “upright” 
 (reproductive branch) data to evaluate genotype performance and make selections. Currently, due to their 
 increased efficiency, cranberry breeding programs are rapidly moving towards high-throughput phenotyping techniques, 
 and there is a need to evaluate the usefulness of traditional phenotyping techniques to determine which traits are 
-still useful and relevant to modern cranberry breeding programs. From 2011 to 2014, 14 fruiting upright-based traits, 
+relevant to modern cranberry breeding programs. From 2011 to 2014, 20 fruiting upright-based traits, 
 10 uprights per genotype, were collected from two half-sib breeding populations planted at the 
 Rutgers University P.E. Marucci Center in Chatsworth, NJ, USA.  Significant marker-BLUP associations were found using 
-a high-density composite linkage map ($n=6073$ markers) using interval mapping and multi-model QTL selection.  Comparative 
-analysis was performed using previously reported QTL for analogous traits in order to corroborate newer, more efficient 
-phenotyping methodologies against the more traditional trait-assessments used in this paper.
+using interval mapping and multi-model QTL selection against previously generated high-density consensus linkage maps.  Comparative 
+analysis was performed using QTL derived from traits collected using newer methods on the same population.
