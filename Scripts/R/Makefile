@@ -154,8 +154,15 @@ GenReactSandboxConfigs:
 		cp -r $(WORKFLOW)/traits/effects_collated.json $(SANDBOX)/public/configs/
 		cp -r $(WORKFLOW)/traits/lod_profiles.json $(SANDBOX)/public/configs/
 		cd $(SANDBOX) && npm install
+
 LaunchReactSandbox:
 		cd $(SANDBOX) && npm start
+
+BuildReactSandbox:
+		cd $(SANDBOX) && npm run build
+
+CopyReactSandbox:
+	scp -r -P 7262 $(SANDBOX)/build maule@vaccinium.vcru.wisc.edu:~/
 
 clean:
 		rm *.Rout
