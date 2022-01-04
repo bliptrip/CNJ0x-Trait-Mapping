@@ -1,6 +1,6 @@
 # Methods {#methods}
 
-## Plant Material and Traits Collected {-}
+## Plant Material and Traits Collected
 
 From 2011 to 2014, cranberry uprights bearing fruit were delivered from samples taken at the New Jersey Agricultural
 Experiment Station (NJAES).  These samples were derived from two full-sib interrelated breeding populations, CNJ02
@@ -15,12 +15,17 @@ number of pedicels (NP), number of berries (NB), number of aborted flowers (NFA)
 length (UL), and evidence of rebud (RB).  Moreover, the following traits were collected on the largest fruit per
 upright: length (BL), width (BW), weight (BM), calyx diameter (CD), calyx lobe characteristics (CLC), shape
 characteristics (S), amount of fruit bloom or bloom rating (BR), and number of developed seeds (NS).  A summary of
-traits collected is displayed in Table \@ref(tab:trait-tab).
+traits collected is displayed in Table \@ref(tab:trait-tab-kable).
 
-```{r trait-tab, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="Traits collected from populations CNJ02 and CNJ04 in years 2011-2014."}
-library(tidyverse)
-library(kableExtra)
-trait_tab <- readr::read_csv("../Data/publication/tables/trait_description_table.csv", na=c("NA")) 
+```{r trait-tab-setup, echo=FALSE, message=FALSE, include=TRUE, results='asis'}
+trait_tab <- readr::read_delim("../Data/publication/tables/trait_description_table.csv", delim=",", escape_backslash=TRUE, na=c("NA")) 
+trait_tab_cat <- trait_tab %>% 
+    mutate(category_repeat=(Category == c("",Category[-length(Category)]))) %>%
+	mutate(Category = ifelse(category_repeat, "", Category))
+```
+
+```{r trait-tab-flex, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="Traits collected from populations CNJ02 and CNJ04 in years 2011-2014.", eval=params$trait_tab_flex}
+trait_tab <- readr::read_delim("../Data/publication/tables/trait_description_table.csv", delim=",", escape_backslash=TRUE, na=c("NA")) 
 trait_tab_cat <- trait_tab %>% 
     mutate(category_repeat=(Category == c("",Category[-length(Category)]))) %>%
 	mutate(Category = ifelse(category_repeat, "", Category)) %>%
@@ -36,17 +41,22 @@ ftrait_tab_cat <-   flextable(trait_tab_cat) %>%
                     theme_booktabs() %>%
                     hline( i = (which(trait_tab_cat$Category != "")-1)[-1], part="body") %>%
                     set_table_properties(width=table.width)
-#ktrait_tab_cat <- rename(trait_tab_cat,'Category[note]'=Category,'Abbreviation[note]'=Abbreviation) %>%
-#    mutate(Units=ifelse(Units != "",paste0("$",Units,"$"),Units)) %>%
-#    kable(  booktabs=TRUE, 
-#            escape = FALSE,
-#            caption="Traits collected from populations CNJ02 and CNJ04 in years 2011-2014.") %>%
-#    column_spec(1, bold=TRUE) %>%
-#    row_spec(row=(which(trait_tab_cat["Category"] != "")-1), hline_after = TRUE) %>%
-#    kable_paper("striped", "scale_down", font_size=table.font_size, full_width=FALSE) %>%
-#    add_footnote(c("Upright traits were collected on a per fruiting upright basis.  Largest berry traits represent that phenotypic values of the largest berry sampled on a given fruiting upright.  Plot traits were collected by harvesting berries from square foot samples of plots and running appropriate assays.  All plot traits were collected amd assayed onsite at NJAES.  Upright and largest berry traits were collected at NJAES, but assayed at UW-Madison.","Trait abbreviations are used to label subsequent figures."))
-#print(ktrait_tab_cat) #Render
 knitr::knit_print(ftrait_tab_cat)
+```
+
+```{r trait-tab-kable, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="Traits collected from populations CNJ02 and CNJ04 in years 2011-2014.", eval=!params$trait_tab_flex}
+ktrait_tab_cat <- rename(trait_tab_cat,'Category[note]'=Category,'Abbreviation[note]'=Abbreviation) %>%
+    mutate(Units=ifelse(Units != "",paste0("$",Units,"$"),Units)) %>%
+    dplyr::select(!c(category_repeat)) %>%
+    kable(  booktabs=TRUE, 
+            escape = FALSE,
+            caption="Traits collected from populations CNJ02 and CNJ04 in years 2011-2014.") %>%
+    column_spec(1, bold=TRUE) %>%
+    row_spec(row=(which(trait_tab_cat["Category"] != "")-1), hline_after = TRUE) %>%
+    kable_paper("striped", "scale_down", font_size=table.font_size, full_width=FALSE) %>%
+    add_footnote(c("Upright traits were collected on a per fruiting upright basis.  Largest berry traits represent that phenotypic values of the largest berry sampled on a given fruiting upright.  Plot traits were collected by harvesting berries from square foot samples of plots and running appropriate assays.  All plot traits were collected amd assayed onsite at NJAES.  Upright and largest berry traits were collected at NJAES, but assayed at UW-Madison.",
+                   "Trait abbreviations are used to label subsequent figures."))
+print(ktrait_tab_cat) #Render
 ```
 
 ```{r berry-shape-template, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="50%", fig.cap="Examples of categories of berry shape parameters, used to help classify cranberry shape [@Franklin1958]."}
@@ -61,25 +71,100 @@ knitr::knit_print(ftrait_tab_cat)
     knitr::include_graphics(c("../Data/publication/figures/upright_length_bw.png"))
 ```
 
+
 ## Trait Evaluation and Transformation
 
-Categorical traits were transformed to numeric values to enable subsequent application to linear regression models.
-Shape-related traits were first converted to persistent topology values (PTV) in order to facilitate better comparison
-between genotypes [@Li2018;@Diaz-Garcia2018a].  In brief, shape templates presented in Figure \@ref(fig:berry-shape-template) and Figure \@ref(fig:calyx-lobe-shape) were first converted to PTVs and
-then recorded shape traits were mapped to these template PTVs.  For all other categorical traits, numeric values were
-chosen such that larger values represented more desirable breeding attributes, as shown in Table \@ref(tab:cat-trait-tab).
+Except for largest berry shape, categorical traits were transformed to numeric, discrete values.  Higher values
+represented more favorable characteristics.    The largest berry categorical to digital map is shown in
+\@ref(tab:cat-trait-tab).
+
+To quantify largest berry shape, scored categorical shapes were first mapped to digital image shapes by starting with the template images provided
+in Figure \@ref(fig:berry-shape-template).  These images were first converted to binary images, and then normalized by
+centering all binarized representations and scaling so that all shape templates have the same area.  Thereafter, a
+chimeric berry representation was derived for each genotype-year by combining and thresholding the differential distance transformed
+representations of each corresponding upright's normalized berry shape.  A distance transform representation of a binary
+image is the euclidean distance of any foreground pixel to its nearest background pixel.  The differential distance
+transformiation is the difference between the distance transformation of the normalized binary berry template image and
+the same image inverted.  Positive values indicate foreground pixels, with higher values indicating the centroid of
+binary images.  By combining the differential distance transforms and thresholding on positive values, a chimeric binary berry
+image representation per genotype-year can be generated.  Shape descriptors can be subsequently calculated on this
+representative berry, allowing for quantitative analysis of these traits for mapping.  This process is demonstrated in
+Figure \@ref(fig:berry-chimera-table).
+
+Digital image shape descriptors derived from the representative berry chimera are listed in Table \@ref(tab:trait-tab-kable).
+Traits *UKUX* and *UKUY* are $log_{10}$
+derivations of unsigned manhattan chain codes [@zalik2016].  In brief, a chain
+code is a numerical representation describing the contour path of an object.  Unsigned manhattan chain codes are one of
+many chain codes used to desribe contour shapes, and were chosen here for their highly compressible representation.
+Other chimera shape descriptors outlined in Table \@ref(tab:trait-tab-kable) include *UKEC*, or chimera shape eccentricity,
+*UKLvW*, or chimera length versus width, *UKTO*, chimera tortuosity, and *UKSO*, chimera solidity.  Eccentricity is a
+mathematical descriptor for the curvature of an ellipse, with zero indicating a perfect circle and anything less than
+one, but higher, indicating a higher length versus width.  Tortuosity describes the *'waviness'* of an object's contour,
+and in this case, a slope chain code (SCC) method was applied to generate this tortuosity value [@Bribiesca2013].  Solidity
+describes the hape density relative to it’s convex hull.  Lower solidity values indicate more *'waviness'* in the berry
+contour, while higher values have smoother contour curvature.
+
+
+```{r berry-chimera-table-gen, echo=FALSE, message=FALSE, include=TRUE, eval=params$table_gen_berry_chimera}
+    shapes <- c("round","oblong","oval","pyriform","spindle","oblong","oblong","round","oval","round")
+    system2("misc/berry_diffdistance.sh", args=shapes)
+
+    tbl <- tibble(upright_no=c(1:length(shapes)), shape=shapes) %>%
+            mutate("Template"="",
+                   "Distance Transform"="",
+                   "Composite Distance Transform"="",
+                   "Composite Chimera"="",
+                   normalized=cell_spec(spec_image(paste0(normalizePath(paste0("../Data/phenotypic\ data/DerivedData/berry_templates/fruit_template_",shape,"_binary.png"))),
+                   diffDistance=paste0(normalizePath(paste0("../Data/publication/figures/fruit_template_",shape,"_diffdistance.png"))),
+                   compositeDiffDistance=paste0(normalizePath("../Data/publication/figures/fruit_chimera_diffdistance.png")),
+                   compositeBinary=paste0(normalizePath("../Data/publication/figures/fruit_chimera_binary.png"))) %>%
+            rename(`Upright Number`=upright_no, `Berry Shape`=shape)
+
+    tbl <- tibble(upright_no=c(1:length(shapes)), shape=shapes) %>%
+            mutate("Template"="",
+                   "Distance Transform"="",
+                   "Composite Distance Transform"="",
+                   "Composite Chimera"="",
+                   normalized=paste0(normalizePath(paste0("../Data/phenotypic\ data/DerivedData/berry_templates/fruit_template_",shape,"_binary.png"))),
+                   diffDistance=paste0(normalizePath(paste0("../Data/publication/figures/fruit_template_",shape,"_diffdistance.png"))),
+                   compositeDiffDistance=c(rep(paste0(normalizePath("../Data/publication/figures/blank_berry.png")),4),paste0(normalizePath("../Data/publication/figures/fruit_chimera_diffdistance.png")),rep(paste0(normalizePath("../Data/publication/figures/blank_berry.png")),5)),
+                   compositeBinary=c(rep(paste0(normalizePath("../Data/publication/figures/blank_berry.png")),4),paste0(normalizePath("../Data/publication/figures/fruit_chimera_binary.png")),rep(paste0(normalizePath("../Data/publication/figures/blank_berry.png")),5))) %>%
+            rename(`Upright Number`=upright_no, `Berry Shape`=shape)
+    ktbl <- tbl %>%
+                select(!c(normalized,diffDistance,compositeDiffDistance,compositeBinary)) %>%
+                kable(align='cccccc', escape = FALSE) %>%
+                kable_minimal("basic", full_width=FALSE) %>%
+                column_spec(1, bold=TRUE) %>%
+                column_spec(2, bold=TRUE) %>%
+                column_spec(3, width="1cm", image=spec_image(paste0('file://',tbl$normalized),131,202)) %>%
+                column_spec(4, width="1cm", image=spec_image(paste0('file://',tbl$diffDistance),131,202)) %>%
+                column_spec(5, width="1cm", image=spec_image(paste0('file://',tbl$compositeDiffDistance),131,202)) %>%
+                column_spec(6, width="1cm", image=spec_image(paste0('file://',tbl$compositeBinary),131,202))
+
+    ktbl %>% save_kable("../Data/publication/figures/berry_chimera_table.png")
+
+    #Flextable's as_image() wasn't working for me, and I grew increasingly frustrated with it.
+    #flxtbl <- flextable(tbl, col_keys=c("upright_no", "shape", "normalized_img", "diffDistance_img")) %>%
+    #            flextable::compose(j = "diffDistance_img", value = as_paragraph(as_image(src="diffDistance",width=0.826,height=1.27,unit="cm")), use_dot=TRUE, part="body") %>%
+    #            set_header_labels(upright_no="Upright Number", shape="Shape", normalized_img="Normalized Template Image", diffDistance_img="Differential Distance Transform Image")
+```
+
+```{r berry-chimera-table, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%", fig.cap="Example showing the methodology for generating representative genotype shape, or berry chimera.  This berry chimera is subsequently used as an image to generate digital image processing shape descriptors used in creating quantifying features for QTL mapping."}
+    knitr::include_graphics(c("../Data/publication/figures/berry_chimera_table.png"))
+```
+
 
 ```{r cat-trait-tab, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="List of categorical traits and their mapped numeric values.  Generally, numeric values were chosen such that larger values represented more desirable breeding attributes."}
 cat_trait_tab <- readr::read_csv("../Data/publication/tables/categorical_traits.csv", na=c("NA")) %>%
                     mutate(trait_repeat=(Trait== c("",Trait[-length(Trait)]))) %>%
-                	mutate(Trait = ifelse(trait_repeat, "", Trait))
+                	mutate(Trait = ifelse(trait_repeat, "", Trait))  
 
 ftrait_tab_cat <-   flextable(cat_trait_tab %>% dplyr::select(Trait,'Categorical Value','Numeric Value')) %>%
 				    align(j=c(1,2), align="left", part="body") %>%
 				    align(j=c(3), align="center", part="body") %>%
 				    bold(j=1, bold=TRUE) %>%
                     theme_booktabs() %>%
-                    hline( i = (which(cat_trait_tab$trait != "")-1)[-1], part="body") %>%
+                    hline( i = (which(cat_trait_tab$Trait != "")-1)[-1], part="body") %>%
                     set_table_properties(width=table.width)
 
 #ktrait_tab_cat <- kable(cat_trait_tab %>% dplyr::select(Trait,'Categorical Value','Numeric Value'), 
@@ -92,41 +177,69 @@ ftrait_tab_cat <-   flextable(cat_trait_tab %>% dplyr::select(Trait,'Categorical
 knitr::knit_print(ftrait_tab_cat)
 ```
 
-All traits were curated by removing entries marked as rotten, and outliers were detected and trimmed by assessing residuals of each trait regressed by population, genotype, and year.
-Genotypes with traits not represented in all three years were eliminated from subsequent analysis in order to maintain balanced datasets for testing effect significance using analysis of
-variance (ANOVA) and to facilitate comprehensive comparisons in combined analyses (across years).   ANOVA was performed on linear models to assess the significance of year, genotype, and
-population effects (CNJ02 vs. CNJ04).  Genotype by year ($G \times E$) effects were also modeled and assessed for significance, and Spearman rank correlations were calculated to bolster
-substantial $G \times E$ effects.  Trait distributions, scatterplots, and Pearson correlation coefficients were evaluated to better understand inter-trait relationships (Figure 4).  To avoid
-issues with non-normality, traits were averaged across all uprights before computing best linear unbiased predictors (BLUPs) per genotype for each trait.
+All traits were curated by removing entries marked as rotten, and outliers were detected and trimmed by assessing residuals of each trait regressed by population, genotype, and year.  Additional observations were culled if 
+they exceeded three standard deviation units from the mean under a Gaussian standard distribution.   Subsequent analysis and trait mapping was applied to all traits based the mean trait values across the ten sampled uprights, for each genotype-year.
+From these upright means, Pearson correlation coefficients were calculated for all traits, averaged across months and all sampled years.  Correlation heatmap plots were generated using the 'corrplot' package, with statistical *p-values* calculated using the 
+*cor_pmat()* function in the 'ggcorrplot' package [@corrplot2021;@ggcorrplot2019].  Additionally, correlation plots
+sorted using the 'TSP' algorithm with the 'seriation' software package to highlight highly correlated (positive and negative) blocks of traits [@Hahsler2008; @Hahsler2021].
+
 
 ## Estimating Breeding Values and Heritability
 
-Equation \@ref(eq:mm-year) shows the mixed model used in estimating BLUPs within years. The equation variables are defined as follows: $y$ = phenotype value, $μ$ = intercept (global mean of trait), $Z_g$ = genotype random-effect incidence matrix, $g$ = genotypic effects (BLUPs), $Z_r$ = row random effect incidence matrix, $r$ = row effect, $Z_c$ = row random effect incidence matrix, $c$ = row effect, $Z_s$ = 2D-spline random effect incidence matrix, $s$ = spline effect, $ε$ = residuals, $G$ = genotype variance-covariance matrix [@DelosCampos2015], $A$ = additive genomic relationship matrix [@Endelman2011], $\sigma_a^2 = additive genomic variance, $I$ = identity matrix, $\sigma_r^2$ = row variance, $\sigma_c^2$ = column variance, $\sigma_s^2$ = 2D-spline variance, $\sigma_{\varepsilon}^2$ = residual error variance.
+Equation \@ref(eq:mm-year) shows the mixed model used in estimating BLUPs within years. The equation variables are defined as follows: $y$ = phenotype value, $μ$ = intercept (global mean of trait), 
+$Z_g$ = genotype random-effect incidence matrix, $g$ = genotypic effects (BLUPs), $Z_r$ = row random effect incidence matrix, $r$ = row effect, $Z_c$ = column random effect incidence matrix, $c$ = column effect, 
+$Z_s$ = 2D-spline random effect incidence matrix, $s$ = spline effect, $ε$ = residuals, $G$ = genotype variance-covariance matrix [@DelosCampos2015], $A$ = additive genomic relationship matrix [@Endelman2011], 
+$σ_a^2$ = additive genomic variance, $I$ = identity matrix, $σ_r^2$ = row variance, $σ_c^2$ = column variance, $σ_s^2$ = 2D-spline variance, $σ_{ε}^2$ = residual error variance.
 
 \begin{equation} 
-    y = \mu + Z_{g}g + Z_{r}r + Z_{c}c + Z_{s}s + \varepsilon
+    y = \mu + Z_{g}g + Z_{r}r + Z_{c}c + Z_{s}s + ε
     (\#eq:mm-year)
 \end{equation} 
 
-where $g \sim \mathcal{N}(0,G)$, $G = A\sigma_a^2$, $r \sim \mathcal(0, I\sigma_r^2)$, $c \sim \mathcal{N}(0,I\sigma_c^2)$, $s \sim \mathcal{N}(0,I\sigma_s^2)$, and $\varepsilon \sim \mathcal{N}(0,I\sigma_{\varepsilon}^2)$.
+where $g \sim \mathcal{N}(0,G)$, $G = Aσ_a^2$, $r \sim \mathcal(0, Iσ_r^2)$, $c \sim \mathcal{N}(0,Iσ_c^2)$, $s \sim \mathcal{N}(0,Iσ_s^2)$, and $ε \sim \mathcal{N}(0,Iσ_{ε}^2)$.
 
-Equation \@ref(eq:mm-year-ge) displays the across year mixed model used in estimating BLUPs.  Year is modeled a fixed effect.   All symbols are the same as in Equation \@ref(eq:mm-year), but with the additional term $X_e$ = fixed-effect year incidence matrix, $e$ = year effect, $Z_{ge} = genotype-by-year random-effect incidence matrix, $ge$ = genotype-by-year effect, and $\sigma_{ge}^2$ = genotype-by-year variance.
+Equation \@ref(eq:mm-year-ge) displays the across year mixed model used in estimating BLUPs.  Year is modeled as a fixed effect.   All symbols are the same as in Equation \@ref(eq:mm-year), 
+but with the additional term $X_e$ = fixed-effect year incidence matrix, $e$ = year effect, $Z_{ge}$ = genotype-by-year random-effect incidence matrix, $ge$ = genotype-by-year effect, and $σ_{ge}^2$ = genotype-by-year variance.
 
 \begin{equation} 
-    y = \mu + X_{e}e + Z_{g}g + Z_{r}r + Z_{c}c + Z_{s}s + \varepsilon
+    y = \mu + X_{e}e + Z_{g}g + Z_{ge}ge + Z_{r}r + Z_{c}c + Z_{s}s + ε
     (\#eq:mm-year-ge)
 \end{equation} 
 
-where $e \in \{2011,2012,2013\}$, and $g_e \sim \mathcal{N}(0,\sigma_{ge}^2)$.
+where $y \in \{2011,2012,2013\}$, and $g_e \sim \mathcal{N}(0,σ_{ge}^2)$._
 
-The `sommer` R package provides a flexible software tool for specifying multiple variance-covariance structures of random-effects when using likelihood-based methods to fit mixed-models [@Covarrubias-Pazaran2016a].  These mixed-models were originally proposed by Henderson, allowing the development of a statistical methodology that leverages animal-kinship relationships to better predict breeding values [@Henderson1975].  These methods have subsequently been adopted by plant breeders, having shown success in increasing the effectiveness of plant breeding.  With the expansion of genomic data acquisition and the development of dense marker maps, the use of these genetic maps can be used to model additive, dominance, and epistatic variance-covariance matrices, substituting for the traditional pedigree relationships described by Henderson to decrease prediction error of fitted mixed-models [@Henderson1975].
 
-Consequently, the `sommer` package was used to calculate the additive genomic variance-covariance matrices and find the GEBV for each phenotype being mapped.  By converting the phenotypes to GEBV using the BLUP methodology, environmental effects are disentangled from the genotypic effects, increasing the power to detect QTLs in each of these traits.  Two different models were used to estimate the breeding values of the CNJ02 population genotypes on each trait to be mapped: a model calculating the breeding value for each year of sampling (Equation \@ref(mm-year)), and a model that incorporates all sampling years, modeling the year effect as a random effect (Equation \@ref(mm-year-ge)).
+The `sommer` R package provides a powerful and flexible software library for specifying multiple variance-covariance structures of random-effects when using likelihood-based methods to fit mixed-models [@Covarrubias-Pazaran2016a].  These mixed-models
+were originally proposed by Henderson, allowing the development of a statistical methodology that leverages animal-kinship relationships to better predict breeding values [@Henderson1975].  These methods have subsequently been adopted 
+by plant breeders, having shown success in increasing the effectiveness of plant breeding.  With the expansion of genomic data acquisition and the development of dense marker maps, the use of these genetic maps can be used to model additive, 
+dominance, and epistatic variance-covariance matrices, substituting for the traditional pedigree relationships described by Henderson to decrease prediction error of fitted mixed-models [@Henderson1975].
 
-In addition to calculating the GEBV for each individual of the populations, the additive genomic heritability ($h^2$) of each trait was calculated using the estimated BLUP and error variances [@DelosCampos2015].  These heritability values are used to assess the effectiveness of locating QTLs and calculating QTL effect sizes.
+Consequently, the `sommer` package was used to calculate the additive genomic variance-covariance matrices and find the genomic estimated breeding value (GEBV) for each phenotype being mapped.  By converting the phenotypes to GEBV using the BLUP methodology, 
+environmental effects are disentangled from the genotypic effects, increasing the power to detect QTLs in each of these traits.  To calculate BLUPs, a full model search was performed on the random terms of the relevant models defined in equation \@ref(eq:mm-year) or 
+\@ref(eq:mm-year-ge) using the *Aikaike Information Criteria* (AIC) [@AIC1974].  The model with the highest AIC was subsequently used to estimate GEBV BLUPs.  In addition to deriving GEBV BLUPs from each selected mnd fitted model, random term variance estimates were 
+used to calculate additive genomic heritability ($h^2$) of each trait [@DelosCampos2015].
 
-## QTL Analysis
 
-QTL mapping was performed by using the `R/qtl` [CRAN](https://cran.r-project.org/) package, a software toolkit for mapping experimental crosses [@Broman2003].  This software tool was chosen due to its continued development and its support of mapping populations with outcrossing parents (four-way crosses).  
+Equation \@ref(eq:h2) displays the formula for calculating within-year narrow-sense genomic heritability, using variances estimated from fitting the mixed model \@ref(eq:mm-year).  Across year genomic heritability is calculated as shown in equation \@ref(eq:h2-ge), using 
+variances estimated from the mixed model\@ref(eq:mm-year-ge).  
 
-To infer QTLs, previously modeled genotype BLUPs were substituted in lieu of raw phenotypes in the `R/qtl` cross table.  QTL were detected using both a single-QTL, Haley-Knott interval mapping approach, and a model selection approach for simultaneously modeling multiple QTLs.  The former approach uses the `scanone()` function of `R/qtl`, the latter approach uses stepwiseqtl() to calculate LOD scores on potential QTLs.  Statistical p-values for each QTL LOD score were using 1,000 permutations of the BLUP values on the genotype marker data, generating a genome-wide maximum LOD score distribution under the NULL hypothesis.  A p-value threshold of 0.05 was used to determine QTL significance. 
+\begin{equation} 
+    h2 = \frac{σ_g^2}{σ_g^2 + σ_ε^2}
+    (\#eq:h2)
+\end{equation} 
+
+\begin{equation} 
+    h2 = \frac{σ_g^2}{σ_g^2 + \frac{σ_{ge}^2}{n} + \frac{σ_ε^2}{n}}
+    (\#eq:h2-ge)
+\end{equation} 
+
+## QTL mapping
+
+QTL mapping was performed by using the `R/qtl` [CRAN](https://cran.r-project.org/) package, a software toolkit for mapping experimental crosses [@Broman2003].  Genetic linkage maps consisting of SSR and microsatellite markers were used for QTL mapping
+each respective population, CNJ02 ($n=3925$) and CNJ04 ($n=3081$) [@Schlautman2017].  To infer QTLs, previously modeled genotype BLUPs were substituted in lieu of 
+raw phenotypes in the `R/qtl` cross table.  QTL were detected using two methods: a single-QTL interval mapping method and a model selection approach.   Both methods used Haley-Knott regression to model QTL between genetic map markers.  The single-QTL method uses
+the `scanone()` function, with significant QTL determined using scanone() run against 1,000 permutations of the phenotypes in order to simulate the LOD distribution of the NULL model.
+The model selection approach uses the `stepwiseqtl()` function.  This function runs a forward/backward model search algorithm by which additive and interacting terms are successively added to the model, followed by 'backward' pruning of other model terms that 
+optimizes a penalized LOD score.  The penalized LOD score uses $n^{th}$ percentile thresholds derived from running scantwo() against 1,000 permutations of the phenotypes in order to control the false positive rate at $n$ percent [@Broman2009].  More complex models are penalized 
+higher in order to reduce model overfitting.  For single-QTL interval mapping, the significance threshold was set for QTL with LDO scores above the $80^{th}$ permutation percentile ($p < 0.2$), while for model selection, penalized LOD scores were derived from thesholds
+determined from the $95^{th}$ permutation percentile ($p < 0.05$).
