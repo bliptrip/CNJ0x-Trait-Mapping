@@ -447,7 +447,7 @@ cnj04.alltraits.pw.tb <- cnj04.merged.mmeans.tb %>%
                                   pivot_wider(names_from=year, values_from=value)
 gencorrplot(cnj04.alltraits.pw.tb %>% select(!c(accession_name, accession, row, column, trait)), filename=paste0(workflow,"/traits/plots/corrplot.cnj04.alltraits.png"), method="number", cl.pos='n')
 ```
-    ### Generate Correlation Matrices Across Months and Years
+### Generate Correlation Matrices Across Months and Years
 
 ```{r include=TRUE, warning=FALSE, echo=FALSE}
 setwd(rRoot)
@@ -505,6 +505,39 @@ p.cnj02 = gencorrplot.mixed(cnj02.merged.means.tb %>% select(!c(accession_name, 
 saveRDS(p.cnj02, file=paste0(workflow,"/traits/plots/corrplot.cnj02.rds"))
 ```
 
+```{r seriation-cnj02-flat, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+top_rank = 15 #Number of top and bottom correlations to show
+p.cnj02 = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj02.rds"))
+pf.cnj02 = flattenCorrMatrix(p.cnj02$corr, p.cnj02$p.mat) %>%
+                filter(p < 0.05) %>%
+                arrange(desc(cor))
+pf.cnj02.inv <-  pf.cnj02  %>% 
+                     arrange(cor)
+write_csv(pf.cnj02, file=paste0(workflow,"/traits/plots/corrplot.cnj02.flattened.csv"))
+write_csv(pf.cnj02.inv, file=paste0(workflow,"/traits/plots/corrplot.cnj02.flattened.inv.csv"))
+pf.cnj02.extremes <- rbind(pf.cnj02 %>% head(top_rank), pf.cnj02 %>% tail(top_rank)) %>%
+                        mutate(row_column=paste0(row," × ",column)) %>%
+                        mutate(row_column=factor(row_column, levels=row_column, ordered=TRUE))
+png(filename=paste0(workflow,"/traits/plots/corrplot.cnj02.flat.png"), bg="white", width=2048, height=1024, units='px')
+p <- ggplot(pf.cnj02.extremes, aes(x=row_column,y=cor)) + 
+        geom_bar(aes(fill=cor), stat="identity", alpha=0.75, show.legend=FALSE) + 
+		scale_fill_distiller(
+				type="div",
+				palette="RdBu",
+				direction=-1) +
+        geom_text(aes(label=sprintf("%0.2f", round(cor, digits = 2)),fontface="bold"),size=7,nudge_y=ifelse(pf.cnj02.extremes$cor < 0, -0.05, 0.05)) +
+        ylim(-1.2,1.2) +
+        theme_minimal() +
+        theme(axis.title = element_text(face="bold",size=14),
+              axis.text.x  = element_text(face="bold",size=16,angle=75),
+              axis.text.y  = element_text(size=16)) +
+        ylab("") + 
+        xlab("")
+p
+dev.off()
+```
+
 ```{r seriation-cnj02-inv-pre, include=TRUE, warning=FALSE, echo=FALSE}
 setwd(rRoot)
 p.cnj02.inv = gencorrplot.mixed(cnj02.merged.means.tb %>% select(!c(accession_name, row, column)), width=2048, height=2048, tl.cex=1.0, cl.cex=1.0, number.cex=1.5,seriate_method="TSP", invert=TRUE)
@@ -515,6 +548,40 @@ saveRDS(p.cnj02.inv, file=paste0(workflow,"/traits/plots/corrplot.cnj02.inv.rds"
 setwd(rRoot)
 p.cnj04 = gencorrplot.mixed(cnj04.merged.means.tb %>% select(!c(accession_name, row, column)), width=2048, height=2048, tl.cex=1.0, cl.cex=1.0, number.cex=1.5, seriate_method="TSP")
 saveRDS(p.cnj04, file=paste0(workflow,"/traits/plots/corrplot.cnj04.rds"))
+```
+
+```{r seriation-cnj04-flat, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+top_rank=15
+p.cnj04 = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj04.rds"))
+pf.cnj04 = flattenCorrMatrix(p.cnj04$corr, p.cnj04$p.mat) %>%
+                filter(p < 0.05) %>%
+                arrange(desc(cor))
+pf.cnj04.inv <-  pf.cnj04  %>% 
+                     arrange(cor)
+write_csv(pf.cnj04, file=paste0(workflow,"/traits/plots/corrplot.cnj04.flattened.csv"))
+write_csv(pf.cnj04.inv, file=paste0(workflow,"/traits/plots/corrplot.cnj04.flattened.inv.csv"))
+pf.cnj04.extremes <- rbind(pf.cnj04 %>% head(top_rank), pf.cnj04 %>% tail(top_rank)) %>%
+                        mutate(row_column=paste0(row," × ",column)) %>%
+                        mutate(row_column=factor(row_column, levels=row_column, ordered=TRUE))
+png(filename=paste0(workflow,"/traits/plots/corrplot.cnj04.flat.png"), bg="white", width=2048, height=1024, units='px')
+p <- ggplot(pf.cnj04.extremes, aes(x=row_column,y=cor)) + 
+        geom_bar(aes(fill=cor), stat="identity", alpha=0.75, show.legend=FALSE) + 
+		scale_fill_distiller(
+				type="div",
+				palette="RdBu",
+				direction=-1) +
+        geom_text(aes(label=sprintf("%0.2f", round(cor, digits = 2)),fontface="bold"),size=7,nudge_y=ifelse(pf.cnj04.extremes$cor < 0, -0.05, 0.05)) +
+        ylim(-1.2,1.2) +
+        theme_minimal() +
+        theme(axis.title = element_text(face="bold",size=14),
+              axis.text.x  = element_text(face="bold",size=16,angle=75),
+              axis.text.y  = element_text(size=16)) +
+        ylab("") + 
+        xlab("")
+p
+dev.off()
+
 ```
 
 ```{r seriation-cnj04-inv-pre, include=TRUE, warning=FALSE, echo=FALSE}
