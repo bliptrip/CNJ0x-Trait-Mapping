@@ -20,5 +20,5 @@ if(length(args)!=0) {
 }
 
 blups.collated.wide.tb <- readRDS(paste0(workflow,"/traits/blups_collated.wide.rds"))
-blup_raw_cors <- blups.collated.wide.tb %>% group_by(model,trait) %>% select(blup,raw) %>% summarize(brcorr=cor(blup,raw,use="pairwise.complete.obs",method="pearson"))
+blup_raw_cors <- blups.collated.wide.tb %>% group_by(model,trait) %>% select(blup,raw) %>% summarize(brcorr=cor(blup,raw,use="pairwise.complete.obs",method="spearman"))
 write_csv(blup_raw_cors, file=paste0(workflow,"/traits/blups_raw_corrs.csv"))
