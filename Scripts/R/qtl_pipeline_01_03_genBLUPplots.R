@@ -23,7 +23,7 @@ options(knitr.kable.NA='') #So we don't display NA's in table renderings.
 
 source('./usefulFunctions.R')
 
-workflow <- get0("workflow", ifnotfound="../../Workflows/1")
+workflow <- get0("workflow", ifnotfound="../../Workflows/9")
 P1_Name <- get0("P1_Name", ifnotfound="Mullica_Queen")
 P2_Name <- get0("P2_Name", ifnotfound="Crimson_Queen")
 POP_Name <- get0("POP_Name", ifnotfound="CNJ02")
@@ -40,8 +40,16 @@ if(length(args)!=0) {
 
 source(paste0(workflow,"/configs/model.cfg"))
 
-
 cat(paste0("Population name: ",POP_Name))
+
+randomEffects2String <- function(randoms) {
+    randoms <- gsub("vs(id, Gu = A)", "Z_{g}g", randoms, fixed=TRUE)
+    randoms <- gsub("id:year", "Z_{ge}ge", randoms, fixed=TRUE)
+    randoms <- gsub("vs(spl2D(row, column))", "Z_{s}s", randoms, fixed=TRUE)
+    randoms <- gsub("vs(columnf)", "Z_{c}c", randoms, fixed=TRUE)
+    randoms <- gsub("vs(rowf)", "Z_{r}r", randoms, fixed=TRUE)
+    return(randoms)
+}
 
 collateBLUPs <- function(trait.cfg, trait.path, args.l) {
     models.tb.p         <- args.l[[2]]
@@ -67,14 +75,15 @@ collateBLUPs <- function(trait.cfg, trait.path, args.l) {
         h2 <- vg/(vg+ve)
     }
     u                    <- model$U[["u:id"]]
-    intercept            <- (model$Beta %>% filter(Effect == "(Intercept)"))$Estimate
-    blups                <- u[[trait_name]] + intercept
-    blupsZ                <- scale(blups)[,1]
+    blup_adjust  <- sum(model$Beta$Estimate)
+    blups                <- u[[trait_name]] + blup_adjust
+    ids                 <- names(blups)
     anova.file            <- paste0(trait.path,'/anova.csv')
     GLRpvalue            <- NA
     GZRpvalue            <- NA
     GxYLRpvalue            <- NA
     GxYZRpvalue            <- NA
+    model_formula          <- randomEffects2String(as.character(model$call$random)[[2]])
     if( file.exists(anova.file) ) {
         anova.df=read.csv(file=anova.file, header=TRUE, row.names=1)
         GLRpvalue    <- as.numeric(anova.df %>% filter(dropterm == 'vs(id, Gu = A)') %>% dplyr::select(PrChisq))
@@ -85,16 +94,21 @@ collateBLUPs <- function(trait.cfg, trait.path, args.l) {
         }
     }
     if( model_id == "all-years" ) {
-        pheno <- model$dataOriginal[,c("id",trait_name)] %>% group_by(id) %>% dplyr::summarize(mean=mean(.data[[trait_name]]))
-        pheno <- pheno[["mean"]]
+        pheno.pre <- model$dataOriginal[,c("id",trait_name)] %>% group_by(id) %>% dplyr::summarize(mean=mean(.data[[trait_name]],na.rm=TRUE))
+        pheno <- pheno.pre$mean
+        names(pheno) <- pheno.pre$id
     } else {
         pheno <- model$dataOriginal[[trait_name]]
+        names(pheno) <- model$dataOriginal$id
     }
-    phenoZ        <- scale(pheno)[,1]
-    ids           <- names(blups)
+    pheno <- pheno[ids] #Make sure that the raw phenotype data is in the same order as BLUPs
+    pheno.sd   <- sd(pheno, na.rm=TRUE)
+    pheno.u    <- mean(pheno, na.rm=TRUE)
+    phenoZ     <- (pheno - pheno.u)/pheno.sd
+    blupsZ     <- (blups - pheno.u)/pheno.sd
     models.tb.p$value <- models.tb.p$value %>% 
-                            add_row(id=factor(ids), model=factor(trait.cfg$model), model_label=factor(trait.cfg$model_label), trait=factor(trait.cfg$trait), value=pheno, valueZ=phenoZ, type=factor("Raw"), label=factor(trait.cfg$label), label_short=factor(trait.cfg$label_short), GLRpvalue=GLRpvalue, GZRpvalue=GZRpvalue, GxYLRpvalue=GxYLRpvalue, GxYZRpvalue=GxYZRpvalue, vg=vg, vge=vge, ve=ve, h2=h2) %>%
-                            add_row(id=factor(ids), model=factor(trait.cfg$model), model_label=factor(trait.cfg$model_label), trait=factor(trait.cfg$trait), value=blups, valueZ=blupsZ, type=factor("BLUPs"), label=factor(trait.cfg$label), label_short=factor(trait.cfg$label_short), GLRpvalue=GLRpvalue, GZRpvalue=GZRpvalue, GxYLRpvalue=GxYLRpvalue, GxYZRpvalue=GxYZRpvalue, vg=vg, vge=vge, ve=ve, h2=h2) 
+                            add_row(id=factor(ids), model=factor(trait.cfg$model), model_label=factor(trait.cfg$model_label), trait=factor(trait.cfg$trait), model_formula=model_formula, value=pheno, valueZ=phenoZ, type=factor("Raw"), label=factor(trait.cfg$label), label_short=factor(trait.cfg$label_short), GLRpvalue=GLRpvalue, GZRpvalue=GZRpvalue, GxYLRpvalue=GxYLRpvalue, GxYZRpvalue=GxYZRpvalue, vg=vg, vge=vge, ve=ve, h2=h2) %>%
+                            add_row(id=factor(ids), model=factor(trait.cfg$model), model_label=factor(trait.cfg$model_label), trait=factor(trait.cfg$trait), model_formula=model_formula, value=blups, valueZ=blupsZ, type=factor("BLUPs"), label=factor(trait.cfg$label), label_short=factor(trait.cfg$label_short), GLRpvalue=GLRpvalue, GZRpvalue=GZRpvalue, GxYLRpvalue=GxYLRpvalue, GxYZRpvalue=GxYZRpvalue, vg=vg, vge=vge, ve=ve, h2=h2) 
 }
 
 pheno.means.df <-read.csv(file=pheno_dpath2fpath(pheno_file))
@@ -102,7 +116,7 @@ pheno.means.df$year <- as.factor(pheno.means.df$year) #Needed for modeling colum
 n.years <- nlevels(pheno.means.df$year)
 traits.df   <- read.csv(file=paste0(workflow,"/configs/model-traits.cfg.csv"),header=T,stringsAsFactors=T)
 #Just build a 'long' version of collated BLUPs as tibble table, and then use tidyverse 'pivot_wider()' to flatten
-model.collated.long.tb       <- tibble(id=factor(), model=factor(), model_label=factor(), trait=factor(), value=numeric(), valueZ=numeric(), type=factor(), label=factor(), label_short=factor(), GLRpvalue=numeric(), GZRpvalue=numeric(), GxYLRpvalue=numeric(), GxYZRpvalue=numeric(), vg=numeric(), vge=numeric(), ve=numeric(), h2=numeric())
+model.collated.long.tb       <- tibble(id=factor(), model=factor(), model_label=factor(), trait=factor(), model_formula=character(), value=numeric(), valueZ=numeric(), type=factor(), label=factor(), label_short=factor(), GLRpvalue=numeric(), GZRpvalue=numeric(), GxYLRpvalue=numeric(), GxYZRpvalue=numeric(), vg=numeric(), vge=numeric(), ve=numeric(), h2=numeric())
 model.collated.long.tb.p   <- newPointer(model.collated.long.tb)
 selectedmodels.df          <- read.csv(file=paste0(workflow,"/traits/selectedModels.csv"))
 loopThruTraits(workflow, collateBLUPs, loopArgs=list(selectedmodels.df,model.collated.long.tb.p,n.years))
@@ -247,7 +261,6 @@ gs <- model.collated.long.tb %>%
                             plot.title   = element_text(face="bold",size=52, hjust=0.5),
                             plot.subtitle = element_text(size=48, hjust = 0.5),
                             plot.margin = ggplot2::unit(c(1,1,1,1),"cm")))
-                        
 
 #Yield-related traits
 ##Upright Yield
@@ -365,7 +378,7 @@ p2.blup_summary.tb <- model.collated.long.tb %>%
 
 model.collated.summary.tb <- model.collated.long.tb %>%
                                     filter(!(id %in% c(P1_Name,P2_Name))) %>%
-                                    group_by(model,model_label,trait,label,label_short,type) %>%
+                                    group_by(model,model_label,trait,label,label_short,model_formula,type) %>%
                                     dplyr::summarize(min=min(value), mean=mean(value), sd=sd(value), range=abs(min(value)-max(value)),
                                               minZ=min(valueZ), min_geno = gsub(paste0(POP_Name,"_[^_]+_([0-9]+)"),"g\\1",id[which.min(value)]),
                                               max=max(value), maxZ=max(valueZ), max_geno = gsub(paste0(POP_Name,"_[^_]+_([0-9]+)"),"g\\1",id[which.max(value)]),
@@ -465,16 +478,16 @@ generateFullTable <- function(values.collated.tb) {
 
 generateReducedTableFlex <- function(values.collated.tb) {
     tbl1 <- generateFullTableHelper(values.collated.tb) %>%
-                dplyr::select(label,model_label,vg,vge,ve,h2,min_Raw,min_BLUPs,mean_Raw,mean_BLUPs,max_Raw,max_BLUPs,range_Raw,range_BLUPs,min_geno_Raw,min_geno_BLUPs,max_geno_Raw,max_geno_BLUPs,P1_Raw,P1_BLUPs,P2_Raw,P2_BLUPs,'Parent Range_Raw','Parent Range_BLUPs') %>%
+                dplyr::select(label,model_label,model_formula,vg,vge,ve,h2,min_Raw,min_BLUPs,mean_Raw,mean_BLUPs,max_Raw,max_BLUPs,range_Raw,range_BLUPs,min_geno_Raw,min_geno_BLUPs,max_geno_Raw,max_geno_BLUPs,P1_Raw,P1_BLUPs,P2_Raw,P2_BLUPs,'Parent Range_Raw','Parent Range_BLUPs') %>%
                 select(!model_label)
     tbl2 <- flextable(tbl1) %>%
         align(align="center", part="header") %>%
         align(align="right", part="body") %>%
-        align(j =  ~label + min_geno_Raw + max_geno_Raw + min_geno_BLUPs + max_geno_BLUPs, align="left", part="body") %>%
+        align(j =  ~label + model_formula + min_geno_Raw + max_geno_Raw + min_geno_BLUPs + max_geno_BLUPs, align="left", part="body") %>%
         italic(j = grep("_BLUPs", colnames(tbl1), ignore.case=TRUE), part="body") %>%
         bold(i = ~ label != "", j = 1) %>%
         color(j = grep("_BLUPs", colnames(tbl1), ignore.case=TRUE), color="darkgray", part="body") %>%
-        add_header_row(top=FALSE, values=c("", "F1 Progeny", "Parents"), colwidths=c(1,16,6)) %>%
+        add_header_row(top=FALSE, values=c("", "", "F1 Progeny", "Parents"), colwidths=c(1,1,16,6)) %>%
         flextable::footnote(i = 1, 
                  j = ~vg + vge + ve + h2 + min_geno_Raw + max_geno_Raw + P1_Raw + P2_Raw,
                  value = as_paragraph(c("Additive genomic variance of model.",
@@ -498,8 +511,9 @@ generateReducedTableFlex <- function(values.collated.tb) {
                  as_paragraph("P",as_sub("2r"),as_sup("h")) ),
                part = "header") %>%
         mk_par(i  =  1, 
-               j  = c('label','min_Raw','min_BLUPs','mean_Raw','mean_BLUPs','max_Raw','max_BLUPs','range_Raw','range_BLUPs','min_geno_BLUPs','max_geno_BLUPs','P1_BLUPs','P2_BLUPs','Parent Range_Raw','Parent Range_BLUPs'),
+               j  = c('label','model_formula', 'min_Raw','min_BLUPs','mean_Raw','mean_BLUPs','max_Raw','max_BLUPs','range_Raw','range_BLUPs','min_geno_BLUPs','max_geno_BLUPs','P1_BLUPs','P2_BLUPs','Parent Range_Raw','Parent Range_BLUPs'),
                c(as_paragraph("Trait"),
+                 as_paragraph("Model Formula"),
                  as_paragraph("Min",as_sub("r")),
                  as_paragraph("Min",as_sub("b")), 
                  as_paragraph("Mean",as_sub("r")),
@@ -515,6 +529,10 @@ generateReducedTableFlex <- function(values.collated.tb) {
                  as_paragraph("PRange",as_sub("r")),
                  as_paragraph("PRange",as_sub("b"))),
                part="header") %>%
+        mk_par(j =~ model_formula,
+               value = as_paragraph(as_equation(., width=1, height=0.5)),
+               part="body",
+               use_dot=TRUE) %>%
         theme_zebra() %>%
         vline(j=17, part="body") %>%
         set_table_properties(width=table.width)
@@ -529,18 +547,19 @@ generateFullTableFlex <- function(values.collated.tb) {
                 mutate(label=gsub(" ",'\\ ',label,fixed=TRUE)) %>%
                 mutate(model_label=gsub("$","",model_label,fixed=TRUE)) %>%
                 mutate(model_label=gsub(" ",'\\ ',model_label,fixed=TRUE)) %>%
-                dplyr::select(label,model_label,vg,vge,ve,h2,min_Raw,min_BLUPs,mean_Raw,mean_BLUPs,max_Raw,max_BLUPs,range_Raw,range_BLUPs,min_geno_Raw,min_geno_BLUPs,max_geno_Raw,max_geno_BLUPs,P1_Raw,P1_BLUPs,P2_Raw,P2_BLUPs,'Parent Range_Raw','Parent Range_BLUPs') %>%
-                rename(`Trait`=label,`Model`=model_label,`σ_g^2`=vg,`σ_{gε}^2`=vge,`σ_{ε}^2`=ve,`h^2`=h2,`Min_r`=min_Raw,`Min_b`=min_BLUPs,`Max_r`=max_Raw,`Max_b`=max_BLUPs,`Mean_r ± SE`=mean_Raw,`Mean_b ± SE`=mean_BLUPs,`Range_r`=range_Raw,`Range_b`=range_BLUPs,`Min\\ Geno_r`=min_geno_Raw,`Min\\ Geno_b`=min_geno_BLUPs,`Max\\ Geno_r`=max_geno_Raw,`Max\\ Geno_b`=max_geno_BLUPs,`P_{1r}`=P1_Raw,`P_{1b}`=P1_BLUPs,`P_{2r}`=P2_Raw,`P_{2b}`=P2_BLUPs,`PRange_r`=`Parent Range_Raw`,`PRange_b`=`Parent Range_BLUPs`)
+                dplyr::select(label,model_label,model_formula, vg,vge,ve,h2,min_Raw,min_BLUPs,mean_Raw,mean_BLUPs,max_Raw,max_BLUPs,range_Raw,range_BLUPs,min_geno_Raw,min_geno_BLUPs,max_geno_Raw,max_geno_BLUPs,P1_Raw,P1_BLUPs,P2_Raw,P2_BLUPs,'Parent Range_Raw','Parent Range_BLUPs') %>%
+                rename(`Trait`=label,`Model`=model_label,`Model Formula`=model_formula, `σ_g^2`=vg,`σ_{gε}^2`=vge,`σ_{ε}^2`=ve,`h^2`=h2,`Min_r`=min_Raw,`Min_b`=min_BLUPs,`Max_r`=max_Raw,`Max_b`=max_BLUPs,`Mean_r ± SE`=mean_Raw,`Mean_b ± SE`=mean_BLUPs,`Range_r`=range_Raw,`Range_b`=range_BLUPs,`Min\\ Geno_r`=min_geno_Raw,`Min\\ Geno_b`=min_geno_BLUPs,`Max\\ Geno_r`=max_geno_Raw,`Max\\ Geno_b`=max_geno_BLUPs,`P_{1r}`=P1_Raw,`P_{1b}`=P1_BLUPs,`P_{2r}`=P2_Raw,`P_{2b}`=P2_BLUPs,`PRange_r`=`Parent Range_Raw`,`PRange_b`=`Parent Range_BLUPs`)
     tbl2 <- flextable(tbl1) %>%
         align(align="center", part="header") %>%
         align(align="right", part="body") %>%
-        align(j =  colnames(tbl1) %in% c('Trait','Model','Min\\ Geno_r','Max\\ Geno_r','Min\\ Geno_b','Max\\ Geno_b'), align="left", part="body") %>%
+        align(j =  colnames(tbl1) %in% c('Trait','Model', 'Model\\ Formula', 'Min\\ Geno_r','Max\\ Geno_r','Min\\ Geno_b','Max\\ Geno_b'), align="left", part="body") %>%
         italic(j = grep("_b", colnames(tbl1), ignore.case=TRUE), part="body") %>%
         bold(i = ~ Trait != "", j = 1) %>%
         color(j = grep("_b", colnames(tbl1), ignore.case=TRUE), color="gray", part="body") %>%
         mk_par(j = "Trait", part="body", value=as_paragraph(as_equation(., width=1, height=0.5)), use_dot=TRUE) %>%
         mk_par(j = "Model", part="body", value=as_paragraph(as_equation(., width=1, height=0.5)), use_dot=TRUE) %>%
-        add_header_row(top=FALSE, values=c("", "", "F1\\ Progeny", "Parents"), colwidths=c(1,1,16,6)) %>%
+        mk_par(j = 'Model Formula', part="body", value=as_paragraph(as_equation(., width=1, height=0.5)), use_dot=TRUE) %>%
+        add_header_row(top=FALSE, values=c("", "", "", "F1\\ Progeny", "Parents"), colwidths=c(1,1,1,16,6)) %>%
         mk_par(part = "header", value = as_paragraph(as_equation(.,width = .1, height = .2)), use_dot = TRUE) %>%
         flextable::footnote(i = 1, 
                  j = colnames(tbl1) %in% c('Trait','Model','σ_g^2','σ_{gε}^2','σ_{ε}^2','h^2','Min\\ Geno_r','Max\\ Geno_r','P_{1r}','P_{2r}'),
