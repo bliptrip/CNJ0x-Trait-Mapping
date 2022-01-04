@@ -2,283 +2,316 @@
 
 ## Trait Correlation Plots
 
-### CNJ02
+### CNJ02-refined
+
+```{r trait-corrplots-setup, echo=FALSE, message=FALSE, include=FALSE}
+     p.cnj02.c = round(readRDS(paste0(workflow,"/traits/plots/corrplot.cnj02.rds"))$corr, digits=2)
+     p.cnj04.c = round(readRDS(paste0(workflow,"/traits/plots/corrplot.cnj04.rds"))$corr, digits=2)
+```
+
+
+Non-trivial strong positive (\@ref(fig:trait-corrplots-cnj02-refined)A) and negative (\@ref(fig:trait-corrplots-cnj02-refined)B) 
+correlations for raw phenotypic measurements in population CNJ02, averaged over the three sampling years, highlight a few moderate to 
+strong correlations that serve to guide subsequent analyses in QTL mapping.  The 15 strongest positive and negative inter-trait correlations for
+CNJ02 are shown in barplot in figure \@ref(fig:trait-corrplots-cnj02-refined)C.  Interesting positive associations that emerge from the
+CNJ02 dataset include *SFY × TY*, *MFM × UBM*, *MFM × UMFM*, *UBM × UTBM*, and *MFM × UBW*.  Although not in the top 15 strongest positive correlations,
+*ULvW × UKLvW* shows a moderately strong positive correlation (figure \@ref(fig:trait-corrplots-cnj02), evidence that the largest berry shape categorization 
+(a subjective trait prone to error in recording) is consistent with that of largest
+berry length versus width (an objective trait that is easy to record).  Interesting negative associations that emerge from the CNJ02 dataset include *TY × PAC*, *UCLP × UCLS*, 
+*SFY × PAC*, *SFY × Tacy*, *UNAB × PAC*, *MFM × PAC*, *MFM × UNAF*, and *MFM × UBBL*.
+
+
 ```{r trait-corrplots-cnj02-refined-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
     system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.png"),"A"))
     system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj02.inv.refined.png"),"B"))
+    system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj02.flat.png"),"C",45))
 ```
 
 ```{r trait-corrplots-cnj02-refined-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","2x1",paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.A.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj02.inv.refined.B.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.combined.png")))
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+0","-tile","2x1",paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.A.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj02.inv.refined.B.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.AB.png")))
+    system2("montage", args=c("-background","white","-geometry","4096x2048+0+20","-tile","1x2",paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.AB.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj02.flat.C.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.combined.png")))
 ```
 
-```{r trait-corrplots-cnj02-refined, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for boxed traits in population CNJ02, ordered by A) positive correlations and B) negative correlations."}  
+```{r trait-corrplots-cnj02-refined, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Significant ($p < 0.5$) trait phenotype correlation heatmaps for boxed traits in population CNJ02, ordered by A) positive correlations and B) negative correlations.  C) Top 15 positive and negative correlations for CNJ04."}  
     knitr::include_graphics(paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.combined.png"))
 ```
 
 ### CNJ04-refined
+
+Noteworthy inter-trait correlations in population CNJ04 are shown in figure \@ref(fig:trait-corrplots-cnj04-refined),
+with the 15 most salient positive and negative correlations shown in subplot C.  Positive associations that stand out
+include *SFY × TY*, *MFM × UBM*, *UBM × UBL*.  Compared to CNJ02, CNJ04 has  weaker correlations for traits
+*UBM x UBW* (`r p.cnj04.c['UBM','UBW']` vs. `r p.cnj02.c['UBM','UBW']`) and *UBM × UBL* (`r p.cnj04.c['UBM','UBL']` vs. `r p.cnj02.c['UBM','UBL']`).    Interesting inter-trait negative
+correlations include *ULvW × UKSO*, *Brix × UBL*, *PFR × UNB*, *Brix × UNS*.  
+
+
 ```{r trait-corrplots-cnj04-refined-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
     system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj04.refined.png"),"A"))
     system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj04.inv.refined.png"),"B"))
+    system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj04.flat.png"),"C",45))
 ```
 
 ```{r trait-corrplots-cnj04-refined-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","2x1",paste0(params$workflow,"/traits/plots/corrplot.cnj04.refined.A.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj04.inv.refined.B.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj04.refined.combined.png")))
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+0","-tile","2x1",paste0(params$workflow,"/traits/plots/corrplot.cnj04.refined.A.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj04.inv.refined.B.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj04.refined.AB.png")))
+    system2("montage", args=c("-background","white","-geometry","4096x2048+0+20","-tile","1x2",paste0(params$workflow,"/traits/plots/corrplot.cnj04.refined.AB.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj04.flat.C.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj04.refined.combined.png")))
 ```
 
-```{r trait-corrplots-cnj04-refined, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for boxed traits in population CNJ04, ordered by A) positive correlations and B) negative correlations."}
+```{r trait-corrplots-cnj04-refined, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Significant ($p < 0.5$) trait phenotype correlation heatmaps for highlighted traits in population CNJ04, ordered by A) positive correlations and B) negative correlations.  C) Top 15 positive and negative correlations for CNJ04."}
     knitr::include_graphics(paste0(params$workflow,"/traits/plots/corrplot.cnj04.refined.combined.png"))
 ```
 
-## Trait Distribution Plots
+## Model Heritabilities and Breeding Values
 
-### Upright Traits
+```{r h2-collate-summarize, echo=FALSE, message=FALSE, include=FALSE}
+    #NOTE: The following code should be moved to QTLPipeline.Rmd
+    cnj02.brcorrs <- read_csv(paste0(cnj02_workflow,"/traits/blups_raw_corrs.csv"))
+    cnj02.h2 <- read_csv(paste0(cnj02_workflow,"/traits/h2.csv")) %>% 
+                    select(model,label_short,h2)
+    cnj02.ay.h2 <- cnj02.h2 %>% filter(model=='all-years') %>% arrange(desc(h2)) #Sort by descending h2 for all-years model
+    cnj02.combined <- read_csv(paste0(cnj02_workflow,"/traits/h2.csv")) %>% 
+                        left_join(cnj02.brcorrs, by=c("model","trait")) %>%
+                        select(c(model,label_short,h2,brcorr)) %>%
+                        pivot_longer(c(h2,brcorr), names_to="type", values_to="value") %>%
+                        mutate(population="cnj02",
+                               trait=factor(label_short, levels=rev(cnj02.ay.h2$label_short), ordered=TRUE),
+                               type=factor(type, levels=c("brcorr","h2"), labels=c("Spearman ρ","Heritability")))
+    cnj04.brcorrs <- read_csv(paste0(cnj04_workflow,"/traits/blups_raw_corrs.csv"))
+    cnj04.h2 <- read_csv(paste0(cnj04_workflow,"/traits/h2.csv")) %>% 
+                    select(model,label_short,h2)
+    cnj04.ay.h2 <- cnj04.h2 %>% filter(model=='all-years') %>% arrange(desc(h2)) #Sort by descending h2 for all-years model
+    cnj04.combined <- read_csv(paste0(cnj04_workflow,"/traits/h2.csv")) %>% 
+                        left_join(cnj04.brcorrs, by=c("model","trait")) %>%
+                        select(c(model,label_short,h2,brcorr)) %>%
+                        pivot_longer(c(h2,brcorr), names_to="type", values_to="value") %>%
+                        mutate(population="cnj04",
+                               trait=factor(label_short, levels=rev(cnj04.ay.h2$label_short), ordered=TRUE),
+                               type=factor(type, levels=c("brcorr","h2"), labels=c("Spearman ρ","Heritability")))
+    cnj0x.h2.sum <- rbind(cnj02.h2,cnj04.h2) %>%
+                    group_by(model, label_short) %>%
+                    summarize(h2.min=min(h2),h2.max=max(h2),h2.mean=mean(h2))
+    cnj0x.h2 <- cnj02.h2 %>%
+                    inner_join(cnj04.h2, by=c("model","label_short"), suffix=c(".2",".4")) %>%
+                    inner_join(cnj0x.h2.sum, by=c("model","label_short")) %>%
+                    arrange(desc(h2.min))
+    cnj0x.h2.all <- cnj0x.h2 %>%
+                        filter(model=="all-years") %>%
+                        mutate(h2.min=round(h2.min,digits=2)) %>%
+                        mutate(trait=factor(label_short, levels=rev(label_short), ordered=TRUE))
+    #The following are for inserting inline results in the text of the document
+    cnj04.combined.ul.h2 <- round((cnj04.ay.h2 %>% filter(label_short == "UL"))$h2, digits=2)
+    cnj04.combined.ul.brcorrs <- round((cnj04.brcorrs %>% filter(model == 'all-years') %>% filter(trait == "upright_length"))$brcorr, digits=2)
 
-#### Yield Trait Distribution Plots
+    load(paste0(cnj02_workflow,"/.RData.01_genBLUP"))
+    model.collated.long.tb.2 <- model.collated.long.tb %>% mutate(population="cnj02")
+    model.collated.long.stats.tb.2 <- model.collated.long.stats.tb %>% mutate(population="cnj02")
+    model.collated.long.ylims.tb.2 <- model.collated.long.ylims.tb %>% mutate(population="cnj02")
+    load(paste0(cnj04_workflow,"/.RData.01_genBLUP"))
+    model.collated.long.tb.4 <- model.collated.long.tb %>% mutate(population="cnj04")
+    model.collated.long.stats.tb.4 <- model.collated.long.stats.tb %>% mutate(population="cnj04")
+    model.collated.long.ylims.tb.4 <- model.collated.long.ylims.tb %>% mutate(population="cnj04")
 
-```{r trait-uprightyield-density-cnj0x-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj0x.png")
-```
+    model.collated.long.tb.both <- bind_rows(model.collated.long.tb.2,model.collated.long.tb.4) %>%
+                                        filter(model == "all-years") %>% 
+                                        filter(h2 != 0)
+    model.collated.long.stats.tb.both <- bind_rows(model.collated.long.stats.tb.2,model.collated.long.stats.tb.4)
+    model.collated.long.ylims.tb.both <- bind_rows(model.collated.long.ylims.tb.2,model.collated.long.ylims.tb.4)
 
-```{r trait-uprightyield-density-cnj0x-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
-    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
-```
+    cnj0x.h2.top.all <- cnj0x.h2.all %>% 
+                            filter(h2.min > 0.5) %>%
+                            mutate(trait = factor(trait, levels=rev(trait)))
 
-```{r trait-uprightyield-density-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
-```
-
-```{r trait-uprightyield-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for upright yield traits in CNJ02 population (A) and CNJ04 population (B)."}
-    knitr::include_graphics(imageCombined)
-```
-
-#### Secondary Yield Trait Distribution Plots
-
-```{r trait-uprightyield2-density-cnj0x-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj0x.png")
-```
-
-```{r trait-uprightyield2-density-cnj0x-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
-    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
-```
-
-```{r trait-uprightyield2-density-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
-```
-
-```{r trait-uprightyield2-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for tangentially-related yield traits in CNJ02 population (A) and CNJ04 population (B)."}
-    knitr::include_graphics(imageCombined)
-```
-
-#### Biennial-Bearing and Rebud Distribution Plots
-
-```{r trait-bbi-density-cnj0x-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj0x.png")
-```
-
-```{r trait-bbi-density-cnj0x-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
-    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
-```
-
-```{r trait-bbi-density-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
-```
-
-```{r trait-bbi-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for plot-sampled traits in CNJ02 (A) and CNJ04 (B) populations."}
-    knitr::include_graphics(imageCombined)
-```
-
-#### Upright Pedicel Trait Distribution Plots
-
-```{r trait-uprightped-density-cnj0x-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj0x.png")
-```
-
-```{r trait-uprightped-density-cnj0x-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
-    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
-```
-
-```{r trait-uprightped-density-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
-```
-
-```{r trait-uprightped-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for upright pedicel characteristics in CNJ02 population (A) and CNJ04 population (B)."}
-    knitr::include_graphics(imageCombined)
-```
-
-#### Largest Berry Bloom and Calyx Trait Distribution Plots
-
-```{r trait-uprightother-density-cnj0x-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj0x.png")
-```
-
-```{r trait-uprightother-density-cnj0x-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
-    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
-```
-
-```{r trait-uprightother-density-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
-```
-
-```{r trait-uprightother-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for upright berry bloom and calyx traits in CNJ02 population (A) and CNJ04 population (B)."}
-    knitr::include_graphics(imageCombined)
-```
-
-#### Largest Berry Shape Trait Distribution Plots
-
-```{r trait-uprightshape-density-cnj0x-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj0x.png")
-```
-
-```{r trait-uprightshape-density-cnj0x-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
-    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
-```
-
-```{r trait-uprightshape-density-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
-```
-
-```{r trait-uprightshape-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for upright shape traits in CNJ02 population (A) and CNJ04 population (B)."}
-    knitr::include_graphics(imageCombined)
+    #Reset workflow as it is overwritten
+    workflow=params$workflow
 ```
 
 
-### Plot-Sampled Trait Distribution Plots
+For both populations, the highest heritabilities were found for the upright yield-related traits and the plot traits (figure \@ref(fig:trait-h2-cnj0x)).
+Generally, the *all year* models (equation \@ref(eq:mm-year-ge)) had the highest heritabilities when compared to the fitted models for individual years.
+Traits with consistently high heritability in both populations are displayed in figure \@ref(fig:h2-top) next to
+boxplots of their associated phenotypes and BLUPs.  The heritabilities are sorted from highest to lowest and represent
+the minimum heritability between the two populations.  The BLUPs and phenotype boxplot distributions are standardized against the raw phenotype trait values in order
+to demonstrate that models with higher heritabilities encapsulate more of the phenotypic variation.
+Trait *ULvW* has an extraordinarily high heritability in both populations, followed by *UBL* and *UNS*.  *Tacy*, a desirable trait associated with fruit color, also shows evidence of 
+high heritability.  High heritabilities in *UBM*, *UMFM*, and *TY* indicate strong potential for selecting for higher
+yields in both of these two populations.  Although only modest, the heritability of traits like *SFY* and *PFR* show
+some potential for selecting rot-resistant varieties for growing in regions where berry rot is a problem.  Fruit quality
+traits such as *TA* and *Brix* show very low *all year* heritabilities in population CNJ02 but higher heritability in
+CNJ04.
 
-```{r trait-plot-density-cnj0x-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj0x.png")
+Figure \@ref(fig:h2-brcorr) displays *all year* model heritabilities sorted highest to lowest for each population
+separately next to the calculated Spearman rank correlation coefficient for the genotype BLUPs relative to their raw
+phenotypes.  Despite having low heritability, traits such as *UL* in CNJ04 continue to show moderate to strong
+correlation between the BLUPs and their raw trait values (*e.g.*, $h^2 = $ `r cnj04.combined.ul.h2`, $ρ = $ `r cnj04.combined.ul.brcorrs`), indicating
+that the models continue to maintain good genotype stability when presented with traits that have incredibly low
+heritability and that issues with genotype × environment interaction are minimal.
+
+```{r h2-top-pre, echo=FALSE, message=FALSE, include=TRUE}
+    p1 <- model.collated.long.tb.both %>% 
+            filter(label_short %in% levels(cnj0x.h2.top.all$trait)) %>%
+            mutate(label_short = factor(label_short, levels=rev(levels(cnj0x.h2.top.all$trait)), ordered=TRUE)) %>%
+            filter(model == "all-years") %>% 
+            ggplot(aes(x=valueZ, y=factor(population, levels=c("cnj04","cnj02"), labels=c("CNJ04","CNJ02"), ordered=TRUE))) +
+            geom_boxplot(aes(fill=type), alpha=0.5, outlier.shape=NA, position=position_dodge(0.5)) +
+            scale_y_discrete(position = "right") +
+            facet_grid(rows=vars(label_short), switch="y") +
+            theme_minimal() +
+            theme(strip.text=element_blank(),
+                axis.title = element_text(face="bold",size=14),
+                axis.text.x  = element_text(size=12)) +
+            labs(x="Standardized Values",
+                y="",
+                fill="Type") 
+
+    p2 <- ggplot(cnj0x.h2.top.all, aes(x=h2.min,y=trait)) + 
+            geom_bar(aes(fill=trait),stat="identity", alpha=0.75, show.legend=FALSE) +
+            geom_text(aes(label=h2.min,fontface="bold"), nudge_x=0.025) +
+            scale_y_discrete(position = "right") +
+            theme_minimal() +
+            theme(axis.title = element_text(face="bold",size=14),
+                axis.text.y  = element_text(face="bold",size=16,angle=0),
+                axis.text.x  = element_text(size=12)) +
+            labs(x="Minimum Heritability",
+                y="")
+
+    p.combined <- plot_grid(p2,p1,rel_widths=c(1.5,1))
+    ggsave(filename="../Data/publication/figures/cnj0x.h2.blupbox.top.png", plot=p.combined, device="png", bg="white", width=34, height=16.5, units="cm", dpi=300)
 ```
 
-```{r trait-plot-density-cnj0x-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
-    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
+```{r h2-top, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Traits sorted by minimum heritabilities across both populations for *all years* model displayed next to their associated BLUP and phenotype distributions.  Only traits with minimum heritability above 0.5 are displayed."}
+    knitr::include_graphics("../Data/publication/figures/cnj0x.h2.blupbox.top.png")
 ```
 
-```{r trait-plot-density-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
+```{r h2-brcorr-plots, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, eval=params$fig_gen_annotations}
+    #NOTE: The following code should be moved to QTLPipeline.Rmd
+    p2 <- ggplot(cnj02.combined %>% filter(model == "all-years"), aes(x=value, y=trait, group=factor(type), fill=type)) + 
+        geom_bar(stat="identity", position=position_dodge(), alpha=0.75) +
+        theme_minimal() +
+        theme(plot.title = element_text(face="bold",size=14,hjust=0.5),
+              axis.title = element_text(face="bold",size=12),
+              legend.title = element_text(face="bold",size=11),
+              axis.text.y  = element_text(size=10,angle=25),
+              axis.text.x  = element_text(size=10,angle=60)) +
+        labs(title="CNJ02",
+             x="",
+             y="Traits",
+             fill="Type")
+    ggsave(filename="../Data/publication/figures/cnj02.barplot.h2spearman.png", plot=p2, device="png", bg="white", width=12, height=20, units="cm", dpi=300)
+
+    p4 <- ggplot(cnj04.combined %>% filter(model == "all-years"), aes(x=value, y=trait, group=factor(type), fill=type)) + 
+        geom_bar(stat="identity", position=position_dodge(), alpha=0.75) +
+        theme_minimal() +
+        theme(plot.title = element_text(face="bold",size=14,hjust=0.5),
+              axis.title = element_text(face="bold",size=12),
+              legend.title = element_text(face="bold",size=11),
+              axis.text.y  = element_text(size=10,angle=25),
+              axis.text.x  = element_text(size=10,angle=60)) +
+        labs(title="CNJ04",
+             x="",
+             y="Traits",
+             fill="Type")
+    ggsave(filename="../Data/publication/figures/cnj04.barplot.h2spearman.png", plot=p4, device="png", bg="white", width=12, height=20, units="cm", dpi=300)
 ```
 
-```{r trait-plot-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for plot-sampled traits in CNJ02 (A) and CNJ04 (B) populations."}
-    knitr::include_graphics(imageCombined)
+```{r h2-brcorr-annotate, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, eval=params$fig_gen_annotations}
+    system2("misc/annotatefig.sh", args=c("../Data/publication/figures/cnj02.barplot.h2spearman.png","A"))
+    system2("misc/annotatefig.sh", args=c("../Data/publication/figures/cnj04.barplot.h2spearman.png","B"))
 ```
 
-## Heritability Tables
-
-### CNJ02
-
-```{r trait-h2-cnj02-def, echo=FALSE, message=FALSE, include=TRUE}
-    imageCombined = paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.cnj02.png")
+```{r h2-brcorr-montage, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE, eval=params$fig_gen_montages}
+    system2("montage", args=c("-background","white","-geometry","1421x2366+20+0","-tile","2x1","../Data/publication/figures/cnj02.barplot.h2spearman.A.png","../Data/publication/figures/cnj04.barplot.h2spearman.B.png","../Data/publication/figures/cnj0x.barplot.h2spearman.png"))
 ```
 
-```{r trait-h2-cnj02-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_yield.cnj02.png"),"A"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_yield2.cnj02.png"),"B"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_ped.cnj02.png"),"C"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_other.cnj02.png"),"D"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_shape.cnj02.png"),"E"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.bbi.cnj02.png"),"F"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.plot_traits.cnj02.png"),"G"))
+```{r h2-brcorr, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Heritabilities and Spearman rank correlation coefficients (ρ) for traits in populations A) CNJ02 and B) CNJ04.  Correlation coefficients represent the associations between genotype BLUPs and their associated phenotypes for the *all years* mixed model."}
+    knitr::include_graphics("../Data/publication/figures/cnj0x.barplot.h2spearman.png")
 ```
 
-```{r trait-h2-cnj02-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1946x1476+20+20","-bordercolor","black","-border","2","-tile","2x4",
-                                paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_yield.cnj02.A.png"),
-                                paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_yield2.cnj02.B.png"),
-                                paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_ped.cnj02.C.png"),
-                                paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_other.cnj02.D.png"),
-                                paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_shape.cnj02.E.png"),
-                                paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.bbi.cnj02.F.png"),
-                                paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.plot_traits.cnj02.G.png"),
-                                imageCombined))
+```{r trait-h2-cnj0x-def, echo=FALSE, message=FALSE, include=TRUE}
+    imageA <- paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_yield.cnj02.png")
+    imageAA <- paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_yield.cnj02.A.png")
+    imageB <- paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.plot_traits.cnj02.png")
+    imageBB <- paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.plot_traits.cnj02.B.png")
+    imageC <- paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_yield.cnj04.png")
+    imageCC <- paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_yield.cnj04.C.png")
+    imageD <- paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.plot_traits.cnj04.png")
+    imageDD <- paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.plot_traits.cnj04.D.png")
+    imageCombined <- "../Data/publication/figures/h2_barplot.polar.cnj0x.png"
+
 ```
 
-```{r trait-h2-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="CNJ02 population heritability plots."}
-    knitr::include_graphics(imageCombined)
+```{r trait-h2-cnj0x-annotate, echo=FALSE, message=FALSE, include=FALSE, eval=params$fig_gen_annotations}
+    system2("misc/annotatefig.sh", args=c(imageA,"A"))
+    system2("misc/annotatefig.sh", args=c(imageB,"B"))
+    system2("misc/annotatefig.sh", args=c(imageC,"C"))
+    system2("misc/annotatefig.sh", args=c(imageD,"D"))
 ```
 
-### CNJ04
-
-```{r trait-h2-cnj04-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageCombined = paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.cnj04.png")
+```{r trait-h2-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
+    system2("montage", args=c("-background","white","-geometry","3897x2952+20+20","-tile","2x2",imageAA,imageBB,imageCC,imageDD,imageCombined))
 ```
 
-```{r trait-h2-cnj04-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_yield.cnj04.png"),"A"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_yield2.cnj04.png"),"B"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_ped.cnj04.png"),"C"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_other.cnj04.png"),"D"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_shape.cnj04.png"),"E"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.bbi.cnj04.png"),"F"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.plot_traits.cnj04.png"),"G"))
+```{r trait-h2-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Heritabilities for upright-related yield traits (A and C) and plot-sampled traits (B and D) in populations CNJ02 (A and B) and CNJ04 (C and D)."}
+    knitr::include_graphics("../Data/publication/figures/h2_barplot.polar.cnj0x.png")
 ```
 
-```{r trait-h2-cnj04-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1946x1476+20+20","-bordercolor","black","-border","2","-tile","2x4",
-                                paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_yield.cnj04.A.png"),
-                                paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_yield2.cnj04.B.png"),
-                                paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_ped.cnj04.C.png"),
-                                paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_other.cnj04.D.png"),
-                                paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_shape.cnj04.E.png"),
-                                paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.bbi.cnj04.F.png"),
-                                paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.plot_traits.cnj04.G.png"),
-                                imageCombined))
-```
 
-```{r trait-h2-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="cnj04 population heritability plots."}
-    knitr::include_graphics(imageCombined)
-```
-
-## BLUP Tables
-
-### CNJ02 - BLUP Summary Statistics - All Years with Significant Effects
-```{r blups-table-cnj02-all-top, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%", tab.cap="CNJ02 Population Trait and BLUP Summary for *All Years* model.  Only models with significant (*p > 0.05*) genotypic effects are displayed."}
+### CNJ02 - BLUP Summary Statistics - All Years with Significant Genotype Effects
+```{r blups-table-cnj02-all-top, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%", tab.cap="CNJ02 Population Trait and BLUP Summary for *All Years* model.  Only models with significant (*p < 0.05*) genotypic effects are displayed."}
 load(file=paste0(cnj02_workflow,"/.RData.01_genBLUP"))
 full_tbl_reduced_flex  <- generateReducedTableFlex(model.collated.summary.wide.tb %>% filter(h2 > 0.6) %>% filter(model == 'all-years') %>% filter(GLRpvalue < 0.05))
 knitr::knit_print(full_tbl_reduced_flex)
 ```
 
-### CNJ04 - BLUPs
-```{r blups-table-cnj04-all-top, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%", tab.cap="CNJ04 Population Trait and BLUP Summary for *All Years* model.  Only models with significant (*p > 0.05*) genotypic effects are displayed."}
+### CNJ04 - BLUP Summary Statistics - All Years with Significant Genotype Effects
+```{r blups-table-cnj04-all-top, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%", tab.cap="CNJ04 Population Trait and BLUP Summary for *All Years* model.  Only models with significant (*p < 0.05*) genotypic effects are displayed."}
 load(file=paste0(cnj04_workflow,"/.RData.01_genBLUP"))
 full_tbl_reduced_flex  <- generateReducedTableFlex(model.collated.summary.wide.tb %>% filter(h2 > 0.6) %>% filter(model == 'all-years') %>% filter(GLRpvalue < 0.05))
 knitr::knit_print(full_tbl_reduced_flex)
 ```
 
-## QTL Tables
+## QTL
+
+```{r qtl-plot-cnj02-setup, echo=FALSE, message=FALSE, include=TRUE}
+    imageA <- "../Data/publication/figures/cnj02.circos.yield.png"
+    imageAA <- "../Data/publication/figures/cnj02.circos.yield.A.png"
+    imageB <- "../Data/publication/figures/cnj02.circos.chemistry.png"
+    imageBB <- "../Data/publication/figures/cnj02.circos.chemistry.B.png"
+    imageCombined <- "../Data/publication/figures/cnj02.circos.png"
+
+```
+
+```{r qtl-plot-cnj02-annotate, echo=FALSE, message=FALSE, include=FALSE, eval=params$fig_gen_annotations}
+    system2("misc/annotatefig.sh", args=c(imageA,"A"))
+    system2("misc/annotatefig.sh", args=c(imageB,"B"))
+```
+
+```{r qtl-plot-cnj02-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+0","-tile","2x1",imageAA,imageBB,imageCombined))
+```
+
+```{r qtl-plot-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Notable QTL found in population CNJ02.  A) Yield-related traits.  B) Chemistry and chemistry-correlated traits."}
+    knitr::include_graphics(imageCombined)
+```
+
+```{r qtl-plot-cnj04-setup, echo=FALSE, message=FALSE, include=TRUE}
+    imageA <- "../Data/publication/figures/cnj04.circos.yield.png"
+    imageAA <- "../Data/publication/figures/cnj04.circos.yield.A.png"
+    imageB <- "../Data/publication/figures/cnj04.circos.chemistry.png"
+    imageBB <- "../Data/publication/figures/cnj04.circos.chemistry.B.png"
+    imageCombined <- "../Data/publication/figures/cnj04.circos.png"
+```
+
+```{r qtl-plot-cnj04-annotate, echo=FALSE, message=FALSE, include=FALSE, eval=params$fig_gen_annotations}
+    system2("misc/annotatefig.sh", args=c(imageA,"A"))
+    system2("misc/annotatefig.sh", args=c(imageB,"B"))
+```
+
+```{r qtl-plot-cnj04-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+0","-tile","2x1",imageAA,imageBB,imageCombined))
+```
+
+```{r qtl-plot-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Notable QTL found in population CNJ04.  A) Yield-related traits.  B) Chemistry and chemistry-correlated traits."}
+    knitr::include_graphics(imageCombined)
+```
 
 ### CNJ02 - Scanone
 #```{r qtl-table-scanone-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
