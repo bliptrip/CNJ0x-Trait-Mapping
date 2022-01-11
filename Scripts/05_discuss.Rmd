@@ -49,6 +49,12 @@ b/w populations.
     - Mention that the largest set of collocated QTLs on LG 3 is intriguing, b/c one of them is derived from an entirely
       different set of data (plot data -- plot mean fruit weigth) versus the upright mean fruit weight data.  Shows
       overlap b/w datasets (check to see how UMFM and MFM correlate)
+    - Mention that total yield also has a closely linked QTL on LG3, but not collocated likely b/c total yield involves
+      a more complex mix of factors.
+    - On linkage group 11, largest *berry weight* and *upright mean fruit mass* are collocated at 30cM, while plot mean fruit mass is closely
+linked at 25cM. All three have the same genotype (*BD*) with the largest effect, indicating that they could all be
+driven by the same QTL. 
+
 - For CNJ04, although a lower LvW ratio is preferred for rounder berries, selecting for this could result in smaller
   berries by dragging in berries with shorter lengths.  Thus, it would make sense to select for berries with larger
   widths to offset this trend.  Although the heritability of berry width is such that it is not displayed in table

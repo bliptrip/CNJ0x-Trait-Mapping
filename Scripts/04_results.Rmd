@@ -480,7 +480,19 @@ length versus width* and *chimera eccentricity*, a collocated QTL on linkage gro
 small, but statisically meaningful association such that genotype *BD* will produce rounder berries (important for fruit
 processing).
 
-For yield-relevant traits, three linkage groups stand out: linkage groups 3, 10, and 11 (\@ref(fig:qtl-plot-cnj02)).  
+For yield-relevant traits, three linkage groups stand out: linkage groups 3, 10, and 11 (figure \@ref(fig:qtl-plot-cnj02)A).
+The greatest set of collocated QTLs is found on linkage group 3, with largest *berry length*, largest *berry weight*,
+*plot mean fruit mass*, and *upright mean fruit mass* all with a QTL around position 46-47cM.  Linkage group 10 is
+noteable for having the largest number of top-tier yield-related QTLs.  On linkage group 10, largest *berry length* and largest
+*berry weight* are closely linked (52cM and 49cM, respectively), as are *plot mean fruit mass* and *upright mean
+fruit mass* (39cM and 37cM, respectively).  Also within linkage group 10, large and signficant QTL can be found for
+largest *berry width* (28cM), *length vs. width* (63cM), and upright *total berry weight* (43cM).  On linkage group
+11, largest *berry weight* and *upright mean fruit mass* are collocated at 30cM, while plot mean fruit mass is closely
+linked at 25cM.  QTLs for largest *berry width* (40cM) and upright *length vs. width* (81cM) can also be found on
+linkage group 11.
+
+Berry chemistry trait QTLs are highlighted in figure \@ref(fig:qtl-plot-cnj02)B.  There are no clear collocation patterns that
+emerges as with the yield-related traits.
 
  A [complete listing](#cnj02-qtls)
 
