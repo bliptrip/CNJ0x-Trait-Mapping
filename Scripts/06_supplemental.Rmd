@@ -272,39 +272,60 @@ workflow=params$workflow
 ## BLUP Tables
 
 ### CNJ02 - BLUP Summary Statistics - Complete
-```{r blups-table-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%", tab.cap="CNJ02 Population Complete Trait and BLUP Summary."}
+```{r blups-table-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%"}
 load(file=paste0(params$cnj02_workflow,"/.RData.01_genBLUP"))
-full_tbl_all_flex  <- generateFullTableFlex(model.collated.summary.wide.tb)
+full_tbl_all_flex  <- generateFullTableFlex(model.collated.summary.wide.tb, caption="CNJ02 Population Complete Trait and BLUP Summary.")
 knitr::knit_print(full_tbl_all_flex)
 ```
 
 ### CNJ04 - BLUP Summary Statistics - Complete
-```{r blups-table-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%", tab.cap="CNJ04 Population Complete Trait and BLUP Summary."}
+```{r blups-table-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%")
 load(file=paste0(params$cnj04_workflow,"/.RData.01_genBLUP"))
-full_tbl_all_flex  <- generateFullTableFlex(model.collated.summary.wide.tb)
+full_tbl_all_flex  <- generateFullTableFlex(model.collated.summary.wide.tb, caption="CNJ04 Population Complete Trait and BLUP Summary.")
 knitr::knit_print(full_tbl_all_flex)
 ```
 
 ## QTL Tables
 
-### CNJ02 - Scanone
+### CNJ02
+
 ```{r qtl-table-scanone-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-load(file=paste0(params$cnj02_workflow,"/.RData.10_01.genQTLtable.scanone.2"))
-print(mtable)
-```
-### CNJ02 - Stepwiseqtl
-```{r qtl-table-stepwiseqtl-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-load(file=paste0(params$cnj02_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
-print(mtable)
+load(file=paste0(cnj02_workflow,"/.RData.10_01.genQTLtable.scanone.2"))
+generateTable(qtl.collated.succinct.tb %>% 
+              arrange(trait,model,desc(marker.variance)))
 ```
 
-### CNJ04 - Scanone
-```{r qtl-table-scanone-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-load(file=paste0(params$cnj04_workflow,"/.RData.10_01.genQTLtable.scanone.2"))
-print(mtable)
+```{r qtl-table-stepwiseqtl-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
+load(file=paste0(cnj02_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
+generateTable(qtl.collated.succinct.tb %>% 
+              arrange(trait,model,desc(marker.variance)))
 ```
-### CNJ04 - Stepwiseqtl
+
+### CNJ04
+
 ```{r qtl-table-stepwiseqtl-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-load(file=paste0(params$cnj04_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
-print(mtable)
+load(file=paste0(cnj04_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
+generateTable(qtl.collated.succinct.tb %>% 
+              arrange(trait,model,desc(marker.variance)))
 ```
+
+## Supplemental Links {#supplemental-links}
+
+### CNJ02 Comprehensive QTL Summary Table With Effect Statistics {#cnj02-qtls}
+```{r qtl-table-cnj02-copy, echo=FALSE, message=FALSE, include=TRUE}
+    #Copy the appropriate data to the 'publication' folder to make it available on server
+    system2("cp", args=c(paste0(cnj02_workflow,"/traits/effects_collated.csv"),"../Data/publication/tables/effects_collated.cnj02.csv"))
+```
+[CNJ02 QTLs]("../Data/publication/tables/effects_collated.cnj02.csv")
+
+### CNJ04 Comprehensive QTL Summary Table With Effect Statistics {#cnj04-qtls}
+```{r qtl-table-cnj04-copy, echo=FALSE, message=FALSE, include=TRUE}
+    #Copy the appropriate data to the 'publication' folder to make it available on server
+    system2("cp", args=c(paste0(cnj04_workflow,"/traits/effects_collated.csv"),"../Data/publication/tables/effects_collated.cnj04.csv"))
+```
+[CNJ04 QTLs]("../Data/publication/tables/effects_collated.cnj04.csv")
+
+### Interactive QTL Browser
+
+* [CNJ02]("https://vaccinium.vcru.wisc.edu/circos-cnj02")
+* [CNJ04]("https://vaccinium.vcru.wisc.edu/circos-cnj04")

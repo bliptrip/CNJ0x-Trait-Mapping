@@ -40,3 +40,24 @@ Evidence of very low heritabilities in traits such as *Brix* and *TA* in populat
 indicate less genetic variation for these traits in CNJ02, but the baseline could be higher -- show a figure of 
 inter-population BLUPS side-by-side to get a good perspective on the absolute amount of selectable additive genetic variation 
 b/w populations.
+
+##QTLs
+
+- Make a comment that smaller population size of CNJ04 could result in overfitting, and hence the higher average model
+  fits than in CNJ02 (almost 17% higher!)
+- CNJ02
+    - Mention that the largest set of collocated QTLs on LG 3 is intriguing, b/c one of them is derived from an entirely
+      different set of data (plot data -- plot mean fruit weigth) versus the upright mean fruit weight data.  Shows
+      overlap b/w datasets (check to see how UMFM and MFM correlate)
+- For CNJ04, although a lower LvW ratio is preferred for rounder berries, selecting for this could result in smaller
+  berries by dragging in berries with shorter lengths.  Thus, it would make sense to select for berries with larger
+  widths to offset this trend.  Although the heritability of berry width is such that it is not displayed in table
+  \@ref(tab:qtl-table-cnj04-sw) because its heritability (0.48) is just below the cutoff of 0.5, lg 9 pos 64.23cM shows
+  a modestly positive effect for genotype *AD*.  Since it is on a separate linkage group from the primary QTL for upright *berry
+  length* (lg 11), it is easy to select for berries with larger widths and lower lengths without worrying about linkage
+  drag.  Also note that CNJ04 much more explicit variation in berry length compared to width, so it is more difficult
+  to select for rounder berries without negatively impacting berry size, and thus yield.  Upright *total berry
+weight* does not even share its top 2 QTL with the same linkage groups as *total yield*, but given that the intertrait
+correlation between them in insignificant, it is not surprising that they do not share QTLs.
+
+

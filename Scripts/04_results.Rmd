@@ -1,3 +1,9 @@
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
 # Results {#results}
 
 ## Trait Correlation Plots
@@ -9,17 +15,24 @@
      p.cnj04.c = round(readRDS(paste0(workflow,"/traits/plots/corrplot.cnj04.rds"))$corr, digits=2)
 ```
 
-
-Non-trivial strong positive (\@ref(fig:trait-corrplots-cnj02-refined)A) and negative (\@ref(fig:trait-corrplots-cnj02-refined)B) 
-correlations for raw phenotypic measurements in population CNJ02, averaged over the three sampling years, highlight a few moderate to 
-strong correlations that serve to guide subsequent analyses in QTL mapping.  The 15 strongest positive and negative inter-trait correlations for
-CNJ02 are shown in barplot in figure \@ref(fig:trait-corrplots-cnj02-refined)C.  Interesting positive associations that emerge from the
-CNJ02 dataset include *SFY × TY*, *MFM × UBM*, *MFM × UMFM*, *UBM × UTBM*, and *MFM × UBW*.  Although not in the top 15 strongest positive correlations,
-*ULvW × UKLvW* shows a moderately strong positive correlation (figure \@ref(fig:trait-corrplots-cnj02), evidence that the largest berry shape categorization 
-(a subjective trait prone to error in recording) is consistent with that of largest
-berry length versus width (an objective trait that is easy to record).  Interesting negative associations that emerge from the CNJ02 dataset include *TY × PAC*, *UCLP × UCLS*, 
-*SFY × PAC*, *SFY × Tacy*, *UNAB × PAC*, *MFM × PAC*, *MFM × UNAF*, and *MFM × UBBL*.
-
+Non-trivial strong positive (\@ref(fig:trait-corrplots-cnj02-refined)A)
+and negative (\@ref(fig:trait-corrplots-cnj02-refined)B) correlations
+for raw phenotypic measurements in population CNJ02, averaged over the
+three sampling years, highlight a few moderate to strong correlations
+that serve to guide subsequent analyses in QTL mapping. The 15 strongest
+positive and negative inter-trait correlations for CNJ02 are shown in
+barplot in figure \@ref(fig:trait-corrplots-cnj02-refined)C. Interesting
+positive associations that emerge from the CNJ02 dataset include *SFY ×
+TY*, *MFM × UBM*, *MFM × UMFM*, *UBM × UTBM*, and *MFM × UBW*. Although
+not in the top 15 strongest positive correlations, *ULvW × UKLvW* shows
+a moderately strong positive correlation (figure
+\@ref(fig:trait-corrplots-cnj02), evidence that the largest berry shape
+categorization (a subjective trait prone to error in recording) is
+consistent with that of largest berry length versus width (an objective
+trait that is easy to record). Interesting negative associations that
+emerge from the CNJ02 dataset include *TY × PAC*, *UCLP × UCLS*, *SFY ×
+PAC*, *SFY × Tacy*, *UNAB × PAC*, *MFM × PAC*, *MFM × UNAF*, and *MFM ×
+UBBL*.
 
 ```{r trait-corrplots-cnj02-refined-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
     system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.png"),"A"))
@@ -32,18 +45,21 @@ berry length versus width (an objective trait that is easy to record).  Interest
     system2("montage", args=c("-background","white","-geometry","4096x2048+0+20","-tile","1x2",paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.AB.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj02.flat.C.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.combined.png")))
 ```
 
-```{r trait-corrplots-cnj02-refined, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Significant ($p < 0.5$) trait phenotype correlation heatmaps for boxed traits in population CNJ02, ordered by A) positive correlations and B) negative correlations.  C) Top 15 positive and negative correlations for CNJ04."}  
+```{r trait-corrplots-cnj02-refined, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Significant ($p < 0.5$) trait phenotype correlation heatmaps for boxed traits in population CNJ02, ordered by A) positive correlations and B) negative correlations.  C) Top 15 positive and negative correlations for CNJ04."}
     knitr::include_graphics(paste0(params$workflow,"/traits/plots/corrplot.cnj02.refined.combined.png"))
 ```
 
 ### CNJ04-refined
 
-Noteworthy inter-trait correlations in population CNJ04 are shown in figure \@ref(fig:trait-corrplots-cnj04-refined),
-with the 15 most salient positive and negative correlations shown in subplot C.  Positive associations that stand out
-include *SFY × TY*, *MFM × UBM*, *UBM × UBL*.  Compared to CNJ02, CNJ04 has  weaker correlations for traits
-*UBM x UBW* (`r p.cnj04.c['UBM','UBW']` vs. `r p.cnj02.c['UBM','UBW']`) and *UBM × UBL* (`r p.cnj04.c['UBM','UBL']` vs. `r p.cnj02.c['UBM','UBL']`).    Interesting inter-trait negative
-correlations include *ULvW × UKSO*, *Brix × UBL*, *PFR × UNB*, *Brix × UNS*.  
-
+Noteworthy inter-trait correlations in population CNJ04 are shown in
+figure \@ref(fig:trait-corrplots-cnj04-refined), with the 15 most
+salient positive and negative correlations shown in subplot C. Positive
+associations that stand out include *SFY × TY*, *MFM × UBM*, *UBM ×
+UBL*. Compared to CNJ02, CNJ04 has weaker correlations for traits *UBM x
+UBW* (`r p.cnj04.c['UBM','UBW']` vs. `r p.cnj02.c['UBM','UBW']`) and
+*UBM × UBL* (`r p.cnj04.c['UBM','UBL']` vs. `r p.cnj02.c['UBM','UBL']`).
+Interesting inter-trait negative correlations include *ULvW × UKSO*,
+*Brix × UBL*, *PFR × UNB*, *Brix × UNS*.
 
 ```{r trait-corrplots-cnj04-refined-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
     system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj04.refined.png"),"A"))
@@ -124,26 +140,39 @@ correlations include *ULvW × UKSO*, *Brix × UBL*, *PFR × UNB*, *Brix × UNS*.
     workflow=params$workflow
 ```
 
+For both populations, the highest heritabilities were found for the
+upright yield-related traits and the plot traits (figure
+\@ref(fig:trait-h2-cnj0x)). Generally, the *all year* models (equation
+\@ref(eq:mm-year-ge)) had the highest heritabilities when compared to
+the fitted models for individual years. Traits with consistently high
+heritability in both populations are displayed in figure
+\@ref(fig:h2-top) next to boxplots of their associated phenotypes and
+BLUPs. The heritabilities are sorted from highest to lowest and
+represent the minimum heritability between the two populations. The
+BLUPs and phenotype boxplot distributions are standardized against the
+raw phenotype trait values in order to demonstrate that models with
+higher heritabilities encapsulate more of the phenotypic variation.
+Trait *ULvW* has an extraordinarily high heritability in both
+populations, followed by *UBL* and *UNS*. *Tacy*, a desirable trait
+associated with fruit color, also shows evidence of high heritability.
+High heritabilities in *UBM*, *UMFM*, and *TY* indicate strong potential
+for selecting for higher yields in both of these two populations.
+Although only modest, the heritability of traits like *SFY* and *PFR*
+show some potential for selecting rot-resistant varieties for growing in
+regions where berry rot is a problem. Fruit quality traits such as *TA*
+and *Brix* show very low *all year* heritabilities in population CNJ02
+but higher heritability in CNJ04.
 
-For both populations, the highest heritabilities were found for the upright yield-related traits and the plot traits (figure \@ref(fig:trait-h2-cnj0x)).
-Generally, the *all year* models (equation \@ref(eq:mm-year-ge)) had the highest heritabilities when compared to the fitted models for individual years.
-Traits with consistently high heritability in both populations are displayed in figure \@ref(fig:h2-top) next to
-boxplots of their associated phenotypes and BLUPs.  The heritabilities are sorted from highest to lowest and represent
-the minimum heritability between the two populations.  The BLUPs and phenotype boxplot distributions are standardized against the raw phenotype trait values in order
-to demonstrate that models with higher heritabilities encapsulate more of the phenotypic variation.
-Trait *ULvW* has an extraordinarily high heritability in both populations, followed by *UBL* and *UNS*.  *Tacy*, a desirable trait associated with fruit color, also shows evidence of 
-high heritability.  High heritabilities in *UBM*, *UMFM*, and *TY* indicate strong potential for selecting for higher
-yields in both of these two populations.  Although only modest, the heritability of traits like *SFY* and *PFR* show
-some potential for selecting rot-resistant varieties for growing in regions where berry rot is a problem.  Fruit quality
-traits such as *TA* and *Brix* show very low *all year* heritabilities in population CNJ02 but higher heritability in
-CNJ04.
-
-Figure \@ref(fig:h2-brcorr) displays *all year* model heritabilities sorted highest to lowest for each population
-separately next to the calculated Spearman rank correlation coefficient for the genotype BLUPs relative to their raw
-phenotypes.  Despite having low heritability, traits such as *UL* in CNJ04 continue to show moderate to strong
-correlation between the BLUPs and their raw trait values (*e.g.*, $h^2 = $ `r cnj04.combined.ul.h2`, $ρ = $ `r cnj04.combined.ul.brcorrs`), indicating
-that the models continue to maintain good genotype stability when presented with traits that have incredibly low
-heritability and that issues with genotype × environment interaction are minimal.
+Figure \@ref(fig:h2-brcorr) displays *all year* model heritabilities
+sorted highest to lowest for each population separately next to the
+calculated Spearman rank correlation coefficient for the genotype BLUPs
+relative to their raw phenotypes. Despite having low heritability,
+traits such as *UL* in CNJ04 continue to show moderate to strong
+correlation between the BLUPs and their raw trait values (*e.g.*, \$h\^2
+= \$ `r cnj04.combined.ul.h2`, \$ρ = \$ `r cnj04.combined.ul.brcorrs`),
+indicating that the models continue to maintain good genotype stability
+when presented with traits that have incredibly low heritability and
+that issues with genotype × environment interaction are minimal.
 
 ```{r h2-top-pre, echo=FALSE, message=FALSE, include=TRUE}
     p1 <- model.collated.long.tb.both %>% 
@@ -253,22 +282,232 @@ heritability and that issues with genotype × environment interaction are minima
     knitr::include_graphics("../Data/publication/figures/h2_barplot.polar.cnj0x.png")
 ```
 
+### Population Summary Statistics
 
-### CNJ02 - BLUP Summary Statistics - All Years with Significant Genotype Effects
-```{r blups-table-cnj02-all-top, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%", tab.cap="CNJ02 Population Trait and BLUP Summary for *All Years* model.  Only models with significant (*p < 0.05*) genotypic effects are displayed."}
+Population CNJ02 and CNJ04 both displayed evidence of transgressive segregation in many of the traits.  Tables
+\@ref(tab:blups-table-cnj02-all-top) and \@ref(tab:blups-table-cnj04-all-top) show summary statistics for traits and their
+associated BLUPs for the *all year* model.  Rows are sorted by decreasing heritability, and only models with significant
+genotypic effects (*p < 0.05*) and heritability above 0.5 are displayed.  Optimal model random effect terms used in
+fitting each model are shown.  Raw trait associated statistics are subscripted with the letter *r*, and BLUP associated
+statistics are subscripted with the letter *b* and are italicized.  The top and bottom five representative genotypes,
+both for raw traits and for genotype BLUPs, are also shown.
+
+
+```{r blups-table-cnj02-all-top, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%"}
 load(file=paste0(cnj02_workflow,"/.RData.01_genBLUP"))
-full_tbl_reduced_flex  <- generateReducedTableFlex(model.collated.summary.wide.tb %>% filter(h2 > 0.6) %>% filter(model == 'all-years') %>% filter(GLRpvalue < 0.05))
-knitr::knit_print(full_tbl_reduced_flex)
+full_tbl_reduced <- generateReducedTable(model.collated.summary.wide.tb %>% filter(model == 'all-years') %>% filter(h2 > 0.5) %>% filter(GLRpvalue < 0.05), caption="CNJ02 Population Trait and BLUP Summary for *All Years* model with heritability above 0.5.  Only models with significant (*p < 0.05*) genotypic effects are displayed.")
+full_tbl_reduced
 ```
 
-### CNJ04 - BLUP Summary Statistics - All Years with Significant Genotype Effects
-```{r blups-table-cnj04-all-top, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%", tab.cap="CNJ04 Population Trait and BLUP Summary for *All Years* model.  Only models with significant (*p < 0.05*) genotypic effects are displayed."}
+```{r blups-table-cnj04-all-top, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%"}
 load(file=paste0(cnj04_workflow,"/.RData.01_genBLUP"))
-full_tbl_reduced_flex  <- generateReducedTableFlex(model.collated.summary.wide.tb %>% filter(h2 > 0.6) %>% filter(model == 'all-years') %>% filter(GLRpvalue < 0.05))
-knitr::knit_print(full_tbl_reduced_flex)
+full_tbl_reduced <- generateReducedTable(model.collated.summary.wide.tb %>% filter(model == 'all-years') %>% filter(h2 > 0.5) %>% filter(GLRpvalue < 0.05), caption="CNJ04 Population Trait and BLUP Summary for *All Years* model with heritability above 0.5.  Only models with significant (*p < 0.05*) genotypic effects are displayed.")
+full_tbl_reduced
+```
+
+```{r blups-plot-cnj0x-rank-sum-defs, echo=FALSE, message=FALSE, include=TRUE}
+rank_blups <- function(blups, traits, direction=1, prop=.10) {
+    o1 <- blups %>%
+                filter(!(id %in% c(P1_Name,P2_Name))) %>%
+                filter(label_short %in% traits) %>%
+                filter(type == "BLUPs") %>%
+                mutate(id=gsub(paste0(POP_Name,"_([0-9]+_[0-9]+)"),"g\\1",id)) %>%
+                group_by(model,label_short)
+    if( direction >= 0 ) {
+        o2 <- o1 %>% slice_max(value,prop=prop)
+    } else {
+        o2 <- o1 %>% slice_min(value,prop=prop)
+    }
+    o3 <- o2 %>%
+             ungroup() %>%
+             group_by(model,label_short)
+    if( direction >= 0 ) {
+        o4 <- o3 %>% arrange(value, .by_group=TRUE)
+    } else {
+        o4 <- o3 %>% arrange(desc(value), .by_group=TRUE)
+    }
+    o5 <- o4 %>% 
+             mutate(frank=1:length(id)) %>%
+             ungroup()
+    return(o5)
+}
+
+sum_ranks <- function(blups.ranked) {
+    blups.sums <- blups.ranked %>% 
+                  select(model,label_short,id,frank) %>% 
+                  group_by(model,id) %>% 
+                  summarize(rankcount=sum(frank)) %>%
+                  arrange(desc(rankcount)) %>%
+                  filter(model=="all-years") %>% 
+                  mutate(id=factor(id, levels=id, ordered=TRUE))
+    return(blups.sums)
+}
+
+plot_rank_sums <- function(blups.ranked, blups.sums, filename) {
+    p <- ggplot(blups.ranked %>% filter(model == "all-years"), aes(x=frank, y=factor(id, levels=rev(blups.sums$id), ordered=TRUE), fill=label_short)) + 
+            geom_bar(stat="identity", position=position_stack(), alpha=0.9) + 
+            scale_fill_brewer(
+                type="qual",
+                palette="Paired") +
+            theme_minimal() +
+            theme(plot.title = element_text(face="bold",size=10,hjust=0.5),
+                axis.title = element_text(face="bold",size=9,hjust=0.5),
+                axis.text.x  = element_text(size=7),
+                axis.text.y  = element_text(size=7),
+                legend.text=element_text(size=8),
+                legend.title=element_text(face="bold",size=10)) +
+            labs(x="Rank Count",
+                y="Genotype",
+                fill="Trait",
+                title=paste0(POP_Name," Rank Sum of Top 10 Percent Genotypes"))
+    ggsave(filename=filename, plot=p, device="png", bg="white", width=12, height=20, units="cm", dpi=300)
+}
+
+imageA <- "../Data/publication/figures/cnj02.blups.rank_sums.png"
+imageAA <- "../Data/publication/figures/cnj02.blups.rank_sums.A.png"
+imageB <- "../Data/publication/figures/cnj04.blups.rank_sums.png"
+imageBB <- "../Data/publication/figures/cnj04.blups.rank_sums.B.png"
+imageCombined <- "../Data/publication/figures/cnj0x.blups.rank_sums.png"
+```
+
+```{r blups-plot-cnj02-rank-sum-plot, echo=FALSE, message=FALSE, include=TRUE}
+load(file=paste0(cnj02_workflow,"/.RData.01_genBLUP"))
+#Traits where higher values are preferred
+positive_traits <- c("UBM","SFY","Tacy","MFM","UMFM")
+#Traits where lower values are preferred
+negative_traits <- c("ULvW","UKEC","PFR")
+
+pts <- rank_blups(model.collated.long.tb, positive_traits)
+nts <- rank_blups(model.collated.long.tb, negative_traits, direction=-1)
+pnts <- bind_rows(pts,nts)
+brs <- sum_ranks(pnts)
+plot_rank_sums(pnts, brs, filename=imageA)
+```
+
+```{r blups-plot-cnj04-rank-sum-plot, echo=FALSE, message=FALSE, include=TRUE}
+load(file=paste0(cnj04_workflow,"/.RData.01_genBLUP"))
+#Traits where higher values are preferred
+positive_traits <- c("UBM","SFY","Tacy","MFM","UMFM","Brix")
+#Traits where lower values are preferred
+negative_traits <- c("ULvW","UKEC","PFR")
+
+pts <- rank_blups(model.collated.long.tb, positive_traits)
+nts <- rank_blups(model.collated.long.tb, negative_traits, direction=-1)
+pnts <- bind_rows(pts,nts)
+brs <- sum_ranks(pnts)
+plot_rank_sums(pnts, brs, filename="../Data/publication/figures/cnj04.blups.rank_sums.png")
+workflow = "../Workflows/9" #Reset
+```
+
+```{r blups-plot-cnj0x-rank-sum-plot-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
+    system2("misc/annotatefig.sh", args=c(imageA,"A"))
+    system2("misc/annotatefig.sh", args=c(imageB,"B"))
+```
+
+```{r blups-plot-cnj0x-rank-sum-plot-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montage}
+    system2("montage", args=c("-background","white","-geometry","1425x2370+20+20","-tile","2x1",imageAA,imageBB,imageCombined))
+```
+
+A distribution of the top genotypes broken down by ranking the top BLUPs indicates a few strong candidates for selection in a breeding
+program \@ref(fig:blups-plot-cnj0x-rank-sum-plot).  For population CNJ02, genotypes *CNJ02_1_38*, *CNJ02_1_82*, *CNJ02_1_17*,  *CNJ02_1_77*,  
+and *CNJ02_1_57* have high combined BLUP ranking for largest berry traits such as *UBM* and *UMFM*, in addition to the mean fruit mass of 
+the plot-sampled traits (*MFM*).  When considering other traits important to breeding, such as larger overall sound fruit yield (*SFY*) and low
+fruit rot (*PFR*), genotype *CNJ02_1_118* shows promise.  Genotypes *CNJ02_1_138* and *CNJ02_1_100* are ideal nominees when
+considering berry quality characteristics such as *Tacy* and rounder berries (low *UKEC* and low *ULvW*).  Because the
+CNJ04 population is significantly smaller, less candidates are available with stacked traits.  However, *CNJ04_21_10*
+and *CNJ04_2_5* shows excellent potential as selection candidates for berries with high *MFM* and largest berry mass
+(*UBM*), while *CNJ04_21_10* has high ranking with A  *SFY*.  *CNJ04_21_32* combines high *Tacy* with high *MFM* and
+rounder berries (low *ULvW*).  *CNJ04_2_24* combines high *Tacy* with low fruit rot (*PFR*), along with rounder berries
+(low *UKEC* and low *ULvW*).  *CNJ04_2_12* stacks higher *Brix* with rounder berries (low *UKEC*).
+
+```{r blups-plot-cnj0x-rank-sum-plot, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Rank-sum of top 10 percent of genotypeis for a selected subset of trait BLUPs  for the *all year* model.  A) Population CNJ02 and b) Population CNJ04.  Genotype identifier is abbreviated: g<num> => CNJ02_<num>.  eg: g1_77 => CNJ02_1_77"}
+    knitr::include_graphics(imageCombined)
 ```
 
 ## QTL
+
+### CNJ02 
+
+
+```{r qtl-table-defs, echo=FALSE, message=FALSE, include=TRUE}
+qtls.cnj02.tb <- read_csv(paste0(cnj02_workflow,"/traits/effects_collated.csv"))
+qtls.cnj02.s1.modv <- round(mean((qtls.cnj02.tb %>% filter(method=="scanone") %>% group_by(model) %>% summarize(model_variance=mean(model_variance)) %>% ungroup())$model_variance), digits=1)
+qtls.cnj02.s1.markv <- round(mean((qtls.cnj02.tb %>% filter(method=="scanone") %>% group_by(model) %>% summarize(marker_variance=mean(marker_variance)) %>% ungroup())$marker_variance), digits=1)
+qtls.cnj02.s1.nqtls <- round(mean((qtls.cnj02.tb %>% filter(method == "scanone") %>% nest_by(model,trait,chr,position) %>% group_by(model,trait) %>% summarize(nqtls=n()))$nqtls), digits=1) 
+qtls.cnj02.s1.ntraits <- length(unique((qtls.cnj02.tb %>% filter(method == 'scanone') %>% group_by(model,trait) %>% summarize(marker_variance=mean(marker_variance)))$trait)) 
+qtls.cnj02.sw.modv <- round(mean((qtls.cnj02.tb %>% filter(method=="stepwiseqtl") %>% group_by(model) %>% summarize(model_variance=mean(model_variance)) %>% ungroup())$model_variance), digits=1)
+qtls.cnj02.sw.markv <- round(mean((qtls.cnj02.tb %>% filter(method=="stepwiseqtl") %>% group_by(model) %>% summarize(marker_variance=mean(marker_variance)) %>% ungroup())$marker_variance), digits=1)
+qtls.cnj02.sw.nqtls <- round(mean((qtls.cnj02.tb %>% filter(method == "stepwiseqtl") %>% nest_by(model,trait,chr,position) %>% group_by(model,trait) %>% summarize(nqtls=n()))$nqtls), digits=1) 
+qtls.cnj02.sw.ntraits <- length(unique((qtls.cnj02.tb %>% filter(method == 'stepwiseqtl'))$trait)) 
+
+qtls.cnj04.tb <- read_csv(paste0(cnj04_workflow,"/traits/effects_collated.csv"))
+qtls.cnj04.s1.modv <- round(mean((qtls.cnj04.tb %>% filter(method=="scanone") %>% group_by(model) %>% summarize(model_variance=mean(model_variance)) %>% ungroup())$model_variance), digits=1)
+qtls.cnj04.s1.markv <- round(mean((qtls.cnj04.tb %>% filter(method=="scanone") %>% group_by(model) %>% summarize(marker_variance=mean(marker_variance)) %>% ungroup())$marker_variance), digits=1)
+qtls.cnj04.s1.nqtls <- round(mean((qtls.cnj04.tb %>% filter(method == "scanone") %>% nest_by(model,trait,chr,position) %>% group_by(model,trait) %>% summarize(nqtls=n()))$nqtls), digits=1) 
+qtls.cnj04.s1.ntraits <- length(unique((qtls.cnj04.tb %>% filter(method == 'scanone') %>% group_by(model,trait) %>% summarize(marker_variance=mean(marker_variance)))$trait)) 
+qtls.cnj04.sw.modv <- round(mean((qtls.cnj04.tb %>% filter(method=="stepwiseqtl") %>% group_by(model) %>% summarize(model_variance=mean(model_variance)) %>% ungroup())$model_variance), digits=1)
+qtls.cnj04.sw.markv <- round(mean((qtls.cnj04.tb %>% filter(method=="stepwiseqtl") %>% group_by(model) %>% summarize(marker_variance=mean(marker_variance)) %>% ungroup())$marker_variance), digits=1)
+qtls.cnj04.sw.nqtls <- round(mean((qtls.cnj04.tb %>% filter(method == "stepwiseqtl") %>% nest_by(model,trait,chr,position) %>% group_by(model,trait) %>% summarize(nqtls=n()))$nqtls), digits=1) 
+qtls.cnj04.sw.ntraits <- length(unique((qtls.cnj04.tb %>% filter(method == 'stepwiseqtl'))$trait)) 
+
+```
+
+For the CNJ02 population, we discovered an average of `r qtls.cnj02.s1.nqtls` QTLs per *trait × model* combination  across `r qtls.cnj02.s1.ntraits` 
+traits for the `scanone` method and `r qtls.cnj02.sw.nqtls` QTLs per *trait × model* across `r qtls.cnj02.sw.ntraits` traits for the `stepwiseqtl` 
+method.   The `scanone` average total BLUP variance explained per QTL was `r qtls.cnj02.s1.markv` percent, with an average BLUP variance explained by
+all QTLs per *trait × model* of `r qtls.cnj02.s1.modv` percent.  The `stepwiseqtl` average total BLUP variance explained per QTL was `r qtls.cnj02.sw.markv` 
+percent, with an average BLUP variance explained by all fitted QTLs per *trait × model* of `r qtls.cnj02.sw.modv` percent.
+
+A summary of the top `stepwiseqtl` QTLs discovered for the CNJ02 population for the *All Years* model can be found in
+Table \@ref(tab:qtl-table-cnj02-sw).  This summary of QTLs only shows trait models with significant genotype effects and
+heritability higher than 0.5, sorted from highest to lowest heritability (same trait order as \@ref(tab:blups-table-cnj02-all-top)).  From the marker
+variance and effect plots, a few traits and their associated QTLs of note emerge.  For largest upright *berry length*, linkage group 10 at
+position 51.79cM, progeny display a 1.94mm advantage of allele *B* over *A* (maternal effect) and a 1.09mm advantage of *C*
+over *D* (paternal effect), with progeny genotype *BC* showing the largest breeding advantage.  A similar pattern
+emerges with the largest berry *number of seeds* on linkage group 6 (position 51.28cM),
+although the *BC* genotype advantage is not as salient due to larger genotype variance and a lower mean interaction
+effect.   For total anthocyanins (Tacy), linkage group 3, position 56.18cM shows a clear advantage in the *·D* genotype over
+*·C* genotype, with an average higher Tacy content of around 12.6 mg units per 100 mg fruit.  As opposite sides of
+the same coin, *sound fruit yield* and *percent fruit rot* have a collocated QTL on LG 11 (21.88cM and 17.25cM,
+respectively) that appears to be have a noticeable impact on fruit rot in CNJ02.  CNJ02 progeny with genotype *AC* shows 
+evidence of higher *sound fruit yield* and lower *percent fruit rot* than the other genotypes.  Largest *berry weight* and
+*upright mean fruit mass* both have a QTL on LG 11 at position 30.32cM, with the average effect of allele *D* giving an
+average 0.42 gram and 0.36 gram/berry advantage over allele *C*.  Plot *total yield* demonstrates and average allelic
+effect of *C* over *D* of around 65 grams per square foot on linkage group 12 (position 48.76cM).  Given that the
+genotypic effects for the upright berry *length versus width* were not found to be significant in the *all-year* model for
+CNJ02, the berry *chimera length versus width* and *chimera eccentricity* represented good proxies.  For both *chimera
+length versus width* and *chimera eccentricity*, a collocated QTL on linkage group 3 at around position 30cM shows a
+small, but statisically meaningful association such that genotype *BD* will produce rounder berries (important for fruit
+processing).
+
+For yield-relevant traits, three linkage groups stand out: linkage groups 3, 10, and 11 (\@ref(fig:qtl-plot-cnj02)).  
+
+ A [complete listing](#cnj02-qtls)
+
+```{r qtl-table-cnj02-sw, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%"}
+load(file=paste0(cnj02_workflow,"/.RData.01_genBLUP"))
+models.filtered <- model.collated.summary.wide.tb %>% 
+                        filter(model == 'all-years') %>% 
+                        filter(h2 > 0.5) %>% 
+                        filter(GLRpvalue < 0.05) %>% 
+                        arrange(desc(h2)) %>%
+                        mutate(trait=factor(as.character(trait), levels=as.character(trait), ordered=TRUE))
+load(file=paste0(cnj02_workflow,"/.RData.12_geneffects.2"))
+generateReducedTable(effs.complete.tb %>% 
+                     filter(model=='all-years' &
+                            method=='stepwiseqtl' &
+                            trait %in% models.filtered$trait) %>% 
+                     mutate(trait = factor(as.character(trait), levels=levels(models.filtered$trait), ordered=TRUE)) %>%
+                     arrange(trait,desc(marker_variance)),
+                     caption="CNJ02 Population Top 2 QTLs for *All Years* model, QTLs fit using *stepwiseqtl()* function, with effect plots.  Only models with heritability > 0.5 and with significant genotypic effects (*p < 0.05*) are displayed.")
+#load(file=paste0(cnj02_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
+#generateReducedTable(qtl.collated.succinct.tb %>% 
+#                     filter(model=='all-years') %>% 
+#                     filter(trait %in% models.filtered$trait) %>%
+#                     mutate(trait = factor(as.character(trait), levels=levels(models.filtered$trait), ordered=TRUE)) %>%
+#                     arrange(trait,desc(marker.variance)),
+#                     caption="CNJ02 Population Top 2 QTLs for *All Years* model, QTLs fit using *stepwiseqtl()* function.  Only models with heritability > 0.5 and with significant genotypic effects (*p < 0.05*) are displayed.")
+```
 
 ```{r qtl-plot-cnj02-setup, echo=FALSE, message=FALSE, include=TRUE}
     imageA <- "../Data/publication/figures/cnj02.circos.yield.png"
@@ -276,7 +515,6 @@ knitr::knit_print(full_tbl_reduced_flex)
     imageB <- "../Data/publication/figures/cnj02.circos.chemistry.png"
     imageBB <- "../Data/publication/figures/cnj02.circos.chemistry.B.png"
     imageCombined <- "../Data/publication/figures/cnj02.circos.png"
-
 ```
 
 ```{r qtl-plot-cnj02-annotate, echo=FALSE, message=FALSE, include=FALSE, eval=params$fig_gen_annotations}
@@ -290,6 +528,63 @@ knitr::knit_print(full_tbl_reduced_flex)
 
 ```{r qtl-plot-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Notable QTL found in population CNJ02.  A) Yield-related traits.  B) Chemistry and chemistry-correlated traits."}
     knitr::include_graphics(imageCombined)
+```
+
+### CNJ04
+
+Despite having a lower population size (*n = 72*), and thus lower power to find statistically significant QTLs,
+QTLs were still found in CNJ04.  The CNJ04 population showed average of `r qtls.cnj04.s1.nqtls` QTLs per *trait × model* combination  across `r qtls.cnj04.s1.ntraits` 
+traits for the `scanone` method and `r qtls.cnj04.sw.nqtls` QTLs per *trait × model* across `r qtls.cnj04.sw.ntraits` traits for the `stepwiseqtl` 
+method.   The `scanone` average total BLUP variance explained per QTL was `r qtls.cnj04.s1.markv` percent, with an average BLUP variance explained by
+all QTLs per *trait × model* of `r qtls.cnj04.s1.modv` percent.  The `stepwiseqtl` average total BLUP variance explained per QTL was `r qtls.cnj04.sw.markv` 
+percent, with an average BLUP variance explained by all QTLs per *trait × model* of `r qtls.cnj04.sw.modv` percent.
+
+Similar to population CNJ02, a summary of the top 2 `stepwiseqtl` QTLs for the *all years* 
+model can be found in Table \@ref(tab:qtl-table-cnj04-sw), with traits sorted by decreasing heritability 
+(same trait order as \@ref(tab:blups-table-cnj04-all-top)).  For largest upright berry *length vs. width*, linkage group
+11, position 11.74cM, progeny with *BD* genotype demonstrate around 10 percent more roundness in berry shape.
+A highly linked QTL in largest *berry length*, linkage group 11 and position 5.09cM, appears to be the main driver of this
+lower *length vs. width* ratio.  For *Tacy*, although a QTL on linkage group 6 explains most of the genetic variation (10.08
+percent) in the trait, linkage group 3 shows evidence of having an important role in explaining *Tacy* variation just as
+in the CNJ02 population.  This QTL on linkage group 3, position 36.49cM, suggests that most of the variation is on the
+paternal side, with a 14.21 $\frac{mg}/{100mg\ fruit}$ advantage of allele *D* over *C*.  Also as in CNJ02, the largest significant
+QTL for *total yield* is found on linkage group 12 and position 48.76cM, with genotype *AC* showing the largest genotype
+effect.  Interestingly, despite having a moderate positive correlation with largest berry *length vs. width* (0.62), the
+top two QTLs for *chimera length v. width* are on linkage groups 4 (10.82cM) and 1 (14.48cM).  These QTL are closely linked
+to other significant QTL found for *length vs. width* without appearing to be linked to QTLs associated with *berry
+width* or *berry length*, avoiding negative linkage drag ([supplemental link](#cnj04-qtl)).  If a lower overall acidity is
+preferred, a significant QTL at linkage group 11, position 16.42cM, suggests that selecting genotype *BD* will help lower 
+acidity in subsequent generations.  If wanting to select for higher *proanthocyanins* due to their beneficial effects on
+human health, a QTL on linkage group 7, position 25.82cM, indicates a modest improvement by selecting *AC*.  Although
+the absolute effect size is modest and the model variance explained by the QTL is small, *Brix* shows a modest advantage in
+genotype *BC* (around 0.2 percent) on linkage group 9, position 84.81cM.  The very high correlation between *total
+yield* and *sound fruit yield* (0.96) is consistent with these two traits sharing the same top 2 QTLs.
+
+
+
+```{r qtl-table-cnj04-sw, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%"}
+load(file=paste0(cnj04_workflow,"/.RData.01_genBLUP"))
+models.filtered <- model.collated.summary.wide.tb %>% 
+                        filter(model == 'all-years') %>% 
+                        filter(h2 > 0.5) %>% 
+                        filter(GLRpvalue < 0.05) %>% 
+                        arrange(desc(h2)) %>%
+                        mutate(trait=factor(as.character(trait), levels=as.character(trait), ordered=TRUE))
+load(file=paste0(cnj04_workflow,"/.RData.12_geneffects.2"))
+generateReducedTable(effs.complete.tb %>% 
+                     filter(model=='all-years' &
+                            method=='stepwiseqtl' &
+                            trait %in% models.filtered$trait) %>% 
+                     mutate(trait = factor(as.character(trait), levels=levels(models.filtered$trait), ordered=TRUE)) %>%
+                     arrange(trait,desc(marker_variance)),
+                     caption="CNJ04 Population Top 2 QTLs for *All Years* model, QTLs fit using *stepwiseqtl()* function, with effect plots.  Only models with heritability > 0.5 and with significant genotypic effects (*p < 0.05*) are displayed.")
+#load(file=paste0(cnj04_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
+#generateReducedTable(qtl.collated.succinct.tb %>% 
+#                     filter(model=='all-years') %>% 
+#                     filter(trait %in% models.filtered$trait) %>%
+#                     mutate(trait = factor(as.character(trait), levels=levels(models.filtered$trait), ordered=TRUE)) %>%
+#                     arrange(trait,desc(marker.variance)),
+#                     caption="CNJ04 Population Top 2 QTLs for *All Years* model, QTLs fit using *stepwiseqtl()* function.  Only models with heritability > 0.5 and with significant genotypic effects (*p < 0.05*) are displayed.")
 ```
 
 ```{r qtl-plot-cnj04-setup, echo=FALSE, message=FALSE, include=TRUE}
@@ -312,25 +607,3 @@ knitr::knit_print(full_tbl_reduced_flex)
 ```{r qtl-plot-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Notable QTL found in population CNJ04.  A) Yield-related traits.  B) Chemistry and chemistry-correlated traits."}
     knitr::include_graphics(imageCombined)
 ```
-
-### CNJ02 - Scanone
-#```{r qtl-table-scanone-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-#load(file=paste0(cnj02_workflow,"/.RData.10_01.genQTLtable.scanone.2"))
-#print(mtable)
-#```
-### CNJ02 - Stepwiseqtl
-#```{r qtl-table-stepwiseqtl-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-#load(file=paste0(cnj02_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
-#print(mtable)
-#```
-
-### CNJ04 - Scanone
-#```{r qtl-table-scanone-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-#load(file=paste0(cnj04_workflow,"/.RData.10_01.genQTLtable.scanone.2"))
-#print(mtable)
-#```
-### CNJ04 - Stepwiseqtl
-#```{r qtl-table-stepwiseqtl-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-#load(file=paste0(cnj04_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
-#print(mtable)
-#```
