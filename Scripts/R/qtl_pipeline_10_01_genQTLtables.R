@@ -49,46 +49,94 @@ qtl.collated.filtered.tb <- qtl.collated.tb %>%
                                        trait_name = trait_to_name(trait.cfg.tb,model,trait)) %>%
                                 inner_join(consensusMapWithGenes.filtered.tb, by="marker") %>%
                                 arrange(trait_name,model_name,desc(marker.variance)) %>%
-                                mutate(trait_name=paste0(trait_name,"$^{",unlist(map(GxYLRpvalue,siginfo)),"}$")) %>%
-                                mutate(model_name=paste0(model_name,"$^{",unlist(map(GLRpvalue,siginfo)),"}$")) %>%
-                                       trait_repeat=(trait_name == c("",trait_name[-length(trait_name)])),
-                                       model_repeat=(model_name == c("",model_name[-length(model_name)]))) %>%
                                 group_by(trait_name,model_name) %>%
                                 mutate(top_qtls = c(rep(TRUE,min(num_top_qtls,length(marker.variance))),rep(FALSE,length(marker.variance)-min(num_top_qtls,length(marker.variance))))) %>%
-                                filter(top_qtls == TRUE)
-
+                                filter(top_qtls == TRUE) %>%
+                                ungroup()
 
 qtl.collated.succinct.tb <- qtl.collated.filtered.tb %>%
                                 mutate(marker = ifelse(is.na(marker)," ",marker)) %>%
                                 mutate(blast = ifelse((!is.na(blast1) & !is.na(blast2)),paste0(blast1,";",blast2),ifelse(is.na(blast1),ifelse(is.na(blast2)," ", blast2),blast1))) %>%
-                                mutate(trait_name = ifelse(trait_repeat, "",trait_name),
-                                       model_name = ifelse(model_repeat, "",model_name),
-                                       position = paste0(round.digits(position,2),"\u00b1",round.digits(interval/2,2)),
-                                       qtl.lod = paste0(round.digits(qtl.lod,2),"$^{",unlist(map(qtl.pvalue,siginfo)),"}$")
-                                       ) %>%
-                                select(trait_name,model_name,chr,position,qtl.lod,marker.variance,marker,blast,trait_repeat,model_repeat)
+                                mutate(position = paste0(round.digits(position,2),"\u00b1",round.digits(interval/2,2)),
+                                       qtl.lod = paste0(round.digits(qtl.lod,2),"$^{",unlist(map(qtl.pvalue,siginfo)),"}$"))
 
 
-colnames(qtl.collated.succinct.tb) <- c("Trait", "Model", "Linkage Group", "Marker Location \u00b1 1.5LOD (cM)", "pLOD", "Variance Explained by QTL", "Nearest Marker", "Putative Function", "trait_repeat", "model_repeat")
+generateTableSignifSymbols <- function(tbl) {
+    return( tbl %>%
+                mutate(trait_name=paste0(trait_name,"$^{",unlist(map(GxYLRpvalue,siginfo)),"}$"),
+                       model_name=paste0(model_name,"$^{",unlist(map(GLRpvalue,siginfo)),"}$")) )
+}
 
-mtable <- qtl.collated.succinct.tb %>%
-    select(-trait_repeat,-model_repeat) %>%
-    mutate(`Variance Explained by QTL` = color_bar("lightblue")(percent(`Variance Explained by QTL`/100))) %>%
-	rename('Trait[note]'=Trait,'Model[note]'=Model,'pLOD[note]'=pLOD) %>%
-    kable("html", align='llrrrrll', escape = FALSE, table.attr="id=\"kableTable\"") %>%
-    kable_paper("striped", full_width=FALSE) %>%
-	row_spec(row=which(qtl.collated.succinct.tb[,"Trait"] != ""), extra_css = "border-top: 1px solid #ddd") %>%
-	column_spec(1, bold=TRUE) %>%
-    column_spec(3, width = "1cm") %>%
-    column_spec(4, width = "2.5cm") %>%
-    column_spec(5, width = "2cm") %>%
-    column_spec(8, width = "20cm") %>%
-	add_footnote(c("Significance codes for Genotype:Year Effects\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n", 
-				   "Significance codes for Genotype Effects",
-				   "Significance codes from QTL pvalues"))
+#arrange(trait_name,model_name,desc(marker.variance)) %>%
+generateTableRemoveRepeats <- function(tbl) {
+    return( tbl %>%
+        mutate(trait_repeat=(trait_name == c("",trait_name[-length(trait_name)])),
+                model_repeat=(model_name == c("",model_name[-length(model_name)]))) %>%
+        mutate(trait_name = ifelse(trait_repeat, "",trait_name),
+               model_name = ifelse(model_repeat, "",model_name)) )
+}
 
+generateReducedTable <- function(tbl, caption=NULL) {
+    qtable1 <- tbl %>%
+        generateTableRemoveRepeats() %>%
+        select(trait_name,chr,position,qtl.lod,marker.variance,marker,blast) %>%
+        mutate(marker.variance=color_bar("lightblue")(percent(marker.variance/100))) %>%
+        rename("Trait"=trait_name,
+               "LG"=chr,
+               "Marker Location ± 1.5LOD (cM)"=position,
+               "pLOD"=qtl.lod,
+               "Variance Explained by QTL"=marker.variance,
+               "Nearest Marker"=marker,
+               "Putative Function"=blast)
+    if( is_html_output() ) {
+        qtable2 <- qtable1 %>% kable("html", caption=caption, align='lrrrrll', escape = FALSE, table.attr="id=\"kableTable\"")
+    } else {
+        qtable2 <- qtable1 %>% kable(align='lrrrrll', caption=caption, escape = FALSE)
+    }
+    qtable3  <- qtable2 %>%
+        kable_paper("striped", full_width=FALSE) %>%
+        column_spec(1, bold=TRUE) %>%
+        column_spec(2, width = "1cm") %>%
+        column_spec(3, width = "2cm") %>%
+        column_spec(4, width = "2cm") %>%
+        column_spec(7, width = "7cm")
+    return(qtable3)
+}
 
-generateFlexTable <- function(tbl) {
+generateTable <- function(tbl, caption=NULL) {
+    qtable1 <- tbl %>%
+        generateTableSignifSymbols() %>%
+        generateTableRemoveRepeats() %>%
+        select(trait_name,model_name,chr,position,qtl.lod,marker.variance,marker,blast) %>%
+        mutate(marker.variance=color_bar("lightblue")(percent(marker.variance/100))) %>%
+        rename('Trait[note]'=trait_name,
+               'Model[note]'=model_name,
+               "LG"=chr,
+               "Marker Location ± 1.5LOD (cM)"=position,
+               "pLOD[note]"=qtl.lod,
+               "Variance Explained by QTL"=marker.variance,
+               "Nearest Marker"=marker,
+               "Putative Function"=blast)
+    if( is_html_output() ) {
+        qtable2 <- qtable1 %>% kable("html", caption=caption, align='llrrrrll', escape = FALSE, table.attr="id=\"kableTable\"")
+    } else {
+        qtable2 <- qtable1 %>% kable(align='llrrrrll', caption=caption, escape = FALSE)
+    }
+    qtable3  <- qtable2 %>%
+        kable_paper("striped", full_width=FALSE) %>%
+        row_spec(row=which(tbl$trait_name != "")-1, hline_after = TRUE) %>%
+        column_spec(1, bold=TRUE) %>%
+        column_spec(3, width = "1cm") %>%
+        column_spec(4, width = "2.5cm") %>%
+        column_spec(5, width = "2cm") %>%
+        column_spec(8, width = "20cm") %>%
+        add_footnote(c("Significance codes for Genotype:Year Effects\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n", 
+                    "Significance codes for Genotype Effects",
+                    "Significance codes from QTL pvalues"))
+    return(qtable3)
+}
+
+generateFlexTable <- function(tbl, caption=NULL) {
         flxtable <- qtl.collated.succinct.tb %>%
         select(-trait_repeat,-model_repeat) %>%
         mutate(Trait=gsub("$","",Trait,fixed=TRUE),
@@ -120,3 +168,4 @@ generateFlexTable <- function(tbl) {
 cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/'),mustWork=TRUE),'/qtl_collated.',qtl_scan_method,'.png'),"'")
 
 save.image(paste0(workflow,"/.RData.10_01.genQTLtable.",qtl_scan_method,".",num_top_qtls))
+load(paste0(workflow,"/.RData.10_01.genQTLtable.",qtl_scan_method,".",num_top_qtls))
