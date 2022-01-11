@@ -100,9 +100,7 @@ colnames(effs.tb) <- gsub('.','_',colnames(effs.tb),fixed=TRUE)
 saveRDS(effs.tb,file=paste0(workflow,'/traits/effects_collated.rds'), compress=TRUE)
 write_json(effs.tb, paste0(workflow, "/traits/effects_collated.json"), auto_unbox=T, pretty=T)
 #Write a csv file without the grouped blups
-write.csv(effs.tb %>% select(!blups), file=paste0(workflow,'/traits/effects_collated.csv'), row.names=FALSE)
-
-
+write.csv(effs.tb %>% unnest(data) %>% select(!blups), file=paste0(workflow,'/traits/effects_collated.csv'), row.names=FALSE)
 effs.tb <- readRDS(paste0(workflow,'/traits/effects_collated.rds')) #We can start here to load older state
 
 #Plot generation
@@ -202,63 +200,126 @@ effs.complete.tb <-  qtl.tb %>%
                         mutate(marker = gsub(".+cM_(.+)", "\\1",nearest_marker), 
                                trait_name = trait_to_name(trait.cfg.tb,model,trait), 
                                model_name = model_to_name(trait.cfg.tb,model,trait),
-                               marker_variance=percent(marker_variance/100),
-                               model_variance=percent(model_variance/100))  %>%
-                        mutate(trait_repeat=(trait_name == c("",trait_name[-length(trait_name)])),
-                               model_repeat=(model_name == c("",model_name[-length(model_name)]))) %>%
-                        mutate(trait_name = paste0(trait_name,"$^{",unlist(map(GxYLRpvalue,siginfo)),"}$"),  #Append significance string info to names for statistically informative table
-                               model_name = paste0(model_name,"$^{",unlist(map(GLRpvalue,siginfo)),"}$"),
-                               qtl_lod = paste0(round.digits(qtl_lod,2),"$^{",unlist(map(qtl_pvalue,siginfo)),"}$"))
+                               marker_variance=marker_variance/100,
+                               model_variance=model_variance/100)
                             
 
-generate_table <- function(tb, caption, meths) {
-    tb <- tb %>%
-            filter(method %in% meths) %>%
-            mutate(trait_name = ifelse(trait_repeat, "", cell_spec(trait_name, "html", bold=TRUE)),
-                   model_name = ifelse(model_repeat, "", cell_spec(model_name, "html", bold=TRUE)),
-                   model_variance = ifelse(model_repeat, "", color_bar("lightgreen")(model_variance)),
+generateTableSignifSymbols <- function(tbl) {
+    return( tbl %>%
+                mutate(trait_name=paste0(trait_name,"$^{",unlist(map(GxYLRpvalue,siginfo)),"}$"),
+                       model_name=paste0(model_name,"$^{",unlist(map(GLRpvalue,siginfo)),"}$")) )
+}
+
+#arrange(trait_name,model_name,desc(marker.variance)) %>%
+generateTableRemoveRepeats <- function(tbl) {
+    return( tbl %>%
+        mutate(trait_repeat=(trait_name == c("",trait_name[-length(trait_name)]))) %>%
+        mutate(model_repeat=(trait_repeat & (model_name == c("",model_name[-length(model_name)])))) %>%
+        mutate(trait_name = ifelse(trait_repeat, "",trait_name),
+               model_name = ifelse(model_repeat, "",model_name)) )
+}
+
+generateReducedTable <- function(tbl, caption=NULL) {
+    etbl1 <- tbl %>%
+            generateTableRemoveRepeats() %>%
+            mutate(model_variance = ifelse(model_repeat, "", color_bar("lightgreen")(percent(model_variance))),
                    marker = ifelse(is.na(marker)," ",marker),
-                   position = paste0(round.digits(position,2),"\u00b1",round.digits(interval/2,2)),
-                   marker_variance = color_bar("lightblue")(marker_variance)) %>%
-            select(method,trait_name,model_name,model_variance,chr,position,qtl_lod,marker_variance,trait_repeat,model_repeat,plot_filename,plot_mpieffects_filename)
-    colnames(tb) <- c("method", "Trait[note]", "Model[note]", "Model Variance[note]", "Linkage Group", "Marker Location[note]", "pLOD[note]", "Variance Explained by QTL", "trait_repeat", "model_repeat", "plot_filename", "plot_mpieffects_filename")
-    tb %>%
-        select(!c(method,trait_repeat,model_repeat,plot_filename,plot_mpieffects_filename)) %>%
-        mutate('Effect Size Boxplots[note]'="") %>%
-        mutate('Effect Difference Plots[note]'="") %>%
-        kbl("html", caption=caption, table.attr="id=\"kableTable\"", align='lllrrrllcc', escape = FALSE) %>%
-        kable_paper("striped", full_width=TRUE) %>%
-        column_spec(1, width = "1.5cm") %>%
-        column_spec(4, width = "1cm") %>%
-        column_spec(5, width = "2.5cm") %>%
-        column_spec(8, width = "5cm", image=spec_image(paste0('file://',tb$plot_filename),1280,320)) %>%
-        column_spec(9, width = "4cm", image=spec_image(paste0('file://',tb$plot_mpieffects_filename),640,320)) %>%
-        add_footnote(c(paste0("All QTLs in table derived from running R/qtl package function ",meths,"().\n","Significance codes for model genotype$*$year effects appended to trait:\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n"), 
-                       "Significance codes for model genotype effects appended to model",
-                       "Variance of model with all significant QTLs fitted.",
-                       "QTL location \u00b1 1.5pLOD interval (cM)",
-                       "Penalized LOD Score w/ significance codes for QTL appended",
-                       "Boxplots of nearest marker BLUPs grouped by genotypes.  Haplotypes A and B are from maternal parent P1, and haplotypes C and D are from paternal parent P2.",
-                       "Effect differences for mean QTL effect size estimates for each progeny genotype.  A.-B. is the maternal effect, calculated as (AC+AD)-(BC+BD).  .C-.D is the paternal effect, calculated as (AC + BC) – (AD + BD).  Int is the interaction effect, calculated as (AC + BD)-(AD+BC) (Sewell et al., 2002)."))
+                   position = paste0(round.digits(position,2),"±",round.digits(interval/2,2)),
+                   marker_variance = color_bar("lightblue")(percent(marker_variance)))
+    etbl2 <- etbl1 %>%
+             select(trait_name,chr,position,qtl_lod,marker_variance,model_variance) %>%
+             rename("Trait"=trait_name, 
+                    "LG"=chr, 
+                    "Marker Location[note]"=position, 
+                    "Variance Explained by QTL"=marker_variance,
+                    "Model Variance[note]"=model_variance,
+                    "pLOD[note]"=qtl_lod) %>% 
+             mutate('Effect Size Boxplots[note]'="") %>%
+             mutate('Effect Difference Plots[note]'="")
+    if( is_html_output() ) {
+        etbl3 <- etbl2 %>% kable("html", caption=caption, table.attr="id=\"kableTable\"", align='lllrrrllcc', escape = FALSE)
+    } else {
+        etbl3 <- etbl2 %>% kable(caption=caption, align='lllrrrllcc', escape = FALSE)
+    }
+    etbl4 <- etbl3 %>%
+                kable_paper("striped", full_width=TRUE) %>%
+                column_spec(1, bold=TRUE, width = "1.5cm") %>%
+                column_spec(2, width = "1cm") %>%
+                column_spec(3, width = "2.5cm") %>%
+                column_spec(4, width = "1.5cm") %>%
+                column_spec(5, width = "2.5cm") %>%
+                column_spec(6, width = "2.5cm") %>%
+                column_spec(7, width = "5cm", image=spec_image(etbl1$plot_filename,1280,320)) %>%
+                column_spec(8, width = "4cm", image=spec_image(etbl1$plot_mpieffects_filename,640,320)) %>%
+                add_footnote(c("QTL location ± 1.5pLOD interval (cM)",
+                        "Variance of model with all significant QTLs fitted.",
+                        "QTL Penalized LOD Score w/ significance codes:\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n",
+                        "Boxplots of nearest marker BLUPs grouped by genotypes.  Haplotypes A and B are from maternal parent P1, and haplotypes C and D are from paternal parent P2.",
+                        "Effect differences for mean QTL effect size estimates for each progeny genotype.  A.-B. is the maternal effect, calculated as (AC+AD)-(BC+BD).  .C-.D is the paternal effect, calculated as (AC + BC) – (AD + BD).  Int is the interaction effect, calculated as (AC + BD)-(AD+BC) (Sewell et al., 2002)."))
+    return(etbl4)
+}
+
+generateTable <- function(tbl, meths=c("scanone","stepwiseqtl"), caption=NULL) {
+    etbl1 <- tbl %>%
+            filter(method %in% meths) %>%
+            generateTableSignifSymbols() %>%
+            generateTableRemoveRepeats() %>%
+            mutate(model_variance = ifelse(model_repeat, "", color_bar("lightgreen")(percent(model_variance))),
+                   marker = ifelse(is.na(marker)," ",marker),
+                   position = paste0(round.digits(position,2),"±",round.digits(interval/2,2)),
+                   marker_variance = color_bar("lightblue")(percent(marker_variance)))
+    etbl2 <- etbl1 %>%
+             select(trait_name,model_name,model_variance,chr,position,qtl_lod,marker_variance) %>%
+             rename("Trait[note]"=trait_name, 
+                    "Model[note]"=model_name, 
+                    "Model Variance[note]"=model_variance, 
+                    "LG"=chr, 
+                    "Marker Location[note]"=position, 
+                    "pLOD[note]"=qtl_lod, 
+                    "Variance Explained by QTL"=marker_variance) %>%
+             mutate('Effect Size Boxplots[note]'="") %>%
+             mutate('Effect Difference Plots[note]'="")
+    if( is_html_output() ) {
+        etbl3 <- etbl2 %>% kable("html", caption=caption, table.attr="id=\"kableTable\"", align='lllrrrllcc', escape = FALSE)
+    } else {
+        etbl3 <- etbl2 %>% kable(caption=caption, align='lllrrrllcc', escape = FALSE)
+    }
+    etbl4 <- etbl3 %>%
+                row_spec(row=(which(etbl1$trait_name != "")-1)[-1], hline_after = TRUE) %>%
+                kable_paper("striped", full_width=TRUE) %>%
+                column_spec(1, width = "1.5cm") %>%
+                column_spec(4, width = "1cm") %>%
+                column_spec(5, width = "2.5cm") %>%
+                column_spec(8, width = "5cm", image=spec_image(paste0('file://',etbl1$plot_filename),1280,320)) %>%
+                column_spec(9, width = "4cm", image=spec_image(paste0('file://',etbl1$plot_mpieffects_filename),640,320)) %>%
+                add_footnote(c(paste0("All QTLs in table derived from running R/qtl package function ",meths,"().\n","Significance codes for model genotype$*$year effects appended to trait:\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n"), 
+                        "Significance codes for model genotype effects appended to model",
+                        "Variance of model with all significant QTLs fitted.",
+                        "QTL location ± 1.5pLOD interval (cM)",
+                        "Penalized LOD Score w/ significance codes for QTL appended",
+                        "Boxplots of nearest marker BLUPs grouped by genotypes.  Haplotypes A and B are from maternal parent P1, and haplotypes C and D are from paternal parent P2.",
+                        "Effect differences for mean QTL effect size estimates for each progeny genotype.  A.-B. is the maternal effect, calculated as (AC+AD)-(BC+BD).  .C-.D is the paternal effect, calculated as (AC + BC) – (AD + BD).  Int is the interaction effect, calculated as (AC + BD)-(AD+BC) (Sewell et al., 2002)."))
+    return(etbl4)
 }
 
 #Table for all traits
-ktable.one <- generate_table(effs.complete.tb, "QTLs (scanone) with Effect Plots for All Traits", "scanone")
-ktable.one
-cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/effectplots.scanone.png'),mustWork=TRUE),"'"))
+#ktable.one <- generateTable(effs.complete.tb, "scanone", "QTLs (scanone) with Effect Plots for All Traits")
+#ktable.one
+#cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/effectplots.scanone.png'),mustWork=TRUE),"'"))
 
-ktable.sw <- generate_table(effs.complete.tb, "QTLs (stepwiseqtl) with Effect Plots for All Traits", "stepwiseqtl")
-ktable.sw
-cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/effectplots.stepwiseqtl.png'),mustWork=TRUE),"'"))
+#ktable.sw <- generateTable(effs.complete.tb, "stepwiseqtl", "QTLs (stepwiseqtl) with Effect Plots for All Traits")
+#ktable.sw
+#cat(paste0("In Firefox javascript console, type: ':screenshot --dpi 8 --file --selector #kableTable --filename ",normalizePath(paste0(workflow,'/traits/effectplots.stepwiseqtl.png'),mustWork=TRUE),"'"))
 
 #Break out into more meaninful nuggets
 #Table per trait
-effs.complete.tb %>%
-    group_by(method,trait) %>%
-    group_walk( ~ {
-                    ktbl <- generate_table(cbind(.y,.x), paste0("QTLs (", .y$method, ") with Effect Plots for trait ", .y$trait), .y$method)
-                    print(ktbl)
-                  } )
+#effs.complete.tb %>%
+#    group_by(method,trait) %>%
+#    group_walk( ~ {
+#                    ktbl <- generateTable(cbind(.y,.x), .y$method, paste0("QTLs (", .y$method, ") with Effect Plots for trait ", .y$trait))
+#                    print(ktbl)
+#                  } )
 
 
 save.image(paste0(workflow,"/.RData.12_geneffects.",num_top_qtls))
+load(paste0(workflow,"/.RData.12_geneffects.",num_top_qtls))
