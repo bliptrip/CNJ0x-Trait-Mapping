@@ -3,7 +3,8 @@
 .PHONY: install GenCross PermMerge Perm2DMerge Rbuild PermBuild StepwiseQTLBuild StepwiseQTL
 
 HTCONDOR=HTCondorFiles
-SANDBOX=../../sandbox
+SANDBOX?=../../sandbox
+CIRCOS_FOLDER?=circos-cnj02
 
 export WORKFLOW ?= ../../Workflows/1
 export P1_Name ?= Mullica_Queen
@@ -160,9 +161,14 @@ LaunchReactSandbox:
 
 BuildReactSandbox:
 		cd $(SANDBOX) && npm run build
+		cp $(SANDBOX)/build/index.html $(SANDBOX)/build/index.orig.html
+
 
 CopyReactSandbox:
-	scp -r -P 7262 $(SANDBOX)/build maule@vaccinium.vcru.wisc.edu:~/
+		cd $(SANDBOX)/build && sed -e 's/\/\(static\)/\1/g' -e 's/\/\(logo192.png\)/\1/g'  -e 's/\/\(favicon.ico\)/\1/g' index.orig.html > index.html
+		#cd $(SANDBOX)/build && sed --in-place=.bak -e 's/\/(static\/js\/)/\0/g' -e 's/\/static\/css\//\/$(CIRCOS_FOLDER)\0/g' -e 's/logo192.png/$(CIRCOS_FOLDER)\/\0/g'  -e 's/favicon.ico/$(CIRCOS_FOLDER)\/\0/g' index.html
+		ssh -X -Y -p 7262 maule@vaccinium.vcru.wisc.edu rm -fr /var/www/html/$(CIRCOS_FOLDER)
+		scp -r -P 7262 $(SANDBOX)/build maule@vaccinium.vcru.wisc.edu:/var/www/html/$(CIRCOS_FOLDER)
 
 clean:
 		rm *.Rout
