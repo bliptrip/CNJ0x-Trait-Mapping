@@ -57,7 +57,9 @@ qtl.collated.filtered.tb <- qtl.collated.tb %>%
 qtl.collated.succinct.tb <- qtl.collated.filtered.tb %>%
                                 mutate(marker = ifelse(is.na(marker)," ",marker)) %>%
                                 mutate(blast = ifelse((!is.na(blast1) & !is.na(blast2)),paste0(blast1,";",blast2),ifelse(is.na(blast1),ifelse(is.na(blast2)," ", blast2),blast1))) %>%
-                                mutate(position = paste0(round.digits(position,2),"\u00b1",round.digits(interval/2,2)),
+                                mutate(position = round.digits(position,2),
+                                       position_left = round.digits(interval.left,2),
+                                       position_right = round.digits(interval.right,2),
                                        qtl.lod = paste0(round.digits(qtl.lod,2),"$^{",unlist(map(qtl.pvalue,siginfo)),"}$"))
 
 
@@ -79,19 +81,21 @@ generateTableRemoveRepeats <- function(tbl) {
 generateReducedTable <- function(tbl, caption=NULL) {
     qtable1 <- tbl %>%
         generateTableRemoveRepeats() %>%
-        select(trait_name,chr,position,qtl.lod,marker.variance,marker,blast) %>%
+        select(trait_name,chr,position,position_left,position_right,qtl.lod,marker.variance,marker,blast) %>%
         mutate(marker.variance=color_bar("lightblue")(percent(marker.variance/100))) %>%
         rename("Trait"=trait_name,
                "LG"=chr,
-               "Marker Location ± 1.5LOD (cM)"=position,
+               "Position (cM)"=position,
+               "1.5-LOD Min (cM)"=position_left,
+               "1.5-LOD Max (cM)"=position_right,
                "pLOD"=qtl.lod,
                "Variance Explained by QTL"=marker.variance,
                "Nearest Marker"=marker,
                "Putative Function"=blast)
     if( is_html_output() ) {
-        qtable2 <- qtable1 %>% kable("html", caption=caption, align='lrrrrll', escape = FALSE, table.attr="id=\"kableTable\"")
+        qtable2 <- qtable1 %>% kable("html", caption=caption, align='lrrrrrrll', escape = FALSE, table.attr="id=\"kableTable\"")
     } else {
-        qtable2 <- qtable1 %>% kable(align='lrrrrll', caption=caption, escape = FALSE)
+        qtable2 <- qtable1 %>% kable(align='lrrrrrrll', caption=caption, escape = FALSE)
     }
     qtable3  <- qtable2 %>%
         kable_paper("striped", full_width=FALSE) %>%
@@ -99,7 +103,9 @@ generateReducedTable <- function(tbl, caption=NULL) {
         column_spec(2, width = "1cm") %>%
         column_spec(3, width = "2cm") %>%
         column_spec(4, width = "2cm") %>%
-        column_spec(7, width = "7cm")
+        column_spec(5, width = "2cm") %>%
+        column_spec(6, width = "2cm") %>%
+        column_spec(9, width = "7cm")
     return(qtable3)
 }
 
@@ -107,12 +113,14 @@ generateTable <- function(tbl, caption=NULL) {
     qtable1 <- tbl %>%
         generateTableSignifSymbols() %>%
         generateTableRemoveRepeats() %>%
-        select(trait_name,model_name,chr,position,qtl.lod,marker.variance,marker,blast) %>%
+        select(trait_name,model_name,chr,position,position_left,position_right,qtl.lod,marker.variance,marker,blast) %>%
         mutate(marker.variance=color_bar("lightblue")(percent(marker.variance/100))) %>%
         rename('Trait[note]'=trait_name,
                'Model[note]'=model_name,
                "LG"=chr,
-               "Marker Location ± 1.5LOD (cM)"=position,
+               "Position (cM)"=position,
+               "1.5-LOD Min (cM)"=position_left,
+               "1.5-LOD Max (cM)"=position_right,
                "pLOD[note]"=qtl.lod,
                "Variance Explained by QTL"=marker.variance,
                "Nearest Marker"=marker,
@@ -126,10 +134,13 @@ generateTable <- function(tbl, caption=NULL) {
         kable_paper("striped", full_width=FALSE) %>%
         row_spec(row=which(tbl$trait_name != "")-1, hline_after = TRUE) %>%
         column_spec(1, bold=TRUE) %>%
+        column_spec(2, bold=TRUE) %>%
         column_spec(3, width = "1cm") %>%
-        column_spec(4, width = "2.5cm") %>%
+        column_spec(4, width = "2cm") %>%
         column_spec(5, width = "2cm") %>%
-        column_spec(8, width = "20cm") %>%
+        column_spec(6, width = "2cm") %>%
+        column_spec(7, width = "2cm") %>%
+        column_spec(10, width = "7cm")
         add_footnote(c("Significance codes for Genotype:Year Effects\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n", 
                     "Significance codes for Genotype Effects",
                     "Significance codes from QTL pvalues"))

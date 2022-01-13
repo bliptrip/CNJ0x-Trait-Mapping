@@ -41,6 +41,14 @@ var axesColors = d3.scaleSequential(d3.interpolateGreys);
 
 const seq = (start, stop, step) => Array.from({ length: (stop - start) / step + 1}, (_, i) => start + (i * step));
 
+const round  = (value, decimals = 0) => {
+    if( decimals === 0 ) {
+        return Number(Math.round(parseFloat(value)));
+    } else {
+        return Number(Math.round(parseFloat(value)+'e'+decimals)+'e-'+decimals);
+    }
+}
+
 var change_scan_type = function(selected_type) {
     //Hide everything
     //Need to hide any old state for the LOD profile lines.
@@ -116,7 +124,7 @@ export default function View() {
                                                         color: blipColors((((trait_idx+1) * models.length) + models.indexOf(d.model))/(1.2*(traits.length * models.length))),
                                                         position: +(consensus === "consensus" ? d.position_consensus : d.position) * 1000,
                                                         value: models.indexOf(d.model)+1,
-                                                        size: Math.round(d.marker_variance * qtl_bubble_scale_factor),
+                                                        size: round(d.marker_variance * qtl_bubble_scale_factor),
                                                         lod: +d.qtl_lod,
                                                         pval: +d.qtl_pvalue,
                                                 }) )
@@ -139,8 +147,8 @@ export default function View() {
                                         .map( d => ({ ...d,
                                                         block_id: "vm" + d.chr,
                                                         color: blipColors((((trait_idx+1) * models.length) + models.indexOf(d.model))/(1.2*(traits.length * models.length))),
-                                                        start: (+(consensus === "consensus" ? d.position_consensus : d.position) - (+d.interval/2))*1000,
-                                                        end: (+(consensus === "consensus" ? d.position_consensus : d.position) + (+d.interval/2))*1000
+                                                        start: +d.interval_left*1000,
+                                                        end: +d.interval_right*1000
                                                     }))
                                         .filter( d => (linkage_groups.includes(d.block_id)) );
             stack_trait_data = d3.rollup( stack_trait_data, 
@@ -215,8 +223,8 @@ export default function View() {
     const gen_scatter_size = d => (d.size);
 
     const gen_scatter_tooltip = d => {
-        var variance = Math.round(d.marker_variance, 1);
-        var position = Math.round(d.position/1000.0, 1);
+        var variance = round(d.marker_variance, 1);
+        var position = round(d.position/1000.0, 1);
         return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+circos_model2modelname[d.model]+"<br />Pos: "+position.toString()+"cM<br />Var: "+variance.toString()+"%<br />"+d.nearest_marker);
     };
 
@@ -232,9 +240,9 @@ export default function View() {
     };
 
     const gen_stack_tooltip = function(d) {
-        var start = Math.round(d.start/1000.0, 1);
-        var end = Math.round(d.end/1000.0, 1);
-        var range = Math.round((d.end-d.start)/1000.0, 1);
+        var start = round(d.start/1000.0, 1);
+        var end = round(d.end/1000.0, 1);
+        var range = round((d.end-d.start)/1000.0, 1);
         return("<b>"+circos_trait2traitname[d.trait]+"</b><br />"+circos_model2modelname[d.model]+"<br />Start-End: "+start.toString()+"-"+end.toString()+"cM<br />Range: "+range.toString()+"cM");
     }
 
@@ -432,6 +440,8 @@ export default function View() {
                             marker_variance: 9999.0,
                             model_variance: 0,
                             interval: 0,
+                            interval_left: 0,
+                            interval_right: 0,
                             effects: undefined
                         } );
                     } );
@@ -581,7 +591,7 @@ export default function View() {
                     "id": labelSector,
                     "label": "", //Must be blank
                     "color": "rgb(255,255,255)",
-                    "len": Math.round((trackLabelProportion/(1-trackLabelProportion)) * karyotypes.reduce((a,k) => a + k.len, 0))
+                    "len": round((trackLabelProportion/(1-trackLabelProportion)) * karyotypes.reduce((a,k) => a + k.len, 0))
                 }); //Inject a sector to show labels
             }
             redraw(karyotypes, labelSector);

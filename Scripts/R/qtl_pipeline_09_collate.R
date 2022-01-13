@@ -64,7 +64,10 @@ generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, trait, lo
         mypos              <- qtl$pos[qtl_idx1]
         #single-additive effect
         if( length(qtl.model.term.v) == 1 ) {
-            qtl_lodint    <- diff(lodint(qtl,qtl.index=qtl_idx1)[c(1,3),2])
+		    qtl_lod.df    <- lodint(qtl,qtl.index=qtl_idx1)
+			qtl_lodint.l  <- qtl_lod.df[1,]
+			qtl_lodint.r  <- qtl_lod.df[3,]
+            qtl_lodint    <- diff(qtl_lod.df[c(1,3),"pos"])
             f             <- which(supermap.bin.df$LG==mychr)
             x             <- supermap.bin.df[f,]
             idx           <- which.min(abs(x$consensus-mypos))
@@ -98,14 +101,14 @@ generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, trait, lo
             }
         }
         #TODO: Fill in interaction qtls
-        append.pointer(collated.df.p, c(method, model, trait, mychr, mypos, mychr2, mypos2, mymarker, qtl.lod, qtl.var, qtl.p, qtl_model.var, qtl_lodint, GLRpvalue, GxYLRpvalue, GZRpvalue, GxYZRpvalue))
+        append.pointer(collated.df.p, c(method, model, trait, mychr, mypos, mychr2, mypos2, mymarker, qtl.lod, qtl.var, qtl.p, qtl_model.var, qtl_lodint.l$pos, rownames(qtl_lodint.l), qtl_lodint, qtl_lodint.r$pos, rownames(qtl_lodint.r),GLRpvalue, GxYLRpvalue, GZRpvalue, GxYZRpvalue))
     }
 }
 
 
 #Generate a single dataframe with qtl information in it, and save to a csv file.
 #index into qtl.collated.df
-qtl.collated.df   <- data.frame(method=character(),model=character(),trait=character(),chr=numeric(),position=numeric(),chr2=numeric(),position2=numeric(),nearest.marker=numeric(),qtl.lod=numeric(),marker.variance=numeric(),qtl.pvalue=numeric(),model.variance=numeric(),interval=numeric(),GLRpvalue=numeric(),GxYLRpvalue=numeric(),GZRpvalue=numeric(),GxYZRpvalue=numeric(),stringsAsFactors=FALSE)
+qtl.collated.df   <- data.frame(method=character(),model=character(),trait=character(),chr=numeric(),position=numeric(),chr2=numeric(),position2=numeric(),nearest.marker=numeric(),qtl.lod=numeric(),marker.variance=numeric(),qtl.pvalue=numeric(),model.variance=numeric(),interval.left=numeric(),interval.marker.left=character(),interval=numeric(),interval.right=numeric(),interval.marker.right=character(),GLRpvalue=numeric(),GxYLRpvalue=numeric(),GZRpvalue=numeric(),GxYZRpvalue=numeric(),stringsAsFactors=FALSE)
 qtl.collated.df.p <- newPointer(qtl.collated.df)
 
 collateQtlCB      <- function(trait.cfg, trait.path, loopArgs) {
