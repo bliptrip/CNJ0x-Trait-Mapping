@@ -4,12 +4,13 @@
 
 HTCONDOR=HTCondorFiles
 SANDBOX?=../../sandbox
-CIRCOS_FOLDER?=circos-cnj02
+CIRCOS_FOLDER=circos-cnj02
 
 export WORKFLOW ?= ../../Workflows/1
 export P1_Name ?= Mullica_Queen
 export P2_Name ?= Crimson_Queen
 export POP_Name ?= CNJ02
+export POP_Circos = #Force user to define
 export RDS_DIR ?= "../../Data/phenotypic\ data/DerivedData/cleanup_data.R.output/Robjs"
 
 #Set the following for configuring the BLUPs summary table in target GenQTLTable: NUM_TOP configures how many of the top-ranked QTLs to display per trait:model combination
@@ -115,8 +116,6 @@ GenCircos:
 
 #Generate QTL table
 GenEffects:
-		touch "$(WORKFLOW)/traits/effectplots.scanone.png"
-		touch "$(WORKFLOW)/traits/effectplots.stepwiseqtl.png"
 		R CMD BATCH '--args workflow="$(WORKFLOW)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_12_geneffects.R
 
 #Copy all circos files and their dependencies to a 'sandbox' folder where all the necessary files are available for rendering the circos plots from a web browser
@@ -140,8 +139,7 @@ GenReactSandbox:
 		cp -r ../../Workflows/templates/traits/plots/circos/circos-viewer  $(SANDBOX)
 		cp -r $(WORKFLOW)/configs $(SANDBOX)/public/
 		cp -r $(WORKFLOW)/traits/blups_collated.wide.json $(SANDBOX)/public/configs/
-		cp -r $(WORKFLOW)/traits/plots/corrplot.cnj02.csv $(SANDBOX)/public/configs/
-		cp -r $(WORKFLOW)/traits/plots/corrplot.cnj04.csv $(SANDBOX)/public/configs/
+		cp -r $(WORKFLOW)/traits/plots/corrplot.$(POP_Circos).csv $(SANDBOX)/public/configs/corrplot.csv
 		cp -r $(WORKFLOW)/traits/effects_collated.json $(SANDBOX)/public/configs/
 		cp -r $(WORKFLOW)/traits/lod_profiles.json $(SANDBOX)/public/configs/
 		cd $(SANDBOX) && npm install
@@ -150,8 +148,7 @@ GenReactSandboxConfigs:
 		cp -r ../../Workflows/templates/traits/plots/circos/circos-viewer/public  $(SANDBOX)
 		cp -r $(WORKFLOW)/configs $(SANDBOX)/public/
 		cp -r $(WORKFLOW)/traits/blups_collated.wide.json $(SANDBOX)/public/configs/
-		cp -r $(WORKFLOW)/traits/plots/corrplot.cnj02.csv $(SANDBOX)/public/configs/
-		cp -r $(WORKFLOW)/traits/plots/corrplot.cnj04.csv $(SANDBOX)/public/configs/
+		cp -r $(WORKFLOW)/traits/plots/corrplot.$(POP_Circos).csv $(SANDBOX)/public/configs/corrplot.csv
 		cp -r $(WORKFLOW)/traits/effects_collated.json $(SANDBOX)/public/configs/
 		cp -r $(WORKFLOW)/traits/lod_profiles.json $(SANDBOX)/public/configs/
 		cd $(SANDBOX) && npm install
