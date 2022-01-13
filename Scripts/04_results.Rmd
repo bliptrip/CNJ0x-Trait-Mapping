@@ -456,7 +456,9 @@ For the CNJ02 population, we discovered an average of `r qtls.cnj02.s1.nqtls` QT
 traits for the `scanone` method and `r qtls.cnj02.sw.nqtls` QTLs per *trait × model* across `r qtls.cnj02.sw.ntraits` traits for the `stepwiseqtl` 
 method.   The `scanone` average total BLUP variance explained per QTL was `r qtls.cnj02.s1.markv` percent, with an average BLUP variance explained by
 all QTLs per *trait × model* of `r qtls.cnj02.s1.modv` percent.  The `stepwiseqtl` average total BLUP variance explained per QTL was `r qtls.cnj02.sw.markv` 
-percent, with an average BLUP variance explained by all fitted QTLs per *trait × model* of `r qtls.cnj02.sw.modv` percent.
+percent, with an average BLUP variance explained by all fitted QTLs per *trait × model* of `r qtls.cnj02.sw.modv` percent.  A more detailed exploration
+of the trait QTLs, effect plots, LOD profiles, and trait correlations can be found on the [CNJ02 QTL explorer](http://vaccinium.vcru.wisc.edu/circos-cnj02/) 
+site.
 
 A summary of the top `stepwiseqtl` QTLs discovered for the CNJ02 population for the *All Years* model can be found in
 Table \@ref(tab:qtl-table-cnj02-sw).  This summary of QTLs only shows trait models with significant genotype effects and
@@ -492,9 +494,18 @@ linked at 25cM.  QTLs for largest *berry width* (40cM) and upright *length vs. w
 linkage group 11.
 
 Berry chemistry trait QTLs are highlighted in figure \@ref(fig:qtl-plot-cnj02)B.  There are no clear collocation patterns that
-emerges as with the yield-related traits.
+emerges as with the yield-related traits, although the chemistry traits recorded do not have as strong as correlations
+as with yield traits.  Some of the traits and their QTLs were discussed in reference to table
+\@ref(tab:qtl-table-cnj02-sw).  Non-chemistry traits were selected because of their correlations with some chemistry
+traits.  For instance, *percent fruit rot* and *Tacy* have a moderately positive correlation (0.38)), likely
+associated with large QTLs closely linked on linkage group 7 (position 38cM and 33cM, respectively).  Interestinly,
+these two traits share the same *BD* genotype for the highest positive effect.  The major QTL for *Tacy* found on
+linkage group 3 is also tightly linked to a large QTL for *plot mean fruit mass*, with allele *D* showing a strong
+positive effect and substantial negative effect over allele *C*, respectively.  The largest QTL for *titratable acidity*
+can be found on linkage group 2 (position 50cM), and does not appear to be closely linked with other traits' major QTLs.   A closely
+linked pair of QTLs on linkage group 3 between *plot mean fruit mass* and *titratable acidity* might explain the
+modestly strong positive correlation between the two traits (0.40).
 
- A [complete listing](#cnj02-qtls)
 
 ```{r qtl-table-cnj02-sw, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%"}
 load(file=paste0(cnj02_workflow,"/.RData.01_genBLUP"))
@@ -549,7 +560,10 @@ QTLs were still found in CNJ04.  The CNJ04 population showed average of `r qtls.
 traits for the `scanone` method and `r qtls.cnj04.sw.nqtls` QTLs per *trait × model* across `r qtls.cnj04.sw.ntraits` traits for the `stepwiseqtl` 
 method.   The `scanone` average total BLUP variance explained per QTL was `r qtls.cnj04.s1.markv` percent, with an average BLUP variance explained by
 all QTLs per *trait × model* of `r qtls.cnj04.s1.modv` percent.  The `stepwiseqtl` average total BLUP variance explained per QTL was `r qtls.cnj04.sw.markv` 
-percent, with an average BLUP variance explained by all QTLs per *trait × model* of `r qtls.cnj04.sw.modv` percent.
+percent, with an average BLUP variance explained by all QTLs per *trait × model* of `r qtls.cnj04.sw.modv` percent.  A more detailed exploration
+of the trait QTLs, effect plots, LOD profiles, and trait correlations can be found on the [CNJ04 QTL explorer](http://vaccinium.vcru.wisc.edu/circos-cnj04/) 
+site.
+
 
 Similar to population CNJ02, a summary of the top 2 `stepwiseqtl` QTLs for the *all years* 
 model can be found in Table \@ref(tab:qtl-table-cnj04-sw), with traits sorted by decreasing heritability 
@@ -559,8 +573,9 @@ A highly linked QTL in largest *berry length*, linkage group 11 and position 5.0
 lower *length vs. width* ratio.  For *Tacy*, although a QTL on linkage group 6 explains most of the genetic variation (10.08
 percent) in the trait, linkage group 3 shows evidence of having an important role in explaining *Tacy* variation just as
 in the CNJ02 population.  This QTL on linkage group 3, position 36.49cM, suggests that most of the variation is on the
-paternal side, with a 14.21 $\frac{mg}/{100mg\ fruit}$ advantage of allele *D* over *C*.  Also as in CNJ02, the largest significant
-QTL for *total yield* is found on linkage group 12 and position 48.76cM, with genotype *AC* showing the largest genotype
+paternal side, with a 14.21 $\frac{mg}/{100mg\ fruit}$ advantage of allele *D* over *C* (figure \@ref(fig:qtl-plot-cnj04)B).  
+Also as in CNJ02, the largest significant QTL for *total yield* is found on linkage group 12 and position 48.76cM, with genotype 
+*AC* showing the largest genotype
 effect.  Interestingly, despite having a moderate positive correlation with largest berry *length vs. width* (0.62), the
 top two QTLs for *chimera length v. width* are on linkage groups 4 (10.82cM) and 1 (14.48cM).  These QTL are closely linked
 to other significant QTL found for *length vs. width* without appearing to be linked to QTLs associated with *berry
@@ -572,6 +587,12 @@ the absolute effect size is modest and the model variance explained by the QTL i
 genotype *BC* (around 0.2 percent) on linkage group 9, position 84.81cM.  The very high correlation between *total
 yield* and *sound fruit yield* (0.96) is consistent with these two traits sharing the same top 2 QTLs.
 
+For yield-relevant traits, linkage group 10 in the CNJ04 population has the largest number of top-tier QTLs (figure \@ref(fig:qtl-plot-cnj04)A).
+QTLs of note on linkage group 10 not already mentioned include collocated *total yield* and *plot mean fruit mass*
+(position 61cM) and the closely linked upright trait *total berry weight* (position 65cM).  These closely linked QTLs
+likely explain the modestly positive correlations (~0.5) between these traits.  Linkage group 9 has collocated QTLs for
+traits largest *berry weight* and upright *upright mean fruit mass* (position 58cM), closely linked with a large QTL for
+largest *berry weight* (position 64cM).  
 
 
 ```{r qtl-table-cnj04-sw, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%"}
