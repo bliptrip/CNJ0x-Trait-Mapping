@@ -16,7 +16,7 @@ const CorrPlot = () => {
     const [currentPlotData, setCurrentPlotData] = useState({d: [], l: {width: 640, height: 320, title: '<b>Correlation Heatmap</b>'}});
 
     useEffect(() => {
-        d3.csv('configs/corrplot.cnj02.csv')
+        d3.csv('configs/corrplot.csv')
           .then( d => {
               setPlotData(new DataFrame(d));
           });
