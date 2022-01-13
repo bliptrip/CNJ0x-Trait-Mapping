@@ -1,5 +1,52 @@
 # Discussion {#discuss}
 
+## Resummarize importance of this study/analysis
+ 
+ - Proof of concept comparing older studies to newer ones.
+ - Better understand trait correlations in two third-generation breeding populations
+ - 
+
+
+## Summarize results
+
+## High level comparison of these results to other previous studies in cranberries
+    - previous QTL mapping of FRR QTLs done in very small populations [@Georgi2013] - since the linkage group numbers
+          - CNJ04 population shares a parent 'Stevens' with many of the crosses made in [@Georgi2013]
+          - Using listed markers near QTLs from this paper, was able to remap and show if QTLs overlap at all
+            - One interesting overlap of Georgi is MRR, marker scf3072b (lg11@26cM on our map) with all-year PFR on lg11@24cM
+            - A closely linked one was also found in CNJ04 found on lg11@17cM
+    - Schlautman2015 paper
+        - MFM - Closest overlap with QTL on LG10@48.52 (LG@37,LG@39 for UMFM and MFM, respectively).  Also QTL on LG11,
+          but not really closely located to the ones in Schlautman's paper
+        - TY - LG4@88.99 -> LG4@85, LG6@56.80 -> LG6@52, LG11@24 -> LG11@20, although in our paper, our largest TY QTL
+          was on LG12
+        - BBI-TY - LG11@24 -> LG11@20
+        - h2 of TY 64 => .741
+        - h2 of MFM => .7 -> 0.81
+        - higher heritability on my end may be due to usage of BLUPs to calculate genomic heritability
+    - Diaz 2018 paper - QTLs with chemistry and some digital image phenotyping
+        - 
+    - Diaz 2018 paper - image phenotyping
+        - Given that this is an entirely different population, it is difficult to really compare results
+        - However, our 'largest berry width' has one closely associated overlap with Luis' collocated QTL on LG1
+            LG1@103.2 -> LG1@100
+    - heritability of upright traits and how they compared to Vorsa's?
+    - mid-level progeny FRR revealed high heritability of 0.81 [@JohnsonCicaleseFRR2015]
+        - I found similarly high heritability in CNJ02 population (h2=0.73)
+        - lower heritability for FRR found in CNJ04 (h2=0.46), likely due to downward biasing in smaller population size
+          when calculating BLUPs (need reference here)
+    - steal page from Luis' 'massive phenotyping' paper and mention how results are consistent with previous Vorsa
+      studies
+    - how results overlap with 
+
+## Limitations and where to go from here.
+
+- Creating a central site to unify previous studies in order to help propel breeding forward
+### how digital ag. can help upend/reveal more, and take this a step further
+
+
+## Take home message
+
 
 For CNJ02 population:
 
@@ -20,6 +67,9 @@ Comment and conjecture on noteworthy correlations discussed in results:
 For CNJ04, there appears to be a modest negative correlation between berry size and Brix.  This could represent some
 form of linkage drag in this population, as seen in other progeny derived from a Steven's parent (Sweetie, progeny of a
 cross of Stevens × Ben Lear).
+
+No single large *TY* QTLs --  seem to be spread out across the genome - consistent with yield being a quantitative trait
+with a lot of genetic players involved.
 
 
 *UCLP x UCLS* is interesting in that calyx lobe fold pattern could have more to do developmentally with calyx lobe size
@@ -45,15 +95,12 @@ b/w populations.
 
 - Make a comment that smaller population size of CNJ04 could result in overfitting, and hence the higher average model
   fits than in CNJ02 (almost 17% higher!)
-- CNJ02
-    - Mention that the largest set of collocated QTLs on LG 3 is intriguing, b/c one of them is derived from an entirely
-      different set of data (plot data -- plot mean fruit weigth) versus the upright mean fruit weight data.  Shows
-      overlap b/w datasets (check to see how UMFM and MFM correlate)
-    - Mention that total yield also has a closely linked QTL on LG3, but not collocated likely b/c total yield involves
-      a more complex mix of factors.
+- CNJ02 - Mention that the largest set of collocated QTLs on LG 3 is intriguing, b/c one of them is derived from an entirely different set of data (plot data -- plot mean fruit weigth) versus the upright mean fruit weight data.  Shows overlap b/w datasets (check to see how UMFM and MFM correlate) - Mention that total yield also has a closely linked QTL on LG3, but not collocated likely b/c total yield involves a more complex mix of factors.
     - On linkage group 11, largest *berry weight* and *upright mean fruit mass* are collocated at 30cM, while plot mean fruit mass is closely
 linked at 25cM. All three have the same genotype (*BD*) with the largest effect, indicating that they could all be
 driven by the same QTL. 
+    - Close linkage of PFR and Tacy on LG7, with shared patterns in genotype effects, could also be associated with
+      early-ripening varieties.  Compare to the differential QTLs found in Luis' paper.
 
 - For CNJ04, although a lower LvW ratio is preferred for rounder berries, selecting for this could result in smaller
   berries by dragging in berries with shorter lengths.  Thus, it would make sense to select for berries with larger
@@ -65,5 +112,9 @@ driven by the same QTL.
   to select for rounder berries without negatively impacting berry size, and thus yield.  Upright *total berry
 weight* does not even share its top 2 QTL with the same linkage groups as *total yield*, but given that the intertrait
 correlation between them in insignificant, it is not surprising that they do not share QTLs.
+- Mention that despite having some modest correlations b/w chemistry traits and chemistry/yield traits, that a lack of
+  overlap in top QTLs makes it difficult to pinpoint a genetic basis of this, if any.  This could be due to the small
+  population size being insufficient to unravel any shared/linked QTLs here, or ...
 
-
+- Both
+  - really emphasize the shared QTL on lg 12 highlighting its importance in controlling total yield.
