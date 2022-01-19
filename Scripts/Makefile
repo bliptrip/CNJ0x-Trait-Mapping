@@ -18,4 +18,6 @@ render_pdf:
 rp: render_pdf
 
 scpvh:
-	scp -r -P 7262 _main.html maule@vaccinium.vcru.wisc.edu:~/
+	scp -r -P 7262 _main.html maule@vaccinium.vcru.wisc.edu:/var/www/html/maule-ch1/index.html
+	scp -r -P 7262 ../Data/publication maule@vaccinium.vcru.wisc.edu:/var/www/html/maule-ch1/Data/
+
