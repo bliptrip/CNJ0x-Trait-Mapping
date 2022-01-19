@@ -18,9 +18,9 @@ if(length(args)==0) {
 
 #source(paste0(workflow,"/configs/model.cfg"))
 
-qtl.collated.df <- read.csv(file=paste0(workflow,'/traits/qtl_collated.csv'), head=TRUE)
+qtl.collated.orig.df <- read.csv(file=paste0(workflow,'/traits/qtl_collated.csv'), head=TRUE)
 #Only look at those qtls derived from the specified method, and moreover, remove interaction qtls and focus on additive-only ones.
-qtl.collated.df <- qtl.collated.df %>%
+qtl.collated.df <- qtl.collated.orig.df %>%
                         filter(is.na(chr2) & is.na(position2)) %>%
                         arrange(method,trait,chr,model)
 
@@ -43,5 +43,11 @@ generate_consensus <- function(model, trait, chr, position) {
     return(consensus_positions)
 }
 
-qtl.collated.consensus.df <- qtl.collated.grouped.df %>% mutate(position.consensus = generate_consensus(model, trait, chr, position))
-write.csv(qtl.collated.consensus.df, file=paste0(workflow,'/traits/qtl_collated.consensus.csv'), row.names=FALSE)
+qtl.collated.consensus.df <- qtl.collated.grouped.df %>% ungroup() %>% mutate(position.consensus = generate_consensus(model, trait, chr, position))
+qtl.collated.epistatics.df <- qtl.collated.orig.df %>% 
+                                    filter(!is.na(chr2) & !is.na(position2)) %>%
+                                    mutate(position.consensus = NA)
+
+qtl.collated.both.df <- rbind(qtl.collated.consensus.df, qtl.collated.epistatics.df) %>%
+                            arrange(method,trait,chr,model)
+write.csv(qtl.collated.both.df, file=paste0(workflow,'/traits/qtl_collated.consensus.csv'), row.names=FALSE)

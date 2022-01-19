@@ -88,17 +88,22 @@ generate_collated_effects <- function(qtl.collated.tb,num_top_qtls) {
 
 
 qtl.tb  <- read_csv(file=paste0(workflow,'/traits/qtl_collated.consensus.csv'), col_names=TRUE) %>%
-                    filter(is.na(chr2) & is.na(position2)) %>% #Remove interaction effects for now
                     group_by(trait) %>%
                     mutate(GxYLRpvalue = rep(min(GxYLRpvalue,na.rm=TRUE),length(GxYLRpvalue))) %>%
                     mutate(GxYZRpvalue = rep(min(GxYZRpvalue,na.rm=TRUE),length(GxYZRpvalue))) %>%
                     ungroup()
 colnames(qtl.tb) <- gsub('.','_',colnames(qtl.tb),fixed=TRUE)
 
-effs.tb <- generate_collated_effects(qtl.tb, num_top_qtls)
+effs.tb <- generate_collated_effects(qtl.tba %>% filter(is.na(chr2) & is.na(position2)), num_top_qtls)
 colnames(effs.tb) <- gsub('.','_',colnames(effs.tb),fixed=TRUE)
 saveRDS(effs.tb,file=paste0(workflow,'/traits/effects_collated.rds'), compress=TRUE)
-write_json(effs.tb, paste0(workflow, "/traits/effects_collated.json"), auto_unbox=T, pretty=T)
+
+effs.epistatics.tb <- qtl.tb %>% 
+		filter(!is.na(chr2) & !is.na(position2)) %>% #Only include interaction effects
+		mutate(data = NA) # Insert an empty data field so it can be merged wtih effs.tb -- interactions for now will not have effects made available
+
+effs.both.tb <- bind_rows(effs.tb, effs.epistatics.tb)
+write_json(effs.both.tb, paste0(workflow, "/traits/effects_collated.json"), auto_unbox=T, pretty=T)
 #Write a csv file without the grouped blups
 write.csv(effs.tb %>% unnest(data) %>% select(!blups), file=paste0(workflow,'/traits/effects_collated.csv'), row.names=FALSE)
 effs.tb <- readRDS(paste0(workflow,'/traits/effects_collated.rds')) #We can start here to load older state
