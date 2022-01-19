@@ -316,16 +316,16 @@ generateTable(qtl.collated.succinct.tb %>%
     #Copy the appropriate data to the 'publication' folder to make it available on server
     system2("cp", args=c(paste0(cnj02_workflow,"/traits/effects_collated.csv"),"../Data/publication/tables/effects_collated.cnj02.csv"))
 ```
-[CNJ02 QTLs]("../Data/publication/tables/effects_collated.cnj02.csv")
+[CNJ02 QTLs](https://vaccinium.vcru.wisc.edu/maule-ch1/Data/publication/tables/effects_collated.cnj02.csv)
 
 ### CNJ04 Comprehensive QTL Summary Table With Effect Statistics {#cnj04-qtls}
 ```{r qtl-table-cnj04-copy, echo=FALSE, message=FALSE, include=TRUE}
     #Copy the appropriate data to the 'publication' folder to make it available on server
     system2("cp", args=c(paste0(cnj04_workflow,"/traits/effects_collated.csv"),"../Data/publication/tables/effects_collated.cnj04.csv"))
 ```
-[CNJ04 QTLs]("../Data/publication/tables/effects_collated.cnj04.csv")
+[CNJ04 QTLs](https://vaccinium.vcru.wisc.edu/maule-ch1/Data/publication/tables/effects_collated.cnj04.csv)
 
 ### Interactive QTL Browser
 
-* [CNJ02]("https://vaccinium.vcru.wisc.edu/circos-cnj02")
-* [CNJ04]("https://vaccinium.vcru.wisc.edu/circos-cnj04")
+* [CNJ02](https://vaccinium.vcru.wisc.edu/circos-cnj02)
+* [CNJ04](https://vaccinium.vcru.wisc.edu/circos-cnj04)
