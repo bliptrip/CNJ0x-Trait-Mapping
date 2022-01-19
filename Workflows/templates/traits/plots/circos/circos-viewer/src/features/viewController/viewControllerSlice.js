@@ -6,6 +6,7 @@ const initialState = {
     qtlModelCount: MAX_QTL_MODEL_COUNT,
     qtlConsensus: false,
     qtlMethod: "scanone",
+    displayInteractions: false,
     displayTrackLabels: false,
     linkageGroups: [],
     traits: [],
@@ -25,6 +26,9 @@ export const viewControllerSlice = createSlice({
         },
         setQTLMethod: (state, action) => {
             state.qtlMethod = action.payload;
+        },
+        setDisplayInteractions: (state, action) => {
+            state.displayInteractions = action.payload;
         },
         setDisplayTrackLabels: (state, action) => {
             state.displayTrackLabels = action.payload;
@@ -48,9 +52,10 @@ const { setQTLModelCount,
         setQTLMethod, 
         setListLL, 
         setListItemCheckedLL, 
-        setDisplayTrackLabels } = viewControllerSlice.actions;
+        setDisplayTrackLabels,
+        setDisplayInteractions} = viewControllerSlice.actions;
 
-export {setQTLConsensus, setQTLModelCount, setQTLMethod, setDisplayTrackLabels};
+export {setQTLConsensus, setQTLModelCount, setQTLMethod, setDisplayTrackLabels, setDisplayInteractions};
 
 export const setList = (name) => (list) => {var payload = { list: list,
                                                             name: name };
@@ -63,6 +68,7 @@ export const setListItemChecked = (name,id) => (payload) => {payload.name   = na
 // The function below is called a selector and allows us to select a value from
 // the state. Selectors can also be defined inline where they're used instead of
 // in the slice file. For example: `useSelector((state: RootState) => state.counter.value)`
+export const selectDisplayInteractions = (state) => state.viewController.displayInteractions;
 export const selectDisplayTrackLabels = (state) => state.viewController.displayTrackLabels;
 export const selectQTLModelCount = (state) => state.viewController.qtlModelCount;
 export const selectQTLConsensus = (state) => state.viewController.qtlConsensus;

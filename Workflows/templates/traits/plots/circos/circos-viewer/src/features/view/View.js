@@ -4,6 +4,7 @@ import {selectQTLModelCount,
         selectQTLConsensus,
         selectQTLMethod,
         selectList,
+        selectDisplayInteractions,
         selectDisplayTrackLabels,
         setList
 } from '../viewController/viewControllerSlice';
@@ -34,6 +35,7 @@ var gqtls;
 var gconfigs;
 var gcircos_trait_config;
 var gscatter_defaults;
+var gepistatic_defaults;
 var gstack_defaults;
 var gline_defaults;
 var blipColors = d3.scaleSequential(d3.interpolateTurbo);
@@ -48,6 +50,16 @@ const round  = (value, decimals = 0) => {
         return Number(Math.round(parseFloat(value)+'e'+decimals)+'e-'+decimals);
     }
 }
+
+const show_interactions = () => {
+    d3.selectAll(".chord")
+        .attr('visibility','visible');
+};
+
+const hide_interactions = () => {
+    d3.selectAll(".chord")
+        .attr('visibility','hidden');
+};
 
 var change_scan_type = function(selected_type) {
     //Hide everything
@@ -86,6 +98,29 @@ var hide_lod_profs = function(datum, index, nodes, event) {
         .attr('visibility', 'hidden');
 }
 
+var find_chord_markers = function(chr,position) {
+    const l = "LG"+chr.toString()+"@"+round(position*1000).toString();
+    return(d3.selectAll("*[location='"+l+"']"));
+}
+
+var highlight_chord_markers = function(event, datum) {
+    if( ("chr" in datum) && ("position" in datum) && ("chr2" in datum) && ("position2" in datum) ) {
+        find_chord_markers(datum.chr, datum.position)
+            .attr('opacity', qtl_bubble_highlight_opacity);
+        find_chord_markers(datum.chr2, datum.position2)
+            .attr('opacity', qtl_bubble_highlight_opacity);
+    }
+}
+
+var unhighlight_chord_markers = function(event, datum) {
+    if( ("chr" in datum) && ("position" in datum) && ("chr2" in datum) && ("position2" in datum) ) {
+        find_chord_markers(datum.chr, datum.position)
+            .attr('opacity', qtl_bubble_opacity);
+        find_chord_markers(datum.chr2, datum.position2)
+            .attr('opacity', qtl_bubble_opacity);
+    }
+}
+
 var highlight_markers = function(event, datum) {
     var marker = datum.nearest_marker;
     d3.selectAll("*[marker='"+marker+"']")
@@ -103,6 +138,7 @@ export default function View() {
     const qtlModelCount               = useSelector(selectQTLModelCount);
     const qtlConsensus                = useSelector(selectQTLConsensus);
     const qtlMethod                   = useSelector(selectQTLMethod);
+    const displayInteractions         = useSelector(selectDisplayInteractions);
     const displayTrackLabels          = useSelector(selectDisplayTrackLabels);
     const linkageGroups               = useSelector(selectList('linkageGroups'));
     const models                      = useSelector(selectList('models'));
@@ -118,8 +154,10 @@ export default function View() {
         var trait = traits[trait_idx];
         var scatter_trait_data = qtls.filter( d => (d.trait === trait) )
                                         .filter( d => (models.includes(d.model)) )
-                                        .filter( d => ((d.method === method) || (d.method === "fakeqtl")) )
-                                        .map( d => ({   ...d,
+                                        .filter( d => (d.method === method) )
+                                        .filter( d => (!("chr2" in d) && !("position2" in d)) )
+                                        .map( d => ({   
+                                                        ...d,
                                                         block_id: "vm"+d.chr,
                                                         color: blipColors((((trait_idx+1) * models.length) + models.indexOf(d.model))/(1.2*(traits.length * models.length))),
                                                         position: +(consensus === "consensus" ? d.position_consensus : d.position) * 1000,
@@ -131,31 +169,98 @@ export default function View() {
                                         .filter( d => (linkage_groups.includes(d.block_id)) );
         scatter_trait_data = d3.rollup( scatter_trait_data, 
                                         v => (v.sort( (a,b) => (b.marker_variance - a.marker_variance) )
-                                               .slice(0,qtlModelCount+linkage_groups.length)), //Add one so that 'fake' qtls render
+                                               .slice(0,qtlModelCount)), //Add one so that 'fake' qtls render
                                         d => d.model );
+        var scatter_trait_data_fake = qtls.filter( d => (d.trait === trait) )
+                                          .filter( d => (models.includes(d.model)) )
+                                          .filter( d => (d.method === "fakeqtl") )
+                                          .map( d => ({   
+                                                          ...d,
+                                                          block_id: "vm"+d.chr,
+                                                          color: blipColors((((trait_idx+1) * models.length) + models.indexOf(d.model))/(1.2*(traits.length * models.length))),
+                                                          position: +(consensus === "consensus" ? d.position_consensus : d.position) * 1000,
+                                                          value: models.indexOf(d.model)+1,
+                                                          size: round(d.marker_variance * qtl_bubble_scale_factor),
+                                                          lod: +d.qtl_lod,
+                                                          pval: +d.qtl_pvalue,
+                                                  }) )
+                                          .filter( d => (linkage_groups.includes(d.block_id)) );
         scatter_trait_data = d3.merge(Array.from(scatter_trait_data.values()));
+        scatter_trait_data = scatter_trait_data.concat(scatter_trait_data_fake); //Add in the fake data
         var trait_class = "scatters-" + method + "-" + consensus + "--" + trait;
         circosScatter.scatter(trait_class, scatter_trait_data, config);
+        return(scatter_trait_data);
     }; 
+
+    //Don't need 'method' as parameter to inject_epistatics, as it is only valid for stepwiseqtl method.
+    const inject_epistatics = (linkage_groups, qtls, traits, trait_idx, models, scatters, config) => {
+        const trait = traits[trait_idx];
+        models.forEach( (model,i) => {
+            //scanone normal
+            var scatters_chr_pos = scatters.filter( d => (models.includes(d.model)) )
+                                           .map( d => ((d.chr).toString()+"@"+round(d.position)) );
+            var epistatic_trait_data = qtls.filter( d => (d.trait === trait) )
+                                       .filter( d => (d.model === model) )
+                                       .filter( d => (d.method === "stepwiseqtl") )
+                                       .filter( d => (("chr2" in d) && ("position2" in d)) )
+                                       .filter( d => (scatters_chr_pos.includes((d.chr).toString()+"@"+round(d.position*1000))) )
+                                       .filter( d => (scatters_chr_pos.includes((d.chr2).toString()+"@"+round(d.position2*1000))) )
+                                       .map( d => ({
+                                                        ...d,
+                                                        range: 1.0 + (d.marker_variance/25)
+                                       }) )
+                                       .map( d => ({ 
+                                                        ...d,
+                                                        color: blipColors((((trait_idx+1) * models.length) + models.indexOf(d.model))/(1.2*(traits.length * models.length))),
+                                                        value: 1,
+                                                        source: { 
+                                                                id: "vm"+d.chr,
+                                                                start: (d.position-d.range)*1000,
+                                                                end: (d.position+d.range)*1000
+                                                        },
+                                                        target: {
+                                                                id: "vm"+d.chr2,
+                                                                start: (d.position2-d.range)*1000,
+                                                                end: (d.position2+d.range)*1000
+                                                        }
+                                       }) );
+            if( epistatic_trait_data.length > 0 ) {
+                const trait_class = "epistatics-stepwiseqtl-normal--"+model+"--"+trait;
+                circosScatter.chords(trait_class, epistatic_trait_data, config[i]);
+            } else {
+                console.log("Non-zero epistatic_trait_data length.")
+            }
+        });
+    };
+
     const inject_stacks = (linkage_groups, qtls, traits, trait_idx, models, config, method, consensus) => {
         var trait = traits[trait_idx];
         models.forEach( (model,i) => {
             //scanone normal
             var stack_trait_data = qtls.filter( d => (d.trait === trait) )
-                                        .filter( d => (models.includes(d.model)) )
-                                        .filter( d => ((d.method === method) || (d.method === "fakeqtl")) )
+                                        .filter( d => (model == d.model) )
+                                        .filter( d => (d.method === method) )
+                                        .filter( d => (!("chr2" in d) && !("position2" in d)) )
                                         .map( d => ({ ...d,
-                                                        block_id: "vm" + d.chr,
-                                                        color: blipColors((((trait_idx+1) * models.length) + models.indexOf(d.model))/(1.2*(traits.length * models.length))),
-                                                        start: +d.interval_left*1000,
-                                                        end: +d.interval_right*1000
+                                                      block_id: "vm" + d.chr,
+                                                      color: blipColors((((trait_idx+1) * models.length) + models.indexOf(d.model))/(1.2*(traits.length * models.length))),
+                                                      start: +d.interval_left*1000,
+                                                      end: +d.interval_right*1000
+                                                    }))
+                                        .filter( d => (linkage_groups.includes(d.block_id)) )
+                                        .sort( (a,b) => (b.marker_variance - a.marker_variance) )
+                                        .slice(0,qtlModelCount);
+            var stack_trait_data_fake = qtls.filter( d => (d.trait === trait) )
+                                        .filter( d => (model == d.model) )
+                                        .filter( d => (d.method === "fakeqtl") )
+                                        .map( d => ({ ...d,
+                                                      block_id: "vm" + d.chr,
+                                                      color: blipColors((((trait_idx+1) * models.length) + models.indexOf(d.model))/(1.2*(traits.length * models.length))),
+                                                      start: +d.interval_left*1000,
+                                                      end: +d.interval_right*1000
                                                     }))
                                         .filter( d => (linkage_groups.includes(d.block_id)) );
-            stack_trait_data = d3.rollup( stack_trait_data, 
-                                            v => (v.sort( (a,b) => (b.marker_variance - a.marker_variance) )
-                                            .slice(0,qtlModelCount+linkage_groups.length)), //Add one so that 'fake' qtls render
-                                            d => d.model );
-            stack_trait_data = d3.merge(Array.from(stack_trait_data.values()));
+            stack_trait_data = stack_trait_data.concat(stack_trait_data_fake);
             if( stack_trait_data.length > 0 ) {
                 var trait_class = "stacks-"+method+"-"+consensus+"--"+model+"--"+trait;
                 circosScatter.stack(trait_class, stack_trait_data, config[i]);
@@ -200,11 +305,12 @@ export default function View() {
         });
     }
 
-    const inject_data = (linkage_groups, qtls, traits, trait_idx, models, scatter_config, stack_config, line_config) => {
+    const inject_data = (linkage_groups, qtls, traits, trait_idx, models, scatter_config, epistatic_config, stack_config, line_config) => {
         //Scatterplots (QTL bubble tracks)
         inject_scatters(linkage_groups, qtls, traits, trait_idx, models, scatter_config, "scanone", "normal");
         inject_scatters(linkage_groups, qtls, traits, trait_idx, models, scatter_config, "scanone", "consensus");
-        inject_scatters(linkage_groups, qtls, traits, trait_idx, models, scatter_config, "stepwiseqtl", "normal");
+        const scatters = inject_scatters(linkage_groups, qtls, traits, trait_idx, models, scatter_config, "stepwiseqtl", "normal");
+        inject_epistatics(linkage_groups, qtls, traits, trait_idx, models, scatters, epistatic_config); //Only valid case for epistatic interactions -- as only for stepwiseqtl() and 'normal' QTLs
         inject_scatters(linkage_groups, qtls, traits, trait_idx, models, scatter_config, "stepwiseqtl", "consensus");
 
         //Stacks (1.5 LOD interval tracks)
@@ -239,6 +345,20 @@ export default function View() {
         dispatch(setBlupTableGridFilters([{columnField: "trait", value: d.trait, operatorValue: "==="}]));
     };
 
+    const gen_epistatic_color = d => (d.color);
+
+    const gen_epistatic_tooltip = d => {
+        const trait = circos_trait2traitname[d.trait];
+        const model = circos_model2modelname[d.model];
+        const variance = round(d.marker_variance, 1);
+        const chr1      = d.chr;
+        const position1 = round(d.position, 1);
+        const chr2      = d.chr2;
+        const position2 = round(d.position2, 1); 
+        return("Trait: "+trait+"<br />Model: "+model+"<br />Var: "+variance.toString()+"%<br />Pos1: LG"+chr1.toString()+"@"+position1.toString()+"cM<br />Pos2: LG"+chr2.toString()+"@"+position2.toString()+"cM");
+    };
+
+
     const gen_stack_tooltip = function(d) {
         var start = round(d.start/1000.0, 1);
         var end = round(d.end/1000.0, 1);
@@ -254,7 +374,7 @@ export default function View() {
                 glayout
             );
         for( var i = 0; i < traits.length; i++ ) {
-            inject_data(linkage_groups, qtls, traits, i, models, track_configs.scatters[i], track_configs.stacks[i], track_configs.lods[i]);
+            inject_data(linkage_groups, qtls, traits, i, models, track_configs.scatters[i], track_configs.epistatics[i], track_configs.stacks[i], track_configs.lods[i]);
         }
         circosScatter.render();
         var svg = d3.select(".svg-content-responsive");
@@ -265,8 +385,11 @@ export default function View() {
         var gtop = d3.select('g.top');
         zoom.transform(gtop, transform);
         d3.selectAll(".point")
-            .on('mouseover.highlight', highlight_markers)
+            .on('mouseover.highlight', highlight_markers) 
             .on('mouseout.highlight', unhighlight_markers);
+        d3.selectAll(".chord")
+            .on('mouseover.highlight', highlight_chord_markers) 
+            .on('mouseout.highlight', unhighlight_chord_markers);
         d3.selectAll(".tile")
             .on('mouseover.highlight', highlight_markers)
             .on('mouseout.highlight', unhighlight_markers);
@@ -296,7 +419,27 @@ export default function View() {
             })
             .attr( "marker", function(d) {
                 return d.nearest_marker;
+            })
+            .attr( "location", function(d) {
+                if( ("chr" in d) && ("position" in d) ) {
+                    return "LG"+(d.chr).toString()+"@"+round(d.position).toString();
+                } else {
+                    return ""; 
+                }
             });
+
+        var chords = d3.selectAll(".chord")
+            .datum( function(d) {
+                return d;
+            })
+            .attr( "location", function(d) {
+                if( ("chr" in d) && ("position" in d) ) {
+                    return "LG"+(d.chr).toString()+"@"+round(d.position).toString();
+                } else {
+                    return ""; 
+                }
+            });
+
         //Update all stack intervals with a 'marker' attribute to select all identical nearest interval stacks
         var stacks = d3.selectAll(".tile")
             .datum( function(d) {
@@ -317,16 +460,26 @@ export default function View() {
         return(gband);
     };
 
+    const epistaticTrackGenerator = (gband, trait_index, nmodels, stack_proportion=0.3) => {
+        const trait_start = gband(trait_index);
+        const trait_end = gband(trait_index) + (1.0-stack_proportion)*gband.step();
+        let eband = d3.scaleBand()
+                        .domain(seq(0, nmodels+1, 1))
+                        .range([trait_start, trait_end])
+                        .padding(0.0);
+        return(eband);
+    };
+
     const stackTrackGenerator = (gband, trait_index, nmodels, intertrack_distance=0.3, stack_proportion=0.3) => {
-    const trait_start = gband(trait_index) + (1.0-stack_proportion)*gband.step();
-    const trait_end = gband(trait_index) + gband.step();
-    let sband = d3.scaleBand()
-                    .domain(seq(0, nmodels-1, 1))
-                    .range([trait_start, trait_end])
-                    .paddingOuter(0.5)
-                    .paddingInner(intertrack_distance)
-                    .align(0.5);
-    return(sband);
+        const trait_start = gband(trait_index) + (1.0-stack_proportion)*gband.step();
+        const trait_end = gband(trait_index) + gband.step();
+        let sband = d3.scaleBand()
+                        .domain(seq(0, nmodels-1, 1))
+                        .range([trait_start, trait_end])
+                        .paddingOuter(0.5)
+                        .paddingInner(intertrack_distance)
+                        .align(0.5);
+        return(sband);
     };
 
     const reloadTrackConfigs = (linkage_groups, traits, models, stack_proportion=0.3, intertrack_distance=0.1) => {
@@ -335,6 +488,8 @@ export default function View() {
         var scatter_configs_json = Array(ntraits);
         var stack_configs_json = Array(ntraits);
         var line_configs_json = Array(ntraits);
+		var epistatic_configs_json = Array(ntraits);
+
         var nmodels = models.length;
         const trackBands = globalTrackGenerator(ntraits);
         for( let i = 0; i < ntraits; i++ ) {
@@ -365,6 +520,26 @@ export default function View() {
             scatter_config_json.backgrounds[0].color    = d3.color("gray45");
             scatter_config_json.backgrounds[0].opacity  = 1;
             scatter_configs_json[i] = scatter_config_json;
+
+            var epistaticBands = epistaticTrackGenerator(trackBands, i, nmodels);
+		    var epistatic_configs_inner_json = Array(nmodels);
+            for( let j = 0; j < nmodels; j++ ) {
+                var epistatic_config_json = JSON.parse(JSON.stringify(gepistatic_defaults));
+                epistatic_config_json.radius = epistaticBands(j+1);
+                epistatic_config_json.color = gen_epistatic_color;
+                epistatic_config_json.tooltipContent = gen_epistatic_tooltip;
+                epistatic_configs_inner_json[j] = epistatic_config_json;
+            }
+            epistatic_configs_json[i] = epistatic_configs_inner_json;
+
+            scatter_config_json.innerRadius     = bi;
+            scatter_config_json.outerRadius     = bi + (1.0-stack_proportion)*trackBands.step();
+            scatter_config_json.max             = nmodels+1;
+            scatter_config_json.color           = gen_scatter_color;
+            scatter_config_json.size            = gen_scatter_size;
+            scatter_config_json.tooltipContent  = gen_scatter_tooltip;
+            scatter_config_json.selectAction    = gen_scatter_action;
+            scatter_config_json.trackLabelConf.label = circos_trait2traitname[trait];
             //Edit the stack layout
             var stackBands = stackTrackGenerator(trackBands, i, nmodels);
             var stack_configs_inner_json = Array(nmodels);
@@ -390,6 +565,7 @@ export default function View() {
             line_configs_json[i] = line_config_json;
         }
         return( { scatters: scatter_configs_json,
+                  epistatics: epistatic_configs_json,
                   stacks: stack_configs_json,
                   lods: line_configs_json } );
     };
@@ -510,6 +686,7 @@ export default function View() {
         gscatter_defaults     = data[5];
         gstack_defaults       = data[6];
         gline_defaults        = data[7];
+        gepistatic_defaults   = data[8];
 
         /* By default, enable everything */
         var karyotypes_df  = new DataFrame(gkaryotypes); 
@@ -564,13 +741,14 @@ export default function View() {
                         d3.json('configs/lod_profiles.json'),
                         d3.json('configs/circos/scatter.default.json'),
                         d3.json('configs/circos/stack.default.json'),
-                        d3.json('configs/circos/line.default.json')])
+                        d3.json('configs/circos/line.default.json'),
+                        d3.json('configs/circos/epistatic.default.json')])
                 .then(data => {
                     loadStaticConfigurations(data);
                     setPostInit(true);
                 })
                 .catch(error => {
-                    console.error(error.message)
+                    console.error(error)
                 });
         return;
     }, [init]);
@@ -578,6 +756,14 @@ export default function View() {
     useEffect(() => {
         change_scan_type(generateMethodConsensus());
     }, [qtlConsensus, qtlMethod]);
+
+    useEffect(() => {
+        if( displayInteractions ) {
+            show_interactions();
+        } else {
+            hide_interactions();
+        }
+    }, [displayInteractions]);
 
     useEffect(() => {
         if( postInit === true ) {
@@ -595,6 +781,11 @@ export default function View() {
                 }); //Inject a sector to show labels
             }
             redraw(karyotypes, labelSector);
+            if( displayInteractions ) {
+                show_interactions();
+            } else {
+                hide_interactions();
+            }
         }
     }, [postInit, qtlModelCount, displayTrackLabels, trackLabelProportion, linkageGroups, traits, models]);
 

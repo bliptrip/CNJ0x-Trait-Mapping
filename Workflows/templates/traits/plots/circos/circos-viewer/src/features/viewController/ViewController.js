@@ -3,6 +3,7 @@ import { useSelector, shallowEqual, useDispatch } from 'react-redux';
 import { useDrag, useDrop } from 'react-dnd';
 import {selectList,
         selectListItem,
+        selectDisplayInteractions,
         selectDisplayTrackLabels,
         selectQTLModelCount,
         selectQTLConsensus,
@@ -12,6 +13,7 @@ import {selectList,
         setQTLMethod,
         setList,
         setListItemChecked,
+        setDisplayInteractions,
         setDisplayTrackLabels,
         MAX_QTL_MODEL_COUNT
 } from './viewControllerSlice';
@@ -460,6 +462,30 @@ const ListViewElement = ({ listType, id, text, index, enabled, setListElementChe
 };
 
 
+const InteractionsSwitch = () => {
+    const dispatch = useDispatch();
+    const displayInteractions = useSelector(selectDisplayInteractions, shallowEqual);
+
+    const handleChange = (event) => {
+        dispatch(setDisplayInteractions(event.target.checked));
+    };
+
+    return( <ListItem>
+                <FormGroup>
+                    <FormControlLabel
+                        control={
+                                    <Switch
+                                        checked={displayInteractions}
+                                        onChange={handleChange}
+                                        color="primary"
+                                    />
+                                }
+                        label="Display StepwiseQTL Interactions"
+                    />
+                </FormGroup>
+            </ListItem> );
+};
+
 const LabelTrackSwitch = () => {
     const dispatch = useDispatch();
     const displayTrackLabels = useSelector(selectDisplayTrackLabels, shallowEqual);
@@ -490,6 +516,8 @@ const ViewController = () => {
             <ConfigurationResetor />
             <Divider />
             <QTLModelCountSelector />
+            <Divider />
+            <InteractionsSwitch />
             <Divider />
             <LabelTrackSwitch />
             <Divider />
