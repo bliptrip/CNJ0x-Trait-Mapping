@@ -1,0 +1,8 @@
+{
+    "radius": 0.5,
+    "color": "rgb(0,0,0)",
+    "opacity": 0.5,
+    "logScale": false,
+    "zIndex": false,
+    "tooltipContent": null
+}
