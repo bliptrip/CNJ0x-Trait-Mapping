@@ -106,6 +106,9 @@ CollateQTL:
 GenQTLTable:
 		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_scan_method="$(QTL_METHOD)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_10_01_genQTLtables.R
 
+GenIntTable:
+		R CMD BATCH '--args workflow="$(WORKFLOW)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_10_02_genInteractionTables.R
+
 #Collate all QTL info into one file
 GenConsensus:
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_10_genconsensus.R
