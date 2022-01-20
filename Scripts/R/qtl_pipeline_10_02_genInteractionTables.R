@@ -38,10 +38,9 @@ qtl.collated.ints.tb <- read_csv(file=paste0(workflow,'/traits/qtl_collated.csv'
                             mutate(GxYZRpvalue = rep(min(GxYZRpvalue,na.rm=TRUE),length(GxYZRpvalue))) %>%
                             ungroup()
 
-qtl.collated.filtered.tb <- qtl.collated.tb %>%
+qtl.collated.filtered.tb <- qtl.collated.ints.tb %>%
                                 filter(method == qtl_scan_method) %>%
-                                mutate(marker = gsub(".+cM_(.+)", "\\1",nearest.marker), 
-                                       model_name = model_to_name(trait.cfg.tb,model,trait), 
+                                mutate(model_name = model_to_name(trait.cfg.tb,model,trait), 
                                        trait_name = trait_to_name(trait.cfg.tb,model,trait)) %>%
                                 arrange(trait_name,model_name,desc(marker.variance)) %>%
                                 group_by(trait_name,model_name) %>%
@@ -50,9 +49,8 @@ qtl.collated.filtered.tb <- qtl.collated.tb %>%
                                 ungroup()
 
 qtl.collated.succinct.tb <- qtl.collated.filtered.tb %>%
-                                mutate(marker = ifelse(is.na(marker)," ",marker)) %>%
                                 mutate(position = round.digits(position,2),
-                                       position2 = round.digits(position2,2)
+                                       position2 = round.digits(position2,2),
                                        qtl.lod = paste0(round.digits(qtl.lod,2),"$^{",unlist(map(qtl.pvalue,siginfo)),"}$"))
 
 
@@ -78,8 +76,8 @@ generateReducedTable <- function(tbl, caption=NULL) {
         rename("Trait"=trait_name,
                "LG1"=chr,
                "Position1 (cM)"=position,
-               "LG2"=chr,
-               "Position2 (cM)"=position,
+               "LG2"=chr2,
+               "Position2 (cM)"=position2,
                "pLOD"=qtl.lod,
                "Variance Explained by QTL"=marker.variance)
     if( is_html_output() ) {
@@ -109,8 +107,8 @@ generateTable <- function(tbl, caption=NULL) {
                'Model[note]'=model_name,
                "LG1"=chr,
                "Position1 (cM)"=position,
-               "LG2"=chr,
-               "Position2 (cM)"=position,
+               "LG2"=chr2,
+               "Position2 (cM)"=position2,
                "pLOD"=qtl.lod,
                "Variance Explained by QTL"=marker.variance)
     if( is_html_output() ) {
