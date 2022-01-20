@@ -94,7 +94,7 @@ qtl.tb  <- read_csv(file=paste0(workflow,'/traits/qtl_collated.consensus.csv'), 
                     ungroup()
 colnames(qtl.tb) <- gsub('.','_',colnames(qtl.tb),fixed=TRUE)
 
-effs.tb <- generate_collated_effects(qtl.tba %>% filter(is.na(chr2) & is.na(position2)), num_top_qtls)
+effs.tb <- generate_collated_effects(qtl.tb %>% filter(is.na(chr2) & is.na(position2)), num_top_qtls)
 colnames(effs.tb) <- gsub('.','_',colnames(effs.tb),fixed=TRUE)
 saveRDS(effs.tb,file=paste0(workflow,'/traits/effects_collated.rds'), compress=TRUE)
 
