@@ -62,3 +62,9 @@ workflow=params$workflow
 cnj02_workflow = params$cnj02_workflow
 cnj04_workflow = params$cnj04_workflow
 ```
+
+<script>
+$(document).ready(function(){
+    $('[data-toggle="popover"]').popover({html:true});   
+});
+</script>
