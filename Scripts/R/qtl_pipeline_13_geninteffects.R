@@ -19,8 +19,7 @@ workflow        <- get0("workflow", ifnotfound="../../Workflows/1")
 num_top_qtls    <- get0("num_top_qtls", ifnotfound=2) #Number of top interaction QTLs to show per trait
 table.font_size <- get0("table.font_size", ifnotfound=10)
 table.width     <- get0("table.width", ifnotfound=0.85)
-
-qtl_scan_method <- "stepwiseqtl" #Only stepwiseqtl method valid for interactions
+collate_effects <- get0("collate_effects", ifnotfound=TRUE)
 
 #In case we override the workflow on the command-line
 args = commandArgs(trailingOnly=TRUE)
@@ -30,9 +29,9 @@ if(length(args)!=0) {
     }
 }
 num_top_qtls <- as.numeric(num_top_qtls) #Convert to numeric if passed in through command-line
+collate_effects <- as.logical(collate_effects) #Convert to logical if passed through command-line
 
 trait.cfg.tb    <- read_csv(file=paste0(workflow,'/configs/model-traits.cfg.csv'), col_names=TRUE)
-
 
 extract_int_effects <- function(model, trait, chr, position, chr2, position2) {
     #print(paste0("method = ",method, ", model = ", model, "trait = ", trait))
@@ -82,22 +81,40 @@ generate_collated_int_effects <- function(qtl.collated.tb) {
     }
     return(effects.tb)
 }
+
+#Non-interactive QTLs
+qtl.nints.tb <- read_csv(file=paste0(workflow,'/traits/qtl_collated.consensus.csv'), col_names=TRUE) %>%
+                   filter(method == "stepwiseqtl") %>%
+                   filter(is.na(chr2) & is.na(position2)) %>%
+                   select(method,model,trait,chr,position,marker.variance)
+colnames(qtl.nints.tb) <- gsub('.','_',colnames(qtl.nints.tb),fixed=TRUE)
+qtl.nints.tb <- unique(qtl.nints.tb) #Needed in case of duplicates
+
+#Interactive QTLs
 qtl.ints.tb <- read_csv(file=paste0(workflow,'/traits/qtl_collated.consensus.csv'), col_names=TRUE) %>%
                         filter(method == "stepwiseqtl") %>%
                         filter(!is.na(chr2) & !is.na(position2)) %>% #Only include interaction QTLs for now
                         group_by(trait) %>%
-                        mutate(GxYLRpvalue = rep(min(GxYLRpvalue,na.rm=TRUE),length(GxYLRpvalue))) %>% #Modify to have the interaction effect modeled in 'all-years' for all model,trait groupings
-                        mutate(GxYZRpvalue = rep(min(GxYZRpvalue,na.rm=TRUE),length(GxYZRpvalue))) %>%
+                        mutate(GxYLRpvalue = rep(min(GxYLRpvalue,na.rm=TRUE),length(GxYLRpvalue)), #Modify to have the interaction effect modeled in 'all-years' for all model,trait groupings
+                               GxYZRpvalue = rep(min(GxYZRpvalue,na.rm=TRUE),length(GxYZRpvalue))) %>%
                         ungroup()
 colnames(qtl.ints.tb) <- gsub('.','_',colnames(qtl.ints.tb),fixed=TRUE)
+qtl.ints.tb <- unique(qtl.ints.tb) #Needed in case of duplicates
 
-effs.ints.tb <- generate_collated_int_effects(qtl.ints.tb) %>%
-                    mutate(genotype_q1 = factor(genotype_q1,levels=c("AC","AD","BC","BD"),ordered=TRUE),
-                           genotype_q2 = factor(genotype_q2,levels=c("AC","AD","BC","BD"),ordered=TRUE))
+if( collate_effects ) {
+    effs.ints.tb <- generate_collated_int_effects(qtl.ints.tb) %>%
+                        mutate(genotype_q1 = factor(genotype_q1,levels=c("AC","AD","BC","BD"),ordered=TRUE),
+                            genotype_q2 = factor(genotype_q2,levels=c("AC","AD","BC","BD"),ordered=TRUE)) %>%
+                        nest_by(method,trait,model,chr,position,chr2,position2,marker_variance) %>%
+                        left_join(qtl.nints.tb, by=c("method","trait","model","chr","position"), suffix=c("","1")) %>%
+                        left_join(qtl.nints.tb %>% rename(chr2=chr,position2=position), by=c("method","trait","model","chr2","position2"), suffix=c("","2")) %>%
+                        unnest(data) %>%
+                        ungroup()
 
-saveRDS(effs.ints.tb,file=paste0(workflow,'/traits/effects_interactions_collated.rds'), compress=TRUE)
-effs.ints.tb <- readRDS(paste0(workflow,'/traits/effects_interactions_collated.rds')) #We can start here to load older state
-
+    saveRDS(effs.ints.tb,file=paste0(workflow,'/traits/effects_interactions_collated.rds'), compress=TRUE)
+} else {
+    effs.ints.tb <- readRDS(paste0(workflow,'/traits/effects_interactions_collated.rds')) #We can start here to load older state
+}
 
 effs.ints.tops.tb <- effs.ints.tb %>% 
                 nest_by(method,trait,model,chr,position,chr2,position2,marker_variance) %>%
@@ -108,76 +125,106 @@ effs.ints.tops.tb <- effs.ints.tb %>%
                 select(-top_qtls) %>%
                 ungroup() %>%
                 unnest(data) %>%
-                unnest(blups)
-
+                unnest(blups) %>%
+                group_by(method,trait,model) %>%
+                mutate(min_blup = min(blup), max_blup=max(blup)) %>%
+                ungroup() %>%
+                group_by(method, trait, model, chr, position, chr2, position2, genotype_q1) %>%
+                mutate(mean_q1 = mean(blup), sd_q1=sd(blup)) %>%
+                ungroup() %>%
+                group_by(method, trait, model, chr, position, chr2, position2, genotype_q2) %>%
+                mutate(mean_q2 = mean(blup), sd_q2=sd(blup)) %>%
+                ungroup() %>%
+                group_by(method, trait, model, chr, position, chr2, position2, genotype_q1, genotype_q2) %>%
+                mutate(mean_q12 = mean(blup), sd_q12=sd(blup)) %>%
+                ungroup() %>%
+                mutate(mean_diff = (mean_q1+mean_q2)-mean_q12,
+                       mean_sum = (mean_q1+mean_q2),
+                       genotype = factor(paste0(genotype_q1,"×",genotype_q2), levels=c("AC×AC","AC×AD","AC×BC","AC×BD","AD×AC","AD×AD","AD×BC","AD×BD","BC×AC","BC×AD","BC×BC","BC×BD","BD×AC","BD×AD","BD×BC","BD×BD")))
 
 effs.ints.plots.tb <- effs.ints.tops.tb %>% 
-                        group_by(method,trait,model) %>%
-                        mutate(min_blup = min(blup), max_blup=max(blup)) %>%
-                        ungroup() %>%
                         group_by(method, trait, model, chr, position, chr2, position2) %>%
-                        mutate(genotype = factor(paste0(genotype_q1,"×",genotype_q2), levels=c("AC×AC","AC×AD","AC×BC","AC×BD","AD×AC","AD×AD","AD×BC","AD×BD","BC×AC","BC×AD","BC×BC","BC×BD","BD×AC","BD×AD","BD×BC","BD×BD"))) %>%
-                        do(plot0  = ggplot(., aes(x=genotype_q2, y=blup, fill=genotype)) +
-                                            geom_blank(aes(y=min_blup)) +
-                                            geom_blank(aes(y=max_blup)) +
+                        do(mad=mean(abs(.$mean_diff)),
+                           nmad = 2*mean(abs(.$mean_diff))/(.$max_blup[1]-.$min_blup[1]), #Normalized mean absolute difference
+                           plot0  = ggplot(., aes(y=genotype_q2, x=blup, fill=genotype)) +
                                             geom_boxplot(alpha=0.5) +
-                                            scale_x_discrete(drop=FALSE) +
                                             geom_jitter(width=0.1, alpha=0.3) +
-                                            geom_hline(mapping=aes(yintercept=0),color="grey30",linetype="dashed") +
+                                            geom_point(aes(x=mean_sum), shape="diamond", size=3, alpha=0.7) +
+                                            geom_point(aes(x=mean_q12), shape="circle", size=3, alpha=0.7) +
+                                            geom_blank(aes(x=min_blup)) +
+                                            geom_blank(aes(x=max_blup)) +
+                                            scale_y_discrete(drop=FALSE) +
+                                            geom_vline(mapping=aes(xintercept=0),color="grey30",linetype="dashed") +
                                             guides(fill = 'none') +
-                                            coord_flip() +
                                             facet_grid(cols=vars(genotype_q1)) +
                                             theme(axis.title.x = element_blank(),
                                                   axis.title.y = element_blank(),
-                                                  axis.line   = element_line(color="black"),
-                                                  axis.ticks = element_line(color="black"),
+                                                  axis.line.x   = element_line(color="black"),
+                                                  axis.line.y   = element_blank(),
+                                                  axis.ticks.x = element_line(color="black"),
+                                                  axis.ticks.y = element_blank(),
+                                                  axis.text.x = element_text(size=12,angle=75,vjust=-.005),
+                                                  axis.text.y = element_blank(),
+                                                  strip.text = element_blank(),
+                                                  strip.background = element_blank(),
                                                   panel.grid = element_line(color="darkgray",size=0.25,linetype=3),
                                                   panel.background = element_rect(fill="transparent"),
-                                                  plot.background = element_rect(fill="transparent")),
-                           plot1 = ggplot(., aes(x=1, y=blup, group=genotype_q1, fill=genotype_q1)) +
-                                            geom_blank(aes(y=min_blup)) +
-                                            geom_blank(aes(y=max_blup)) +
+                                                  plot.background = element_rect(fill="transparent"),
+                                                  plot.margin = margin(20,10,20,20)),
+                           plot1 = ggplot(., aes(x=blup, y=1, group=genotype_q1, fill=genotype_q1)) +
+                                            geom_blank(aes(x=min_blup)) +
+                                            geom_blank(aes(x=max_blup)) +
                                             geom_boxplot(alpha=0.5) +
-                                            scale_x_discrete(drop=FALSE) +
+                                            scale_y_discrete(drop=FALSE) +
                                             geom_jitter(width=0.1, alpha=0.3) +
-                                            geom_hline(mapping=aes(yintercept=0),color="grey30",linetype="dashed") +
+                                            geom_vline(mapping=aes(xintercept=0),color="grey30",linetype="dashed") +
                                             guides(fill = 'none') +
-                                            coord_flip() +
                                             facet_grid(cols=vars(genotype_q1)) +
                                             theme(axis.title.x = element_blank(),
                                                   axis.title.y = element_blank(),
-                                                  axis.line   = element_line(color="black"),
-                                                  axis.ticks = element_line(color="black"),
+                                                  axis.line.x   = element_line(color="black"),
+                                                  axis.line.y   = element_blank(),
+                                                  axis.text.x = element_text(size=12,angle=75,vjust=-.005),
+                                                  axis.ticks.x = element_line(color="black"),
+                                                  axis.ticks.y = element_blank(),
+                                                  strip.text = element_text(face="bold",size=18),
+                                                  strip.background = element_rect(fill="transparent"),
                                                   panel.grid = element_line(color="darkgray",size=0.25,linetype=3),
                                                   panel.background = element_rect(fill="transparent"),
-                                                  plot.background = element_rect(fill="transparent")),
-                           plot2 = ggplot(., aes(x=genotype_q2, y=blup, fill=genotype_q2)) +
-                                            geom_blank(aes(y=min_blup)) +
-                                            geom_blank(aes(y=max_blup)) +
+                                                  plot.background = element_rect(fill="transparent"),
+                                                  plot.margin = margin(10,10,20,24)),
+                           plot2 = ggplot(., aes(y=genotype_q2, x=blup, fill=genotype_q2)) +
+                                            geom_blank(aes(x=min_blup)) +
+                                            geom_blank(aes(x=max_blup)) +
                                             geom_boxplot(alpha=0.5) +
-                                            scale_x_discrete(drop=FALSE) +
+                                            scale_y_discrete(drop=FALSE) +
                                             geom_jitter(width=0.1, alpha=0.3) +
-                                            geom_hline(mapping=aes(yintercept=0),color="grey30",linetype="dashed") +
+                                            geom_vline(mapping=aes(xintercept=0),color="grey30",linetype="dashed") +
                                             guides(fill = 'none') +
-                                            coord_flip() +
-                                            theme(axis.text.y = element_blank(),
-                                                  axis.title.x = element_blank(),
+                                            theme(axis.title.x = element_blank(),
                                                   axis.title.y = element_blank(),
+                                                  axis.text.x = element_text(size=12,angle=75,vjust=-.005),
+                                                  axis.text.y = element_text(face="bold",size=18),
                                                   axis.line   = element_line(color="black"),
                                                   axis.ticks = element_line(color="black"),
                                                   panel.grid = element_line(color="darkgray",size=0.25,linetype=3),
                                                   panel.background = element_rect(fill="transparent"),
-                                                  plot.background = element_rect(fill="transparent"))) %>%
-                        mutate(plot_filename = paste0(normalizePath(paste0(workflow,'/traits/',model,'--',trait,'/',trait),mustWork=TRUE), '/effects_interactions_plot.blups.chr',chr,'_',round.digits(position,2),'cM--chr',chr2,'_',round.digits(position2,2),'cM.png')) %>%
+                                                  plot.background = element_rect(fill="transparent"),
+                                                  plot.margin = margin(20,22,24,20))) %>%
+                        mutate(mad=unlist(mad),
+                               nmad=unlist(nmad),
+                               plot_filename = paste0(normalizePath(paste0(workflow,'/traits/',model,'--',trait,'/',trait),mustWork=TRUE), '/effects_interactions_plot.blups.chr',chr,'_',round.digits(position,2),'cM--chr',chr2,'_',round.digits(position2,2),'cM.png')) %>%
                         group_walk(~ {
-                                        plot = plot_grid(.x$plot0[[1]],.x$plot2[[1]],.x$plot1[[1]],nrow=2,ncol=2,rel_widths=c(1,.25))
+                                        plot = plot_grid(.x$plot0[[1]],.x$plot2[[1]],.x$plot1[[1]],nrow=2,ncol=2,rel_widths=c(1,.4),rel_heights=c(1,.85))
                                         print(paste0("Saving ",.x$plot_filename))
                                         #png(filename=.x$plot_filename, width=640, height=320, bg="white")
-                                        ggsave(filename=.x$plot_filename, plot = plot, device="png", bg="transparent", dpi=300, width=20, height=20, units="cm")
+                                        ggsave(filename=.x$plot_filename, plot = plot, device="png", bg="transparent", dpi=300, width=25, height=10, units="cm")
                                     })
 
 effs.ints.all.tb <- effs.ints.plots.tb %>%
                         left_join(qtl.ints.tb, by=c("method","trait","model","chr","position","chr2","position2")) %>%
+                        left_join(qtl.nints.tb, by=c("method","trait","model","chr","position"), suffix=c("","1")) %>%
+                        left_join(qtl.nints.tb %>% rename(chr2=chr,position2=position), by=c("method","trait","model","chr2","position2"), suffix=c("","2")) %>%
                         mutate(model_name = model_to_name(trait.cfg.tb,model,trait), 
                                trait_name = trait_to_name(trait.cfg.tb,model,trait),
                                position = round.digits(position,2),
@@ -198,38 +245,66 @@ generateTableRemoveRepeats <- function(tbl) {
         mutate(trait_name = ifelse(trait_repeat, "",trait_name),
                model_name = ifelse(model_repeat, "",model_name)) )
 }
-generateReducedTable(effs.ints.all.tb)
+
 generateReducedTable <- function(tbl, caption=NULL) {
     etbl1 <- tbl %>%
         generateTableRemoveRepeats() %>%
-        select(trait_name,chr,position,chr2,position2,qtl_lod,marker_variance) %>%
-        mutate(marker_variance=color_bar("lightblue")(percent(marker_variance/100))) %>%
+        select(trait_name,chr,position,chr2,position2,qtl_lod,mad,nmad,marker_variance,marker_variance1,marker_variance2,plot_filename) %>%
+        mutate(mad=round.digits(mad,3),
+               nmad=color_bar(spec_color(nmad,option="E",alpha=0.3,scale_from=c(0,20)))(round.digits(percent(nmad),4)),
+               marker_variance=color_bar(spec_color(marker_variance,option="E",alpha=0.3,scale_from=c(0,20)))(percent(marker_variance/100)),
+               marker_variance1=color_bar(spec_color(marker_variance1,option="E",alpha=0.3,scale_from=c(0,20)))(percent(marker_variance1/100)),
+               marker_variance2=color_bar(spec_color(marker_variance2,option="E",alpha=0.3,scale_from=c(0,20)))(percent(marker_variance2/100))) %>%
+        select(!plot_filename) %>%
         rename("Trait"=trait_name,
                "LG1"=chr,
                "Position1 (cM)"=position,
-               "LG2"=chr,
-               "Position2 (cM)"=position,
-               "pLOD"=qtl_lod,
-               "Variance Explained by QTL"=marker_variance) %>%
+               "LG2"=chr2,
+               "Position2 (cM)"=position2,
+               "pLOD[note]"=qtl_lod,
+               "MAD[note]"=mad,
+               "NMAD[note]"=nmad,
+               "Int[note] Variance"=marker_variance,
+               "QTL1 Variance"=marker_variance1,
+               "QTL2 Variance"=marker_variance2) %>%
         mutate("Interaction Effect Boxplots[note]"="")
     if( is_html_output() ) {
-        etbl2 <- etbl1 %>% kable("html", caption=caption, align='lrrrrrrc', escape = FALSE, table.attr="id=\"kableTable\"")
+        etbl2 <- etbl1 %>% kable("html", caption=caption, align='lrrrrrrrrrrc', escape = FALSE, table.attr="id=\"kableTable\"")
     } else {
-        etbl2 <- etbl1 %>% kable(align='lrrrrrrc', caption=caption, escape = FALSE)
+        etbl2 <- etbl1 %>% kable(align='lrrrrrrrrrrc', caption=caption, escape = FALSE)
     }
     etbl3  <- etbl2 %>%
         kable_paper("striped", full_width=FALSE) %>%
-        column_spec(1, bold=TRUE) %>%
+        column_spec(1, width = "1cm", bold=TRUE) %>%
         column_spec(2, width = "0.5cm") %>%
-        column_spec(3, width = "1.5cm") %>%
+        column_spec(3, width = "1cm") %>%
         column_spec(4, width = "0.5cm") %>%
-        column_spec(5, width = "1.5cm") %>%
+        column_spec(5, width = "1cm") %>%
         column_spec(6, width = "1.5cm") %>%
-        column_spec(7, width = "1cm") %>%
-        column_spec(8, width = "20cm", image=spec_image(tbl$plot_filename,2560,2560)) %>%
-        add_footnote(c("Fill in"))
+        column_spec(7, width = ".5cm") %>%
+        column_spec(8, width = ".5cm") %>%
+        column_spec(9, width = ".75cm") %>%
+        column_spec(10, width = ".75cm") %>%
+        column_spec(11, width = ".75cm") %>%
+        column_spec(12, image=spec_image(tbl$plot_filename,2400,960),
+                        popover=paste0("<img src='",tbl$plot_filename,"' width='1024' height='410'>")) %>%
+        add_footnote(c("QTL Penalized LOD Score w/ significance codes:\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n",
+                       "Mean Absolute Difference - Mean of all absolute differences between interaction effects and and expected mean effect under additive models only.",
+                       "Normalized Mean Absolute Difference - Normalized absolute difference between mean interaction effects and sum of QTL pair mean additive effects.  Higher numbers indicate more skew from additive effects.",
+                       "Percent of model variance explained by interaction effect.",
+                       "Interaction effects are shown in upper left subplot, with boxplots showing the distribution of trait BLUPs organized by QTL 1 genotype (x-axis) and 
+                       QTL 2 genotype (y-axis).  Lower left plot is the marginal BLUP distributions factored by QTL genotype 1 (x-axis).
+                       Upper right plot is the marginal BLUP distributions factored by QTL genotype 2 (y-axis)."))
+    if( is_html_output() ) {
+        #This is necessary b/c some component of knitr kable is escaping some html that I don't want escaped, despite using the flag 'escape=FALSE'
+        etbl3 <- gsub("&lt;","<",etbl3,fixed=T)
+        etbl3 <- gsub("&gt;",">",etbl3,fixed=T)
+        etbl3 <- gsub("&quot;","\"",etbl3,fixed=T)
+        etbl3 <- gsub("data-placement=\"right\"","data-placement=\"auto\"",etbl3,fixed=T)
+    }
     return(etbl3)
 }
+#generateReducedTable(effs.ints.all.tb %>% filter((model=='all-years') & (trait=="berry_length")))
 
-save.image(paste0(workflow,"/.RData.13.geninteffects",num_top_qtls))
-load(paste0(workflow,"/.RData.10_02.geninteffects",num_top_qtls))
+save.image(paste0(workflow,"/.RData.13_geninteffects.",num_top_qtls))
+load(paste0(workflow,"/.RData.13_geninteffects.",num_top_qtls))
