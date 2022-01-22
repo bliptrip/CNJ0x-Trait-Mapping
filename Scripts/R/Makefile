@@ -12,6 +12,7 @@ export P2_Name ?= Crimson_Queen
 export POP_Name ?= CNJ02
 export POP_Circos = #Force user to define
 export RDS_DIR ?= "../../Data/phenotypic\ data/DerivedData/cleanup_data.R.output/Robjs"
+export COLLATE_EFFECTS ?= TRUE
 
 #Set the following for configuring the BLUPs summary table in target GenQTLTable: NUM_TOP configures how many of the top-ranked QTLs to display per trait:model combination
 QTL_METHOD ?= stepwiseqtl
@@ -120,6 +121,9 @@ GenCircos:
 #Generate QTL table
 GenEffects:
 		R CMD BATCH '--args workflow="$(WORKFLOW)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_12_geneffects.R
+
+GenIntEffects:
+		R CMD BATCH '--args workflow="$(WORKFLOW)" collate_effects="$(COLLATE_EFFECTS)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_13_geninteffects.R
 
 #Copy all circos files and their dependencies to a 'sandbox' folder where all the necessary files are available for rendering the circos plots from a web browser
 #NOTE: Must specify SANDBOX on command-line to give destination directory to copy to.
