@@ -439,6 +439,13 @@ qtls.cnj02.sw.modv <- round(mean((qtls.cnj02.tb %>% filter(method=="stepwiseqtl"
 qtls.cnj02.sw.markv <- round(mean((qtls.cnj02.tb %>% filter(method=="stepwiseqtl") %>% group_by(model) %>% summarize(marker_variance=mean(marker_variance)) %>% ungroup())$marker_variance), digits=1)
 qtls.cnj02.sw.nqtls <- round(mean((qtls.cnj02.tb %>% filter(method == "stepwiseqtl") %>% nest_by(model,trait,chr,position) %>% group_by(model,trait) %>% summarize(nqtls=n()))$nqtls), digits=1) 
 qtls.cnj02.sw.ntraits <- length(unique((qtls.cnj02.tb %>% filter(method == 'stepwiseqtl'))$trait)) 
+qtls.cnj02.sw.ay.ints <- read_csv(paste0(cnj02_workflow,"/traits/qtl_collated.csv")) %>%
+                            filter(method=="stepwiseqtl") %>%
+                            filter(model=="all-years") %>%
+                            filter(!is.na(chr2) & !is.na(position2))
+qtls.cnj02.sw.ay.nints <- nrow(qtls.cnj02.sw.ay.ints)
+qtls.cnj02.sw.ay.ntraits <- length(unique(qtls.cnj02.sw.ay.ints$trait))
+qtls.cnj02.sw.ay.markv <- mean(qtls.cnj02.sw.ay.ints$marker_variance)
 
 qtls.cnj04.tb <- read_csv(paste0(cnj04_workflow,"/traits/effects_collated.csv"))
 qtls.cnj04.s1.modv <- round(mean((qtls.cnj04.tb %>% filter(method=="scanone") %>% group_by(model) %>% summarize(model_variance=mean(model_variance)) %>% ungroup())$model_variance), digits=1)
@@ -449,14 +456,21 @@ qtls.cnj04.sw.modv <- round(mean((qtls.cnj04.tb %>% filter(method=="stepwiseqtl"
 qtls.cnj04.sw.markv <- round(mean((qtls.cnj04.tb %>% filter(method=="stepwiseqtl") %>% group_by(model) %>% summarize(marker_variance=mean(marker_variance)) %>% ungroup())$marker_variance), digits=1)
 qtls.cnj04.sw.nqtls <- round(mean((qtls.cnj04.tb %>% filter(method == "stepwiseqtl") %>% nest_by(model,trait,chr,position) %>% group_by(model,trait) %>% summarize(nqtls=n()))$nqtls), digits=1) 
 qtls.cnj04.sw.ntraits <- length(unique((qtls.cnj04.tb %>% filter(method == 'stepwiseqtl'))$trait)) 
+qtls.cnj04.sw.ay.ints <- read_csv(paste0(cnj04_workflow,"/traits/qtl_collated.csv")) %>%
+                            filter(method=="stepwiseqtl") %>%
+                            filter(model=="all-years") %>%
+                            filter(!is.na(chr2) & !is.na(position2))
+qtls.cnj04.sw.ay.nints <- nrow(qtls.cnj04.sw.ay.ints)
+qtls.cnj04.sw.ay.ntraits <- length(unique(qtls.cnj04.sw.ay.ints$trait))
+qtls.cnj04.sw.ay.markv <- mean(qtls.cnj04.sw.ay.ints$marker_variance)
 
 ```
 
 For the CNJ02 population, we discovered an average of `r qtls.cnj02.s1.nqtls` QTLs per *trait × model* combination  across `r qtls.cnj02.s1.ntraits` 
 traits for the `scanone` method and `r qtls.cnj02.sw.nqtls` QTLs per *trait × model* across `r qtls.cnj02.sw.ntraits` traits for the `stepwiseqtl` 
-method.   The `scanone` average total BLUP variance explained per QTL was `r qtls.cnj02.s1.markv` percent, with an average BLUP variance explained by
-all QTLs per *trait × model* of `r qtls.cnj02.s1.modv` percent.  The `stepwiseqtl` average total BLUP variance explained per QTL was `r qtls.cnj02.sw.markv` 
-percent, with an average BLUP variance explained by all fitted QTLs per *trait × model* of `r qtls.cnj02.sw.modv` percent.  A more detailed exploration
+method.   The average `scanone` variance per QTL was `r qtls.cnj02.s1.markv` percent, with an average model variance of `r qtls.cnj02.s1.modv` 
+percent.  The `mean stepwiseqtl` variance per QTL was `r qtls.cnj02.sw.markv` 
+percent, with an average model variance of `r qtls.cnj02.sw.modv` percent.  A more detailed exploration
 of the trait QTLs, effect plots, LOD profiles, and trait correlations can be found on the [CNJ02 QTL explorer](http://vaccinium.vcru.wisc.edu/circos-cnj02/) 
 site.
 
@@ -477,37 +491,19 @@ evidence of higher *sound fruit yield* and lower *percent fruit rot* than the ot
 average 0.42 gram and 0.36 gram/berry advantage over allele *C*.  Plot *total yield* demonstrates and average allelic
 effect of *C* over *D* of around 65 grams per square foot on linkage group 12 (position 48.76cM).  Given that the
 genotypic effects for the upright berry *length versus width* were not found to be significant in the *all-year* model for
-CNJ02, the berry *chimera length versus width* and *chimera eccentricity* represented good proxies.  For both *chimera
-length versus width* and *chimera eccentricity*, a collocated QTL on linkage group 3 at around position 30cM shows a
-small, but statisically meaningful association such that genotype *BD* will produce rounder berries (important for fruit
-processing).
+CNJ02, the berry *chimera length versus width* and *chimera eccentricity* represented good proxies.  A collocated QTL on 
+linkage group 3 near 30cM for traits *chimera length versus width* and *chimera eccentricity* shows a
+small, but statisically meaningful association such that genotype *BD* will produce rounder berries, an important
+characteristic for fruit processing.
 
-For yield-relevant traits, three linkage groups stand out: linkage groups 3, 10, and 11 (figure \@ref(fig:qtl-plot-cnj02)A).
-The greatest set of collocated QTLs is found on linkage group 3, with largest *berry length*, largest *berry weight*,
-*plot mean fruit mass*, and *upright mean fruit mass* all with a QTL around position 46-47cM.  Linkage group 10 is
-noteable for having the largest number of top-tier yield-related QTLs.  On linkage group 10, largest *berry length* and largest
-*berry weight* are closely linked (52cM and 49cM, respectively), as are *plot mean fruit mass* and *upright mean
-fruit mass* (39cM and 37cM, respectively).  Also within linkage group 10, large and signficant QTL can be found for
-largest *berry width* (28cM), *length vs. width* (63cM), and upright *total berry weight* (43cM).  On linkage group
-11, largest *berry weight* and *upright mean fruit mass* are collocated at 30cM, while plot mean fruit mass is closely
-linked at 25cM.  QTLs for largest *berry width* (40cM) and upright *length vs. width* (81cM) can also be found on
-linkage group 11.
-
-Berry chemistry trait QTLs are highlighted in figure \@ref(fig:qtl-plot-cnj02)B.  There are no clear collocation patterns that
-emerges as with the yield-related traits, although the chemistry traits recorded do not have as strong as correlations
-as with yield traits.  Some of the traits and their QTLs were discussed in reference to table
-\@ref(tab:qtl-table-cnj02-sw).  Non-chemistry traits were selected because of their correlations with some chemistry
-traits.  For instance, *percent fruit rot* and *Tacy* have a moderately positive correlation (0.38)), likely
-associated with large QTLs closely linked on linkage group 7 (position 38cM and 33cM, respectively).  Interestinly,
-these two traits share the same *BD* genotype for the highest positive effect.  The major QTL for *Tacy* found on
-linkage group 3 is also tightly linked to a large QTL for *plot mean fruit mass*, with allele *D* showing a strong
-positive effect and substantial negative effect over allele *C*, respectively.  The largest QTL for *titratable acidity*
-can be found on linkage group 2 (position 50cM), and does not appear to be closely linked with other traits' major QTLs.   A closely
-linked pair of QTLs on linkage group 3 between *plot mean fruit mass* and *titratable acidity* might explain the
-modestly strong positive correlation between the two traits (0.40).
+The `stepwiseqtl` method found `r qtls.cnj02.sw.ay.nints` significant pairwise QTL:QTL interactions across `r qtls.cnj02.sw.ay.ntraits` 
+for the *All Years* model, with an average variance per QTL pair of `r qtls.cnj02.sw.ay.markv`.  Table \@ref(tab:qtl-table-cnj02-sw-ints) 
+summarizes the top pairwise QTL interactions
 
 
-```{r qtl-table-cnj02-sw, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%"}
+
+
+```{r qtl-table-cnj02-sw-setup, echo=FALSE, message=FALSE, include=FALSE}
 load(file=paste0(cnj02_workflow,"/.RData.01_genBLUP"))
 models.filtered <- model.collated.summary.wide.tb %>% 
                         filter(model == 'all-years') %>% 
@@ -515,6 +511,10 @@ models.filtered <- model.collated.summary.wide.tb %>%
                         filter(GLRpvalue < 0.05) %>% 
                         arrange(desc(h2)) %>%
                         mutate(trait=factor(as.character(trait), levels=as.character(trait), ordered=TRUE))
+```
+
+
+```{r qtl-table-cnj02-sw, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
 load(file=paste0(cnj02_workflow,"/.RData.12_geneffects.2"))
 generateReducedTable(effs.complete.tb %>% 
                      filter(model=='all-years' &
@@ -523,14 +523,48 @@ generateReducedTable(effs.complete.tb %>%
                      mutate(trait = factor(as.character(trait), levels=levels(models.filtered$trait), ordered=TRUE)) %>%
                      arrange(trait,desc(marker_variance)),
                      caption="CNJ02 Population Top 2 QTLs for *All Years* model, QTLs fit using *stepwiseqtl()* function, with effect plots.  Only models with heritability > 0.5 and with significant genotypic effects (*p < 0.05*) are displayed.")
-#load(file=paste0(cnj02_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
-#generateReducedTable(qtl.collated.succinct.tb %>% 
-#                     filter(model=='all-years') %>% 
-#                     filter(trait %in% models.filtered$trait) %>%
-#                     mutate(trait = factor(as.character(trait), levels=levels(models.filtered$trait), ordered=TRUE)) %>%
-#                     arrange(trait,desc(marker.variance)),
-#                     caption="CNJ02 Population Top 2 QTLs for *All Years* model, QTLs fit using *stepwiseqtl()* function.  Only models with heritability > 0.5 and with significant genotypic effects (*p < 0.05*) are displayed.")
 ```
+
+
+
+```{r qtl-table-cnj02-sw-ints, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
+load(file=paste0(cnj02_workflow,"/.RData.13_geninteffects.2"))
+generateReducedTable(effs.ints.all.tb %>% 
+                     filter(model=='all-years' &
+                            trait %in% models.filtered$trait,
+                            marker_variance >= 5.0) %>% 
+                    mutate(trait = factor(as.character(trait), levels=levels(models.filtered$trait), ordered=TRUE)) %>%
+                    group_by(trait) %>%
+                    arrange(desc(marker_variance), .by_group = TRUE) %>%
+                    slice_head() %>%
+                    ungroup(),
+                    caption="CNJ02 Population Top Interaction QTLs for *All Years* model, QTLs fit using *stepwiseqtl()* function.  Only models with heritability > 0.5, QTLs with interaction percent variance explained greater than 5.0%, and models with significant genotypic effects (*p < 0.05*) are displayed.")
+```
+
+For yield-relevant traits, three linkage groups stand out: linkage groups 3, 10, and 11 (figure \@ref(fig:qtl-plot-cnj02)A).
+The greatest set of collocated QTLs is found on linkage group 3, with largest *berry length*, largest *berry weight*,
+*plot mean fruit mass*, and *upright mean fruit mass* all found near 46-47cM.  Linkage group 10 is
+noteable for having the highest number of large-effect yield QTLs.  On linkage group 10, largest *berry length* and largest
+*berry weight* are closely linked (52cM and 49cM, respectively), as are *plot mean fruit mass* and *upright mean
+fruit mass* (39cM and 37cM, respectively).  Also within linkage group 10, large and signficant QTL can be found for
+largest *berry width* (28cM), *length vs. width* (63cM), and upright *total berry weight* (43cM).  On linkage group
+11, largest *berry weight* and *upright mean fruit mass* are collocated at 30cM, while plot mean fruit mass is closely
+linked at 25cM.  QTLs for largest *berry width* (40cM) and upright *length vs. width* (81cM) can also be found on
+linkage group 11.
+
+Berry chemistry trait QTLs are highlighted in figure \@ref(fig:qtl-plot-cnj02)B.  There are no clear collocation patterns that
+emerge as with the yield-related traits, not surprising given that the chemistry trait correlations were not as
+strong as those of yield traits. Some of the traits and their QTL were discussed in reference to table
+\@ref(tab:qtl-table-cnj02-sw).  A few non-chemistry traits cohabit chemistry traits in figure \@ref(fig:qtl-plot-cnj02)B because 
+of their correlation with corresponding chemistry
+traits.  For instance, *percent fruit rot* and *Tacy* have a moderately positive correlation (0.38)), likely
+related to large QTLs closely linked on linkage group 7 (position 38cM and 33cM, respectively). 
+These two traits share the same *BD* genotype for the highest positive effect.  The major QTL for *Tacy* found on
+linkage group 3 is also linked to a large QTL for *plot mean fruit mass*, with allele *D* versus *C* showing a strong
+positive *Tacy* effect and substantial negative *plot mean fruit mass* effect  The largest QTL for *titratable acidity*, 
+found on linkage group 2 at 50cM, appear to be closely linked with other traits' major QTLs.   A closely
+linked pair of QTL on linkage group 3 between *plot mean fruit mass* and *titratable acidity* could explain the
+modest positive correlation between these two traits (0.40).
 
 ```{r qtl-plot-cnj02-setup, echo=FALSE, message=FALSE, include=TRUE}
     imageA <- "../Data/publication/figures/cnj02.circos.yield.png"
@@ -595,7 +629,7 @@ traits largest *berry weight* and upright *upright mean fruit mass* (position 58
 largest *berry weight* (position 64cM).  
 
 
-```{r qtl-table-cnj04-sw, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%"}
+```{r qtl-table-cnj04-sw-setup, echo=FALSE, message=FALSE, include=FALSE}
 load(file=paste0(cnj04_workflow,"/.RData.01_genBLUP"))
 models.filtered <- model.collated.summary.wide.tb %>% 
                         filter(model == 'all-years') %>% 
@@ -603,6 +637,9 @@ models.filtered <- model.collated.summary.wide.tb %>%
                         filter(GLRpvalue < 0.05) %>% 
                         arrange(desc(h2)) %>%
                         mutate(trait=factor(as.character(trait), levels=as.character(trait), ordered=TRUE))
+```
+
+```{r qtl-table-cnj04-sw, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
 load(file=paste0(cnj04_workflow,"/.RData.12_geneffects.2"))
 generateReducedTable(effs.complete.tb %>% 
                      filter(model=='all-years' &
@@ -611,13 +648,21 @@ generateReducedTable(effs.complete.tb %>%
                      mutate(trait = factor(as.character(trait), levels=levels(models.filtered$trait), ordered=TRUE)) %>%
                      arrange(trait,desc(marker_variance)),
                      caption="CNJ04 Population Top 2 QTLs for *All Years* model, QTLs fit using *stepwiseqtl()* function, with effect plots.  Only models with heritability > 0.5 and with significant genotypic effects (*p < 0.05*) are displayed.")
-#load(file=paste0(cnj04_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
-#generateReducedTable(qtl.collated.succinct.tb %>% 
-#                     filter(model=='all-years') %>% 
-#                     filter(trait %in% models.filtered$trait) %>%
-#                     mutate(trait = factor(as.character(trait), levels=levels(models.filtered$trait), ordered=TRUE)) %>%
-#                     arrange(trait,desc(marker.variance)),
-#                     caption="CNJ04 Population Top 2 QTLs for *All Years* model, QTLs fit using *stepwiseqtl()* function.  Only models with heritability > 0.5 and with significant genotypic effects (*p < 0.05*) are displayed.")
+```
+
+
+```{r qtl-table-cnj04-sw-ints, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
+load(file=paste0(cnj04_workflow,"/.RData.13_geninteffects.2"))
+#is_html_output <- function() {TRUE}
+generateReducedTable(effs.ints.all.tb %>% 
+                     filter(model=='all-years' &
+                            trait %in% models.filtered$trait) %>% 
+                    mutate(trait = factor(as.character(trait), levels=levels(models.filtered$trait), ordered=TRUE)) %>%
+                    group_by(trait) %>%
+                    arrange(desc(marker_variance), .by_group = TRUE) %>%
+                    slice_head() %>%
+                    ungroup(),
+                    caption="CNJ04 Population Top Interaction QTL for *All Years* model, QTLs fit using *stepwiseqtl()* function.  Only models with heritability > 0.5 and with significant genotypic effects (*p < 0.05*) are displayed.")
 ```
 
 ```{r qtl-plot-cnj04-setup, echo=FALSE, message=FALSE, include=TRUE}

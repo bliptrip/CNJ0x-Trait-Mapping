@@ -118,3 +118,10 @@ correlation between them in insignificant, it is not surprising that they do not
 
 - Both
   - really emphasize the shared QTL on lg 12 highlighting its importance in controlling total yield.
+
+- Epistatic Interactions
+      - emphasize that the top epistatic QTL are on separate linkage groups -- not surprising given that the smaller
+        population sizes and lower recombination history gives less chance for neighboring QTL to break their linkages
+        and give the appropriate number of samples of all pairwise combinations for determining significance.
+      - not surprising that CNJ04 has a lot less epistatic QTL than CNJ02, given that it is less than half the
+        population size of CNJ02.
