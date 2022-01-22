@@ -1,5 +1,6 @@
 bookdown::html_document2:
     toc: TRUE
+    css: "style.css"
 bookdown::pdf_document2:
     latex_engine: xelatex
     keep_tex: TRUE
