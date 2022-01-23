@@ -1,7 +1,26 @@
 # Discussion {#discuss}
 
 ## Resummarize importance of this study/analysis
- 
+
+A recent buildup of the quantity and quality of cranberry molecular resources has the potential to propel a renaissance in cranberry breeding.  
+Advances in the genetic capital of this important fruit crop include development of high density linkage maps,
+construction of mitochondrial and nuclear genome assemblies, a plethora of QTL mapping studies in a variety of important traits,
+and an early feasibility study of genomic prediction and genomic selection (TODO: references).  
+
+Shifts and innovations in cranberry phenotyping methods have paralleled advances in genetic resource development.
+Up until 60 years ago, breeders would select cranberry breeding material based on traits measured from the fundamental 
+unit of cranberry productivity: the reproductive upright.  Since then, modernization of farming technology and
+management methods, a better understanding cranberry physiology, scaling up planting of more productive cultivars, 
+climate change, and evolving breeding objectives has led (transofrmed) to growers and breeders needing to apply newer trait assessment 
+metrics and methods in order maintain the pace of germplasm advancement.  This shift has predominantly involved moving away from assessing 
+cranberry uprights as a fundamental measure of cultivar caliber to more holistic measurements at a plot-level.
+gap in our understanding b/w the two different methodologies ...
+This study offers a unique opportunity to assess the genetic basis of reproductive upright traits that were 
+classically collected by breeders in order to advance cranberry domestication.
+offers the chance to compare old to new and validate that newer methods are sound.
+
+
+ - This QTL mapping study offers a unique perspective on ...
  - Proof of concept comparing older studies to newer ones.
  - Better understand trait correlations in two third-generation breeding populations
  - 
@@ -125,3 +144,8 @@ correlation between them in insignificant, it is not surprising that they do not
         and give the appropriate number of samples of all pairwise combinations for determining significance.
       - not surprising that CNJ04 has a lot less epistatic QTL than CNJ02, given that it is less than half the
         population size of CNJ02.
+      - mention that a changing in effect rank, or ordering per genotype across it's interacting pair also indicates
+        that an interaction effect exists.
+
+- Talk about how translating to biallelic markers only and using population-specific consensus maps could possibly
+  help some with increasing power to detect QTL and helping interpret effects more meaningfully.
