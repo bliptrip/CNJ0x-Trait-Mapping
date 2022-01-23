@@ -18,30 +18,33 @@ export COLLATE_EFFECTS ?= TRUE
 QTL_METHOD ?= stepwiseqtl
 NUM_TOP ?= 2
 
-install:
+cleanR:
+		rm -f .RData #Clear out any previously automatically saved workspace data -- clean slate!
+
+install: cleanR
 		R CMD BATCH packagedeps.R
 
-means:
+means: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_00_1_means.R 
 
-plotcors:
+plotcors: cleanR
 		R CMD BATCH qtl_pipeline_00_2_plotcors.R 
 
-genmodels:
+genmodels: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_genmodels.R
 
-genanalyses:
+genanalyses: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_analyzemodels.R
 
-genblupplots:
+genblupplots: cleanR
 		touch "$(WORKFLOW)/traits/blups.summary.table.png"
 		touch "$(WORKFLOW)/traits/raw.summary.table.png"
 		R CMD BATCH '--args workflow="$(WORKFLOW)" P1_Name="$(P1_Name)" P2_Name="$(P2_Name)" POP_Name="$(POP_Name)"' qtl_pipeline_01_03_genBLUPplots.R
 
-genh2plot:
+genh2plot: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)" POP_Name="$(POP_Name)"' qtl_pipeline_01_04_genh2plots.R
 
-genbrcorrs:
+genbrcorrs: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_05_genBLUPCorrPlots.R
 
 #Rbuild tars up the packages necessary for installing an R-build and then transferring to submit server.  Untar Rpackage.tgz, submit an interactive session using
@@ -66,10 +69,10 @@ RunPerms:
 PullPerms:
 		make -C $(HTCONDOR) WORKFLOW=../$(WORKFLOW) $@
 
-PermMerge:
+PermMerge: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_03_mergperms.R
 
-ScanOne:
+ScanOne: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_04_scanone.R
 
 #Perm2DBuild is meant for building a tarball of necessary scripts/etc. needed for running 2D-QTL (scantwo) permutation tests on cluster.
@@ -84,45 +87,45 @@ RunPerms2D:
 PullPerms2D:
 		make -C $(HTCONDOR) WORKFLOW=../$(WORKFLOW) $@
 
-Perm2DMerge:
+Perm2DMerge: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_06_mergeperms2D.R
 
 #StepwiseQTLBuild is meant for bundling/building an HTCondor dataset for running stepwiseqtl()
-StepwiseQTLBuild::
+StepwiseQTLBuild:
 		make -C $(HTCONDOR) WORKFLOW=../$(WORKFLOW) $@
 
 #StepwiseQTL is meant to run stepwiseqtl() locally (as sometimes the HTCondor system is slammed)
-StepwiseQTL:
+StepwiseQTL: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_07_stepwiseqtl.local.R
 		
 #FitQTL Makes the QTL and fits the QTL model derived from stepwiseqtl()
-FitQTL:
+FitQTL: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_08_makefitqtls.R
 
 #Collate all QTL info into one file
-CollateQTL:
+CollateQTL: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_09_collate.R
 
 #Generate QTL table
-GenQTLTable:
+GenQTLTable: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)" qtl_scan_method="$(QTL_METHOD)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_10_01_genQTLtables.R
 
-GenIntTable:
+GenIntTable: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_10_02_genInteractionTables.R
 
 #Collate all QTL info into one file
-GenConsensus:
+GenConsensus: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_10_genconsensus.R
 
 #Generate Circos Plot
-GenCircos:
+GenCircos: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_11_gencircos.R
 
 #Generate QTL table
-GenEffects:
+GenEffects: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_12_geneffects.R
 
-GenIntEffects:
+GenIntEffects: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)" collate_effects="$(COLLATE_EFFECTS)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_13_geninteffects.R
 
 #Copy all circos files and their dependencies to a 'sandbox' folder where all the necessary files are available for rendering the circos plots from a web browser
