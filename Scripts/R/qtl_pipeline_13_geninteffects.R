@@ -144,8 +144,8 @@ effs.ints.tops.tb <- effs.ints.tb %>%
 
 effs.ints.plots.tb <- effs.ints.tops.tb %>% 
                         group_by(method, trait, model, chr, position, chr2, position2) %>%
-                        do(mad=mean(abs(.$mean_diff)),
-                           nmad = 2*mean(abs(.$mean_diff))/(.$max_blup[1]-.$min_blup[1]), #Normalized mean absolute difference
+                        do(mad=max(abs(.$mean_diff)),
+                           nmad = max(abs(.$mean_diff))/(.$max_blup[1]-.$min_blup[1]), #Normalized mean absolute difference
                            plot0  = ggplot(., aes(y=genotype_q2, x=blup, fill=genotype)) +
                                             geom_boxplot(alpha=0.5) +
                                             geom_jitter(width=0.1, alpha=0.3) +
@@ -215,7 +215,7 @@ effs.ints.plots.tb <- effs.ints.tops.tb %>%
                                nmad=unlist(nmad),
                                plot_filename = paste0(normalizePath(paste0(workflow,'/traits/',model,'--',trait,'/',trait),mustWork=TRUE), '/effects_interactions_plot.blups.chr',chr,'_',round.digits(position,2),'cM--chr',chr2,'_',round.digits(position2,2),'cM.png')) %>%
                         group_walk(~ {
-                                        plot = plot_grid(.x$plot0[[1]],.x$plot2[[1]],.x$plot1[[1]],nrow=2,ncol=2,rel_widths=c(1,.4),rel_heights=c(1,.85))
+                                        plot = plot_grid(.x$plot0[[1]],.x$plot2[[1]],.x$plot1[[1]],labels="auto",label_size=14, nrow=2,ncol=2,rel_widths=c(1,.4),rel_heights=c(1,.85))
                                         print(paste0("Saving ",.x$plot_filename))
                                         #png(filename=.x$plot_filename, width=640, height=320, bg="white")
                                         ggsave(filename=.x$plot_filename, plot = plot, device="png", bg="transparent", dpi=300, width=25, height=10, units="cm")
@@ -289,12 +289,12 @@ generateReducedTable <- function(tbl, caption=NULL) {
         column_spec(12, image=spec_image(tbl$plot_filename,2400,960),
                         popover=paste0("<img src='",tbl$plot_filename,"' width='1024' height='410'>")) %>%
         add_footnote(c("QTL Penalized LOD Score w/ significance codes:\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n",
-                       "Mean Absolute Difference - Mean of all absolute differences between interaction effects and and expected mean effect under additive models only.",
-                       "Normalized Mean Absolute Difference - Normalized absolute difference between mean interaction effects and sum of QTL pair mean additive effects.  Higher numbers indicate more skew from additive effects.",
+                       "Max Average Difference - Maximum of all differences between mean interaction effects and and expected mean effect under additive models only.",
+                       "Normalized Max Average Difference - Normalized value of Max Average Difference, using BLUP range as a normalization factor.",
                        "Percent of model variance explained by interaction effect.",
-                       "Interaction effects are shown in upper left subplot, with boxplots showing the distribution of trait BLUPs organized by QTL 1 genotype (x-axis) and 
-                       QTL 2 genotype (y-axis).  Lower left plot is the marginal BLUP distributions factored by QTL genotype 1 (x-axis).
-                       Upper right plot is the marginal BLUP distributions factored by QTL genotype 2 (y-axis)."))
+                       "Interaction effects are shown in subplot *a*, with boxplots showing the distribution of trait BLUPs organized by QTL 1 genotype (x-axis) and 
+                       QTL 2 genotype (y-axis).  Subplot *c* is the marginal BLUP distributions factored by QTL genotype 1 (x-axis).
+                       Subplot *b* is the marginal BLUP distributions factored by QTL genotype 2 (y-axis)."))
     if( is_html_output() ) {
         #This is necessary b/c some component of knitr kable is escaping some html that I don't want escaped, despite using the flag 'escape=FALSE'
         etbl3 <- gsub("&lt;","<",etbl3,fixed=T)
