@@ -11,8 +11,10 @@ editor_options:
 ### CNJ02
 
 ```{r trait-corrplots-setup, echo=FALSE, message=FALSE, include=FALSE}
-     p.cnj02.c = round(readRDS(paste0(workflow,"/traits/plots/corrplot.cnj02.rds"))$corr, digits=2)
-     p.cnj04.c = round(readRDS(paste0(workflow,"/traits/plots/corrplot.cnj04.rds"))$corr, digits=2)
+    p.cnj02.c = round(readRDS(paste0(workflow,"/traits/plots/corrplot.cnj02.rds"))$corr, digits=2)
+    write_csv(tibble::as_tibble(p.cnj02.c, rownames="Trait"),"../Data/publication/tables/corrplot.cnj02.csv")
+    p.cnj04.c = round(readRDS(paste0(workflow,"/traits/plots/corrplot.cnj04.rds"))$corr, digits=2)
+    write_csv(tibble::as_tibble(p.cnj04.c, rownames="Trait"),"../Data/publication/tables/corrplot.cnj04.csv")
 ```
 
 Non-trivial strong positive (\@ref(fig:trait-corrplots-cnj02-refined)A)
@@ -502,7 +504,7 @@ evidence of higher *sound fruit yield* and lower *percent fruit rot* than the ot
 average 0.42 gram and 0.36 gram/berry advantage over allele *C*.  Plot *total yield* demonstrates and average allelic
 effect of *C* over *D* of around 65 grams per square foot on linkage group 12 (position 48.76cM).  Given that the
 genotypic effects for the upright berry *length versus width* were not found to be significant in the *all-year* model for
-CNJ02, the berry *chimera length versus width* and *chimera eccentricity* represented good proxies.  A collocated QTL on 
+CNJ02, the berry *chimera length versus width* and *chimera eccentricity* represent good proxies.  A collocated QTL on 
 linkage group 3 near 30cM for traits *chimera length versus width* and *chimera eccentricity* shows a
 small, but statisically meaningful association such that genotype *BD* will produce rounder berries, an important
 characteristic for fruit processing.

@@ -1,7 +1,5 @@
 # Discussion {#discuss}
 
-## Resummarize importance of this study/analysis
-
 A recent buildup of the quantity and quality of cranberry molecular resources has the potential to propel a renaissance in cranberry breeding.  
 Advances in the genetic capital of this important fruit crop include development of high density linkage maps,
 construction of mitochondrial and nuclear genome assemblies, a plethora of QTL mapping studies in a variety of important traits,
@@ -11,141 +9,133 @@ Shifts and innovations in cranberry phenotyping methods have paralleled advances
 Up until 60 years ago, breeders would select cranberry breeding material based on traits measured from the fundamental 
 unit of cranberry productivity: the reproductive upright.  Since then, modernization of farming technology and
 management methods, a better understanding cranberry physiology, scaling up planting of more productive cultivars, 
-climate change, and evolving breeding objectives has led (transofrmed) to growers and breeders needing to apply newer trait assessment 
-metrics and methods in order maintain the pace of germplasm advancement.  This shift has predominantly involved moving away from assessing 
-cranberry uprights as a fundamental measure of cultivar caliber to more holistic measurements at a plot-level.
-gap in our understanding b/w the two different methodologies ...
-This study offers a unique opportunity to assess the genetic basis of reproductive upright traits that were 
-classically collected by breeders in order to advance cranberry domestication.
-offers the chance to compare old to new and validate that newer methods are sound.
+climate change, and evolving breeding objectives have together transformed how grows and breeders assess traits
+[@Vorsa2019].  This shift has predominantly involved moving away from assessing cranberry uprights as a fundamental measure of 
+cultivar caliber to more holistic measurements at a plot-level, along with applications in high-throughput digital
+image processing [@Diaz-Garcia2018a].
+
+Despite a widespread acceptance and application of these modern trait collection methods in cranberry breeding, a
+translation gap exists in how upright traits relate to these newer phenotype scoring methods.
+Armed with dense marker maps and parallel collection of both reproductive upright attributes and plot-level traits,
+the current study offers a unique opportunity to assess the phenotypic and genetic connections between these distinctly
+different paradigms in trait assessment.  These study results also offer the chance to validate these
+newer methods in breeding.
+
+## Trait Distributions and Correlations
+
+Given that upright traits were condensed to their ten-sample mean, these traits as modeled and mapped approach normality
+by virtue of application of the Central Limit Theorem (figures \@ref(fig:trait-uprightyield-density-cnj0x)-\@ref(fig:trait-plot-density-cnj0x)).
+Yield-related traits displayed the most normality, consistent with their tendency to be polygenic (figures \@ref(fig:trait-uprightyield-density-cnj0x)
+and \@ref(fig:trait-plot-density-cnj0x)).  Biennial-bearing index and rebud demonstrated a tendency to be slightly bimodal, which could suggest
+a large-effect QTL that is segregating in the population (figure \@ref(fig:trait-bbi-density-cnj0x).  This bimodal
+behavior appears to be paralleled in the number of empty pedicels (*UN0*), number of aborted flowers (*UNAF*) and number of aborted 
+berries (*UNAB*) pedicel traits, an unsurprising finding given that alternating, repeating patterns of fruit set would manifest 
+as periodic patterns in crop yield (\@ref(fig:trait-uprightped-density-cnj0x)) (reference?).  Other traits suggesting a bimodal-type
+distribution can be found in calyx traits and berry shape traits (figures \@ref(fig:trait-uprightother-density-cnj0x) and \@ref(fig:trait-uprightshape-density-cnj0x).
+Altogether, traits with bimodal distributions are inconsistent across sampling years, which could be an artifact of
+errors introduced for traits that require subjective scoring, or from data transformation processes such as in deriving
+chimeric berry shape parameters.
+
+Although many of the traits with strong positive and negative correlations are expected, a few non-obvious correlations
+suggest genetic linkage or pleiotropy.  In the CNJ02 population, the inverse correlation of *Tacy* and *PAC* with *SFY*
+($ρ =  `r p.cnj02.c['SFY','Tacy']`$ and $ρ =  `r p.cnj02.c['SFY','PAC']`$, respectively)
+and positive correlation with *PFR* ($ρ =  `r p.cnj02.c['PFR','Tacy']`$ and $ρ =  `r p.cnj02.c['PFR','PAC']`$,
+respectively) suggest negative linkage drag between separate QTL, or could simply be a
+consequence of biochemical patterns that coordinate with the timing of cranberry ripening.  A strong positive correlation
+between CNJ02's plot trait *MFM* and upright traits *UMFM*, *UBM*, *UBL*, and *UBW* ($ρ =  `r p.cnj02.c['MFM','UMFM']`$,
+ $ρ =  `r p.cnj02.c['MFM','UBM']`$, $ρ =  `r p.cnj02.c['MFM','UBL']`$, and $ρ =  `r p.cnj02.c['MFM','UBW']`$,
+ respectively) establishes an important link between a plot and upright traits.  This link is also mirrored in CNJ04, with 
+respective correlations of ($ρ =  `r p.cnj04.c['MFM','UMFM']`$, $ρ =  `r p.cnj04.c['MFM','UBM']`$,$ρ =  `r p.cnj04.c['MFM','UBL']`$,
+and $ρ =  `r p.cnj04.c['MFM','UBW']`$).  For both CNJ02 and CNJ04 populations, a moderately strong positive correlation
+between *ULvW* and *UKLvW* validates that berry chimeras derived from berry shape categories track with more numerically
+precise, accurately measured traits.  For the CNJ02 population, modest but significant positive correlations
+between plot trait *TY* and upright traits *UTBM*, *UBW*, *UBM*, *UMFM*, *UNP*, and *UNB* ($ρ =
+ `r p.cnj02.c['TY','UTBM']`$, $`r p.cnj02.c['TY','UBW']`$, $`r p.cnj02.c['TY','UBM']`$, $`r p.cnj02.c['TY','UMFM']`$,
+$`r p.cnj02.c['TY','UNP']`$, and $`r p.cnj02.c['TY','UNB']`$) also tie together plot traits with upright traits.  These
+plot yield - upright traits correlations are not as prominent in the CNJ04 population, with *TY* × *UNP*, *UNB*, and *UTBM*
+correlations of  $`r p.cnj04.c['TY','UNP']`$, $`r p.cnj04.c['TY','UNB']`$, $`r p.cnj04.c['TY','UTBM']`$, respectively.
+Interestingly, *UTBM*, an upright-level trait expected to correlate most with *TY*, is highest rank for CNJ02 but is
+below both *UNP* and *UNB* for CNJ04.  A lower *TY* and *MFM* correlation in CNJ04 versus CNJ02 ($ρ =  `r p.cnj04.c['TY','MFM']`$
+vs. $`r p.cnj02.c['TY','MFM']`$) could explain some of this decoupling of plot yield - upright associations in CNJ04.
+
+## Heritabilities and BLUPs
+
+Estimating heritabilities offers breeders a chance to find confidence that their selections will be fruitful in
+subsequent generations.   Although this study calculates heritabilities from mixed model estimates of environmental,
+additive genetic, and residual variances, the heritabilities derived offer breeding insights when selecting upon
+model-derived BLUPs.  Many of the calculated heritabilities in this study mirror the results of other studies.
+
+Incredibly high heritabilities in berry length vs. width ($h^2 ≥ 0.96$) parallel findings found in *GRYG*, a population genetically distinct
+from CNJ02 and CNJ04 [@Diaz-Garcia2018a].  Consistency across three populations suggests a strong genetic persistence of
+this trait in cranberries and shows that selecting for rounder berries will be productive.  Considering a composite of
+all pertinent traits is important to any breeding program, though, and understanding trait correlations, interactions,
+and linkages of all traits needs to be considered for overall success.  Motivated by the concept of using selection indices 
+for plant breeding, figure \@ref(fig:blups-plot-cnj0x-rank-sum-plot) demonstrates the sorted combined value of various
+genotypes by ranking, stacking, and sorting all relevant BLUPs.  This figure and study highlights that in CNJ02 and
+CNJ04, selecting for *ULvW* alone will not necessarily result in an optimum genotype for other traits, such as higher *SFY* and
+larger *MFM*.  Also, the negative correlation of *SFY* with *Tacy* is further made apparent by the tradeoffs evident in 
+figure \@ref(fig:blups-plot-cnj0x-rank-sum-plot).
+
+Lower heritability estimates of *TY* ($h^2 ≈ 0.74$ and $h^2 ≈ 0.62$ for CNJ02 and CNJ04, respectively) relative to other berry size and weight 
+parameters are consistent with the highly polygenic nature of this trait in other crops
+along with the lower statistical power to segregate genetic from phenotypic variances in mixed models due to low population sizes, reduced
+recombination history in F1 mapping populations, and higher degrees of freedom when working with heterozygous, four-way crosses.
+Despite this, *TY* heritability estimates closely mimic to those found in other papers, or at the very least are
+consistent in rank relative to other traits measured.  *Schlautman et al.* estimated CNJ02 heritabilites of $h^2 ≈ 0.70$ and $h^2 ≈ 0.64$ 
+for *MFM* and *TY*, respectively [@Schlautman2015].  Although lower estimates for *TY* were found by Vorsa and Johnson-Cicalese ($h^2 ≈ 0.29-0.47$), 
+these heritabilities were derived from 16 crosses and using midparent-progeny mean regression, and other measures of
+heritability for traits such as *Tacy*, *Brix*, and *TA* were consistent with this study's findings [@Vorsa2012].
+A study by *Johnson-Cicalese et al.* using midparent-progeny mean regression estimates of heritability for fruit rot resistance ($h^2 ≈ 0.81$)
+found consistently higher heritability with *PFR* in the CNJ02 population of this study ($h2 ≈ 0.73$) [@JohnsonCicaleseFRR2015].  Lower heritability
+estimates found in CNJ04 ($h2 ≈ 0.46$) could be due to lower statistical power from lower population size.  
 
 
- - This QTL mapping study offers a unique perspective on ...
- - Proof of concept comparing older studies to newer ones.
- - Better understand trait correlations in two third-generation breeding populations
- - 
+## QTL Discovery
+
+This study takes one of the most comprehensive approaches to date to map QTL in cranberry, in number of traits
+assessed, number of factors modeled, and assessment of epistatic QTL interactions.  Linkage group 10 demonstrated 
+consistent importance in berry size and weight parameters across both CNJ02 and CNJ04.  Although *TY* had a modest 
+positive correlation with berry size traits, none of its largest QTL overlapped with those found for berry size.
+Given that *TY* is a complex trait involving the interplay of multiple berry and upright parameters, along with lower
+statistical power to detect QTL for reasons mentioned previously, it is possible that QTL do overlap with berry size
+parameter but remain undiscovered.  Despite this, there was evidence of overlap in *TY* QTL for CNJ02 in linkage
+groups 4, 6, and 11 when comparing the results of *Schlautman et al.* to this study [@Schlautman2015].
+*Tacy* showed strong evidence of the importance of linkage group 3 in both CNJ02 and CNJ04, and QTL on linkage group 3 were 
+consistent with QTL and SSR-trait associations found in *Diaz-Garcia et al.*, including QTL found in linkage group 3 of 
+the *GRYG* population [@Diaz-Garcia2018].  A digital image QTL study performed by  *Diaz-Garcia et al.* discovered a
+QTL for berry length on linkage group 1 for the *GRYG* population collocated with a berry length QTL in CNJ02.  An
+interesting QTL for fruit rot QTL on linkage group 11 found in *Georgi et al.* is consistent with a QTL found in CNJ04
+in this study, not surprising given that many of the crosses studied in *Georgi et al.* shared the parent *Stevens*
+[@Georgi2013].
+
+More large-effect interacting QTL were found in CNJ02 over CNJ04, unremarkable given CNJ04's significantly lower population
+size.  A pairwise QTL interaction found in CNJ02 for the *Tacy* trait between linkage groups 4 and 7 could indicate an
+important regulatory role between these two QTL.  Despite finding significant QTL interactions for  berry shape and weight
+parameters, their absolute effect sizes were small compared to their combined additive QTL effect sizes (tables
+\@ref(tab:qtl-table-cnj02-sw) and \@ref(tab:qtl-table-cnj02-sw-ints)).  As for CNJ04, the one interacting QTL of note
+was found in linkage group 6 and 11, but overall the absolute effect size of this interacting pair is so small as to
+be trivial in breeding.
+
+## Conclusion
+
+This study set out to characterize and assess the genetic basis of a large contingent of reproductive upright traits in
+cranberry and thoroughly compare these results to newer phenotyping methods.  The goal is not only to validate that
+these newer methods are relevant in cranberry breeding, but also to feature consistently important QTL across multiple
+studies to provide important targets for marker assisted selection (MAS).  Moderately strong correlations between reproductive 
+upright traits for berry parameters and plot-level traits for yield demonstrate that newer, more efficient phenotyping
+methods are relevant proxies.  These correlations are reinforced with similar estimates of heritabilities and closely
+linked QTL found in the same and disparate populations.
+
+This validation is positive news, as the time needed to measure and score traits at the upright level is enormous,
+requiring hundreds of man-hours, even for small populations.  Compounded with the inefficiency of the phenotyping
+process, many of the traits collected can be prone to recording error due to differences in how traits are scored
+between different workers and from fatigue brought on by the monotony of the task.  Moreover, although some of the
+upright traits collected may provide a higher-fidelity picture of the genetics and physiology of complex traits, they
+can still fail to capture more meaningful, holistic measures of traits, such as in total yield.  This is evident in how
+a modestly positive correlation between yield and berry size parameters loses most of its association when mapping
+the genetic basis of these traits.  In the end, plot-sampled traits likely provide a more realistic picture of genotypic
+performance for traits important to growers, and the application of digital imaging processing algorithms to 
+cranberries serves to more accurately assess berry-level traits with higher throughput.  
 
 
-## Summarize results
 
-## High level comparison of these results to other previous studies in cranberries
-    - previous QTL mapping of FRR QTLs done in very small populations [@Georgi2013] - since the linkage group numbers
-          - CNJ04 population shares a parent 'Stevens' with many of the crosses made in [@Georgi2013]
-          - Using listed markers near QTLs from this paper, was able to remap and show if QTLs overlap at all
-            - One interesting overlap of Georgi is MRR, marker scf3072b (lg11@26cM on our map) with all-year PFR on lg11@24cM
-            - A closely linked one was also found in CNJ04 found on lg11@17cM
-    - Schlautman2015 paper
-        - MFM - Closest overlap with QTL on LG10@48.52 (LG@37,LG@39 for UMFM and MFM, respectively).  Also QTL on LG11,
-          but not really closely located to the ones in Schlautman's paper
-        - TY - LG4@88.99 -> LG4@85, LG6@56.80 -> LG6@52, LG11@24 -> LG11@20, although in our paper, our largest TY QTL
-          was on LG12
-        - BBI-TY - LG11@24 -> LG11@20
-        - h2 of TY 64 => .741
-        - h2 of MFM => .7 -> 0.81
-        - higher heritability on my end may be due to usage of BLUPs to calculate genomic heritability
-    - Diaz 2018 paper - QTLs with chemistry and some digital image phenotyping
-        - 
-    - Diaz 2018 paper - image phenotyping
-        - Given that this is an entirely different population, it is difficult to really compare results
-        - However, our 'largest berry width' has one closely associated overlap with Luis' collocated QTL on LG1
-            LG1@103.2 -> LG1@100
-    - heritability of upright traits and how they compared to Vorsa's?
-    - mid-level progeny FRR revealed high heritability of 0.81 [@JohnsonCicaleseFRR2015]
-        - I found similarly high heritability in CNJ02 population (h2=0.73)
-        - lower heritability for FRR found in CNJ04 (h2=0.46), likely due to downward biasing in smaller population size
-          when calculating BLUPs (need reference here)
-    - steal page from Luis' 'massive phenotyping' paper and mention how results are consistent with previous Vorsa
-      studies
-    - how results overlap with 
-
-## Limitations and where to go from here.
-
-- Creating a central site to unify previous studies in order to help propel breeding forward
-### how digital ag. can help upend/reveal more, and take this a step further
-
-
-## Take home message
-
-
-For CNJ02 population:
-
-Tacy and PAC inversely correlated with SFY and positively correlated with PFR could mean that fruit rot is undesirably 
-linked with higher levels of Tacy/PAC (desirable traits), or could simply be an indicator that these genotypes undergo 
-berry development and ripening sooner than the others (since everything harvested at the same time).  A few additional
-indicators of this relationship between sound fruit yield and Tacy/PAC can be found in the modestly negative
-correlations of *SFY × PAC* ($\rho =  `r p.cnj02.c['SFY','PAC']`$), *SFY × Tacy* ($\rho =  `r p.cnj02.c['SFY','Tacy']`$), 
-*UNAB × PAC* ($\rho =  `r p.cnj02.c['UNAB','PAC']`$), *MFM × PAC* ($\rho =  `r p.cnj02.c['MFM','PAC']`$), 
-*MFM × UNAF* ($\rho =  `r p.cnj02.c['MFM','UNAF']`$), and *MFM × UBBL* ($\rho =  `r p.cnj02.c['MFM','UBBL']`$).
-
-Compared to CNJ02, CNJ04 has  weaker correlations for traits
-*UBM x UBW* (`r p.cnj04.c['UBM','UBW']` vs. `r p.cnj02.c['UBM','UBW']`) and *UBM × UBL* (`r p.cnj04.c['UBM','UBL']` vs. `r p.cnj02.c['UBM','UBL']`). - Due to less variation/segregation in width and length 
-in berries found in CNJ04?  Look at BLUP and trait summary stats tables
-
-Comment and conjecture on noteworthy correlations discussed in results:
-
-For CNJ04, there appears to be a modest negative correlation between berry size and Brix.  This could represent some
-form of linkage drag in this population, as seen in other progeny derived from a Steven's parent (Sweetie, progeny of a
-cross of Stevens × Ben Lear).
-
-No single large *TY* QTLs --  seem to be spread out across the genome - consistent with yield being a quantitative trait
-with a lot of genetic players involved.
-
-
-*UCLP x UCLS* is interesting in that calyx lobe fold pattern could have more to do developmentally with calyx lobe size
-(pleiotropy), or the genes are strongly linked.
-
-It would be interesting to compare differential fruit coloring/Tacy with differential fruit rot (check out Luis' paper)
--- this could allow us to decouple ripening stage from negatively linked sound fruit yield with Tacy/PAC levels.
-
-##Heritabilities
-
-High heritability of berry length in both populations would seem to indicate that this would be a good way of selecting
-for larger berries.  Even higher heritabilities in berry length vs. width indicates that this is a great trait to breed
-for when selecting for particular berry shape characteristics important for processing (rounder berries preferred).  If
-it is possible to select genotypes with larger berry length and low LvW, along with low rot rates, this could be a good
-way to produce genotypes with good processing abilities.
-
-Evidence of very low heritabilities in traits such as *Brix* and *TA* in population CNJ02 over CNJ04 could simply
-indicate less genetic variation for these traits in CNJ02, but the baseline could be higher -- show a figure of 
-inter-population BLUPS side-by-side to get a good perspective on the absolute amount of selectable additive genetic variation 
-b/w populations.
-
-##QTLs
-
-- Make a comment that smaller population size of CNJ04 could result in overfitting, and hence the higher average model
-  fits than in CNJ02 (almost 17% higher!)
-- CNJ02 - Mention that the largest set of collocated QTLs on LG 3 is intriguing, b/c one of them is derived from an entirely different set of data (plot data -- plot mean fruit weigth) versus the upright mean fruit weight data.  Shows overlap b/w datasets (check to see how UMFM and MFM correlate) - Mention that total yield also has a closely linked QTL on LG3, but not collocated likely b/c total yield involves a more complex mix of factors.
-    - On linkage group 11, largest *berry weight* and *upright mean fruit mass* are collocated at 30cM, while plot mean fruit mass is closely
-linked at 25cM. All three have the same genotype (*BD*) with the largest effect, indicating that they could all be
-driven by the same QTL. 
-    - Close linkage of PFR and Tacy on LG7, with shared patterns in genotype effects, could also be associated with
-      early-ripening varieties.  Compare to the differential QTLs found in Luis' paper.
-
-- For CNJ04, although a lower LvW ratio is preferred for rounder berries, selecting for this could result in smaller
-  berries by dragging in berries with shorter lengths.  Thus, it would make sense to select for berries with larger
-  widths to offset this trend.  Although the heritability of berry width is such that it is not displayed in table
-  \@ref(tab:qtl-table-cnj04-sw) because its heritability (0.48) is just below the cutoff of 0.5, lg 9 pos 64.23cM shows
-  a modestly positive effect for genotype *AD*.  Since it is on a separate linkage group from the primary QTL for upright *berry
-  length* (lg 11), it is easy to select for berries with larger widths and lower lengths without worrying about linkage
-  drag.  Also note that CNJ04 much more explicit variation in berry length compared to width, so it is more difficult
-  to select for rounder berries without negatively impacting berry size, and thus yield.  Upright *total berry
-weight* does not even share its top 2 QTL with the same linkage groups as *total yield*, but given that the intertrait
-correlation between them in insignificant, it is not surprising that they do not share QTLs.
-- Mention that despite having some modest correlations b/w chemistry traits and chemistry/yield traits, that a lack of
-  overlap in top QTLs makes it difficult to pinpoint a genetic basis of this, if any.  This could be due to the small
-  population size being insufficient to unravel any shared/linked QTLs here, or ...
-
-- Both
-  - really emphasize the shared QTL on lg 12 highlighting its importance in controlling total yield.
-
-- Epistatic Interactions
-      - emphasize that the top epistatic QTL are on separate linkage groups -- not surprising given that the smaller
-        population sizes and lower recombination history gives less chance for neighboring QTL to break their linkages
-        and give the appropriate number of samples of all pairwise combinations for determining significance.
-      - not surprising that CNJ04 has a lot less epistatic QTL than CNJ02, given that it is less than half the
-        population size of CNJ02.
-      - mention that a changing in effect rank, or ordering per genotype across it's interacting pair also indicates
-        that an interaction effect exists.
-
-- Talk about how translating to biallelic markers only and using population-specific consensus maps could possibly
-  help some with increasing power to detect QTL and helping interpret effects more meaningfully.
