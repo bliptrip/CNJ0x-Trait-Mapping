@@ -1,7 +1,7 @@
 --- 
 title: "A Comparative Study of Phenotyping Methods and their Utility in Mapping Quantitative Trait Loci for the Advancement of _Vaccinium macrocarpon Ait._ Breeding Germplasm"
 author: "Andrew Maule"
-date: "`r Sys.Date()`"
+date: "2022-01-22"
 site: bookdown::bookdown_site
 documbookentclass: article
 always_allow_html: true
