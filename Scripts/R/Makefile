@@ -13,6 +13,7 @@ export POP_Name ?= CNJ02
 export POP_Circos = #Force user to define
 export RDS_DIR ?= "../../Data/phenotypic\ data/DerivedData/cleanup_data.R.output/Robjs"
 export COLLATE_EFFECTS ?= TRUE
+export RELOAD_TABLE_FUNCTIONS ?= FALSE
 
 #Set the following for configuring the BLUPs summary table in target GenQTLTable: NUM_TOP configures how many of the top-ranked QTLs to display per trait:model combination
 QTL_METHOD ?= stepwiseqtl
@@ -39,7 +40,7 @@ genanalyses: cleanR
 genblupplots: cleanR
 		touch "$(WORKFLOW)/traits/blups.summary.table.png"
 		touch "$(WORKFLOW)/traits/raw.summary.table.png"
-		R CMD BATCH '--args workflow="$(WORKFLOW)" P1_Name="$(P1_Name)" P2_Name="$(P2_Name)" POP_Name="$(POP_Name)"' qtl_pipeline_01_03_genBLUPplots.R
+		R CMD BATCH '--args workflow="$(WORKFLOW)" reload_table_functions="$(RELOAD_TABLE_FUNCTIONS)" P1_Name="$(P1_Name)" P2_Name="$(P2_Name)" POP_Name="$(POP_Name)"' qtl_pipeline_01_03_genBLUPplots.R
 
 genh2plot: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)" POP_Name="$(POP_Name)"' qtl_pipeline_01_04_genh2plots.R
@@ -123,10 +124,10 @@ GenCircos: cleanR
 
 #Generate QTL table
 GenEffects: cleanR
-		R CMD BATCH '--args workflow="$(WORKFLOW)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_12_geneffects.R
+		R CMD BATCH '--args workflow="$(WORKFLOW)" reload_table_functions="$(RELOAD_TABLE_FUNCTIONS)" collate_effects="$(COLLATE_EFFECTS)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_12_geneffects.R
 
 GenIntEffects: cleanR
-		R CMD BATCH '--args workflow="$(WORKFLOW)" collate_effects="$(COLLATE_EFFECTS)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_13_geninteffects.R
+		R CMD BATCH '--args workflow="$(WORKFLOW)" reload_table_functions="$(RELOAD_TABLE_FUNCTIONS)" collate_effects="$(COLLATE_EFFECTS)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_13_geninteffects.R
 
 #Copy all circos files and their dependencies to a 'sandbox' folder where all the necessary files are available for rendering the circos plots from a web browser
 #NOTE: Must specify SANDBOX on command-line to give destination directory to copy to.
