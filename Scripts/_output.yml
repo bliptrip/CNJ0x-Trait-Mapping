@@ -1,12 +1,14 @@
 bookdown::html_document2:
-    toc: TRUE
+    toc: true
     css: "style.css"
 bookdown::pdf_document2:
     latex_engine: xelatex
-    keep_tex: TRUE
-    toc: TRUE
-bookdown::word_document:
-    toc: TRUE
+    keep_tex: true
+    toc: true
+bookdown::word_document2:
+    toc: true
+redoc::redoc:
+    keep_md: true
 officedown::rdocx_document:
     tables:
         style: Table
