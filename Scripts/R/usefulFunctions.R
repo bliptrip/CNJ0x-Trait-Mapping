@@ -174,11 +174,11 @@ siginfo <- function(x){
 }
 
 round.digits <- function(values,digits) {
-	rvalue <- gsub("NA", "", format(round(values,digits=digits),nsmall=digits))
+	rvalue <- as.numeric(gsub("NA", "", format(round(values,digits=digits),nsmall=digits)))
 }
 
 signif.digits <- function(values,digits) {
-	rvalue <- gsub("NA", "", format(round(values,digits=digits),nsmall=digits))
+	rvalue <- as.numeric(gsub("NA", "", format(round(values,digits=digits),nsmall=digits)))
 }
 
 
