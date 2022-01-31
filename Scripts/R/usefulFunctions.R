@@ -1,25 +1,3 @@
-# # markers
-#                   '<plot>',
-#                   'type=text',
-#                   'file=/Users/luisdiaz/Documents/chamba/PHENOTYPING/QTLcolorPaper/circosFiles/markers.txt',
-#                   'color=black',
-#                   'r1=0.99r',
-#                   'r0=.80r',
-#                   'show_links=yes',
-#                   'link_dims=8p,8p,8p,4p,8p',
-#                   'link_thickness=2p',
-#                   'link_color=black',
-#                   'label_size=13p',
-#                   'label_font=default',
-#                   'padding=2p',
-#                   'rpadding=2p',
-#                   'max_snuggle_distance=3r',
-#                   'label_snuggle=yes',
-#                   '</plot>',
-
-
-
-
 # generador de huecolors
 # 
 hueGen<-function(n,from,to,s="100%",l="50%"){
@@ -29,13 +7,14 @@ hueGen<-function(n,from,to,s="100%",l="50%"){
 
 
 #Specify the directory prefix for storing data files.
-DATA_FOLDER_PREFIX <- '../../Data/phenotypic data/DerivedData/cleanup_data.R.output'
-DATA_ROBJS_FOLDER_PREFIX <- paste0(DATA_FOLDER_PREFIX,"/Robjs")
-DATA_PLOTS_FOLDER_PREFIX <- paste0(DATA_FOLDER_PREFIX,"/plots")
-GDATA_FOLDER_PREFIX <- "../../Data/genetic_data/RawData"
-GDDATA_FOLDER_PREFIX <- "../../Data/genetic_data/DerivedData"
-PDATA_FOLDER_PREFIX <- "../../Data/phenotypic data/RawData"
-PDDATA_FOLDER_PREFIX <- "../../Data/phenotypic data/DerivedData"
+DATA_REL_PATH <- get0("DATA_REL_PATH", ifnotfound='../..')
+DATA_FOLDER_PREFIX <- get0("DATA_FOLDER_PREFIX", ifnotfound=paste0(DATA_REL_PATH,'/Data/phenotypic data/DerivedData/cleanup_data.R.output'))
+DATA_ROBJS_FOLDER_PREFIX <- get0("DATA_ROBJS_FOLDER_PREFIX", ifnotfound=paste0(DATA_FOLDER_PREFIX,"/Robjs"))
+DATA_PLOTS_FOLDER_PREFIX <- get0("DATA_PLOTS_FOLDER_PREFIX", ifnotfound=paste0(DATA_FOLDER_PREFIX,"/plots"))
+GDATA_FOLDER_PREFIX <- get0("GDATA_FOLDER_PREFIX", ifnotfound=paste0(DATA_REL_PATH,"/Data/genetic_data/RawData"))
+GDDATA_FOLDER_PREFIX <- get0("GDDATA_FOLDER_PREFIX", ifnotfound=paste0(DATA_REL_PATH,"/Data/genetic_data/DerivedData"))
+PDATA_FOLDER_PREFIX <- get0("PDATA_FOLDER_PREFIX", ifnotfound=paste0(DATA_REL_PATH,"/Data/phenotypic data/RawData"))
+PDDATA_FOLDER_PREFIX <- get0("PDDATA_FOLDER_PREFIX", ifnotfound=paste0(DATA_REL_PATH,"/Data/phenotypic data/DerivedData"))
 
 # Returns string without leading white space
 trim.leading <- function (x)  sub("^\\s+", "", x)

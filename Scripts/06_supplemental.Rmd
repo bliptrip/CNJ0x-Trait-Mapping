@@ -272,41 +272,69 @@ workflow=params$workflow
 ## BLUP Tables
 
 ### CNJ02 - BLUP Summary Statistics - Complete
-```{r blups-table-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%"}
-load(file=paste0(params$cnj02_workflow,"/.RData.01_genBLUP"))
-full_tbl_all_flex  <- generateFullTableFlex(model.collated.summary.wide.tb, caption="CNJ02 Population Complete Trait and BLUP Summary.")
-knitr::knit_print(full_tbl_all_flex)
+
+```{r blups-table-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
+load(file=paste0(cnj02_workflow,"/.RData.01_genBLUP"))
+clabel <- knitr::opts_current$get('label')
+caption <- "CNJ02 Population Complete Trait and BLUP Summary."
+tbl <- generateFullTable(model.collated.summary.wide.tb, caption=caption)
+print_table(tbl, clabel, caption)
 ```
 
 ### CNJ04 - BLUP Summary Statistics - Complete
-```{r blups-table-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%")
-load(file=paste0(params$cnj04_workflow,"/.RData.01_genBLUP"))
-full_tbl_all_flex  <- generateFullTableFlex(model.collated.summary.wide.tb, caption="CNJ04 Population Complete Trait and BLUP Summary.")
-knitr::knit_print(full_tbl_all_flex)
+
+```{r blups-table-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
+load(file=paste0(cnj04_workflow,"/.RData.01_genBLUP"))
+clabel <- knitr::opts_current$get('label')
+caption <- "CNJ04 Population Complete Trait and BLUP Summary."
+tbl <- generateFullTable(model.collated.summary.wide.tb, caption=caption)
+print_table(tbl, clabel, caption)
 ```
 
 ## QTL Tables
 
 ### CNJ02
 
-```{r qtl-table-scanone-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-load(file=paste0(cnj02_workflow,"/.RData.10_01.genQTLtable.scanone.2"))
-generateTable(qtl.collated.succinct.tb %>% 
-              arrange(trait,model,desc(marker.variance)))
+```{r qtl-table-scanone-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
+load(file=paste0(cnj02_workflow,"/.RData.12_geneffects.2"))
+clabel <- knitr::opts_current$get('label')
+caption <- "CNJ02 Population Top 2 QTL for all Trait x Model combinations, fit using scanone() function, with effect plots."
+tbl <- generateTable(effs.complete.tb %>% arrange(model,trait,desc(marker_variance)),
+                     meths = "scanone",
+                     caption = caption)
+print_table(tbl, clabel, caption)
 ```
 
-```{r qtl-table-stepwiseqtl-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-load(file=paste0(cnj02_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
-generateTable(qtl.collated.succinct.tb %>% 
-              arrange(trait,model,desc(marker.variance)))
+```{r qtl-table-stepwiseqtl-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
+load(file=paste0(cnj02_workflow,"/.RData.12_geneffects.2"))
+clabel <- knitr::opts_current$get('label')
+caption <- "CNJ02 Population Top 2 QTL for all Trait x Model combinations, fit using stepwiseqtl() function, with effect plots."
+tbl <- generateTable(effs.complete.tb %>% arrange(model,trait,desc(marker_variance)),
+                     meths = "stepwiseqtl",
+                     caption = caption)
+print_table(tbl, clabel, caption)
 ```
 
 ### CNJ04
 
-```{r qtl-table-stepwiseqtl-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%"}
-load(file=paste0(cnj04_workflow,"/.RData.10_01.genQTLtable.stepwiseqtl.2"))
-generateTable(qtl.collated.succinct.tb %>% 
-              arrange(trait,model,desc(marker.variance)))
+```{r qtl-table-scanone-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
+load(file=paste0(cnj04_workflow,"/.RData.12_geneffects.2"))
+clabel <- knitr::opts_current$get('label')
+caption <- "CNJ04 Population Top 2 QTL for all Trait x Model combinations, fit using scanone() function, with effect plots."
+tbl <- generateTable(effs.complete.tb %>% arrange(model,trait,desc(marker_variance)),
+                     meths = "scanone",
+                     caption = caption)
+print_table(tbl, clabel, caption)
+```
+
+```{r qtl-table-stepwiseqtl-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
+load(file=paste0(cnj04_workflow,"/.RData.12_geneffects.2"))
+clabel <- knitr::opts_current$get('label')
+caption <- "CNJ04 Population Top 2 QTL for all Trait x Model combinations, fit using stepwiseqtl() function, with effect plots."
+tbl <- generateTable(effs.complete.tb %>% arrange(model,trait,desc(marker_variance)),
+                     meths = "stepwiseqtl",
+                     caption = caption)
+print_table(tbl, clabel, caption)
 ```
 
 ## Supplemental Links {#supplemental-links}

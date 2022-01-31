@@ -45,18 +45,20 @@ knitr::knit_print(ftrait_tab_cat)
 ```
 
 ```{r trait-tab-kable, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="Traits collected from populations CNJ02 and CNJ04 in years 2011-2014.", eval=!params$trait_tab_flex}
+clabel <- knitr::opts_current$get('label')
+caption <- "Traits collected from populations CNJ02 and CNJ04 in years 2011-2014."
 ktrait_tab_cat <- rename(trait_tab_cat,'Category[note]'=Category,'Abbreviation[note]'=Abbreviation) %>%
     mutate(Units=ifelse(Units != "",paste0("$",Units,"$"),Units)) %>%
     dplyr::select(!c(category_repeat)) %>%
     kable(  booktabs=TRUE, 
             escape = FALSE,
-            caption="Traits collected from populations CNJ02 and CNJ04 in years 2011-2014.") %>%
+            caption=caption) %>%
     column_spec(1, bold=TRUE) %>%
     row_spec(row=(which(trait_tab_cat["Category"] != "")-1), hline_after = TRUE) %>%
     kable_paper("striped", "scale_down", font_size=table.font_size, full_width=FALSE) %>%
     add_footnote(c("Upright traits were collected on a per fruiting upright basis.  Largest berry traits represent that phenotypic values of the largest berry sampled on a given fruiting upright.  Plot traits were collected by harvesting berries from square foot samples of plots and running appropriate assays.  All plot traits were collected amd assayed onsite at NJAES.  Upright and largest berry traits were collected at NJAES, but assayed at UW-Madison.",
                    "Trait abbreviations are used to label subsequent figures."))
-print(ktrait_tab_cat) #Render
+print_table(ktrait_tab_cat, clabel, caption) #Render
 ```
 
 ```{r berry-shape-template, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="50%", fig.cap="Examples of categories of berry shape parameters, used to help classify cranberry shape [@Franklin1958]."}

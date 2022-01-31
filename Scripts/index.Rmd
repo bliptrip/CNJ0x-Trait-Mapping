@@ -48,7 +48,23 @@ library(knitr)
 library(officedown)
 library(tidyverse)
 
-#source('./R/usefulFunctions.R')
+DATA_REL_PATH = ".."
+source('./R/usefulFunctions.R')
+
+print_table <- function(tbl, label, caption) {
+    if( is_word_output() ) {
+        target_file <- paste0("Data/publication/tables/",label,".html")
+        save_kable(tbl, file=paste0("../",target_file))
+        cat(paste0("\n\nTable: (\\#tab:",label,") ", caption, "\n\n",
+                "--------\n",
+                "![",label,"](../Data/publication/figures/table-32x32.png) [Table Link](",target_file,")\n",
+                "--------\n\n"
+                ))
+    } else {
+        tbl
+    }
+}
+
 ```
 
 ```{r style-defs, echo=FALSE, message=FALSE, include=FALSE}
