@@ -79,8 +79,6 @@ cnj02_workflow = params$cnj02_workflow
 cnj04_workflow = params$cnj04_workflow
 ```
 
-<script>
-$(document).ready(function(){
-    $('[data-toggle="popover"]').popover({html:true});   
-});
-</script>
+```{r format-test, echo=FALSE, message=FALSE, include=TRUE, eval=FALSE}
+cat(paste0("Knitting format: ***",knitr::opts_knit$get("rmarkdown.pandoc.to"),"***\n"))
+```

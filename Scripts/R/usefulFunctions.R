@@ -267,15 +267,15 @@ assign.pointer<-function(object, value, pos) {
 
 #The following functions can only be used within knitr renderings
 is_word_output = function() {
-    return(knitr::opts_knit$get("rmarkdown.pandoc.to") == "docx")
+    return(grepl("docx",knitr::opts_knit$get("rmarkdown.pandoc.to")))
 }
 
 is_pdf_output = function() {
-    return(knitr::opts_knit$get("rmarkdown.pandoc.to") == "latex")
+    return(grepl("latex",knitr::opts_knit$get("rmarkdown.pandoc.to")))
 }
 
 is_html_output = function() {
-    return(knitr::opts_knit$get("rmarkdown.pandoc.to") == "html")
+    return(grepl("html",knitr::opts_knit$get("rmarkdown.pandoc.to")))
 }
 
 #Shamelessly taken from http://www.sthda.com/english/wiki/correlation-matrix-formatting-and-visualization
