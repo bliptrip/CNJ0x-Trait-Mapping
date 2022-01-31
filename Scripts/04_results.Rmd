@@ -429,7 +429,16 @@ and *CNJ04_2_5* shows excellent potential as selection candidates for berries wi
 rounder berries (low *ULvW*).  *CNJ04_2_24* combines high *Tacy* with low fruit rot (*PFR*), along with rounder berries
 (low *UKEC* and low *ULvW*).  *CNJ04_2_12* stacks higher *Brix* with rounder berries (low *UKEC*).
 
-```{r blups-plot-cnj0x-rank-sum-plot, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Rank-sum of top 10 percent of genotypes for a selected subset of trait BLUPs  for the *all year* model.  A) Population CNJ02 and b) Population CNJ04.  Genotype identifier is abbreviated: g<num> => CNJ02_<num>.  eg: g1_77 => CNJ02_1_77"}
+```{r blups-plot-cnj0x-rank-sum-plot-defs, echo=FALSE, message=FALSE, include=TRUE}
+caption="Rank-sum of top 10 percent of genotypes for a selected subset of trait BLUPs for the *all year* model.  A) Population CNJ02 and b) Population CNJ04.  Genotype identifier is abbreviated: g<num> => CNJ02_<num>.  eg: g1_77 => CNJ02_1_77"
+if( is_latex_output() ) {
+    #If we don't properly escape the captions, then the latex code that is generated isn't correct -- it inserts a
+    #\texbackslash in front of everything
+    caption = knitr:::escape_latex(caption)
+}
+```
+
+```{r blups-plot-cnj0x-rank-sum-plot, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap=caption}
     knitr::include_graphics(imageCombined)
 ```
 
