@@ -37,9 +37,10 @@ install.packages(c("corrplot"), repos = "http://mirror.las.iastate.edu/CRAN/", d
 install.packages(c("GGally"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) #Themese package for ggplot2
 install.packages(c("ggthemes"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("factoextra"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
-install.packages(c("kableExtra"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+remotes::install_github("bliptrip/kableExtra")
 install.packages(c("formattable"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("ggfittext"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("cowplot"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("rlist"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 
+remotes::install_github("noamross/redoc")
