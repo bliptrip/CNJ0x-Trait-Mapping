@@ -2,12 +2,25 @@ all: render_html
 
 render_office:
 		@./renderOfficeDown.R && libreoffice _book/_main.docx
-
 ro: render_office
 
 render_word:
 		@./renderWord.R && libreoffice _book/_main.docx
 rw: render_word
+
+package_word:
+	rm -rf maule-ch1*
+	mkdir -p maule-ch1/Data/publication
+	cp _book/_main.docx maule-ch1/
+	cp -r ../Data/publication maule-ch1/Data/
+	zip -r maule-ch1.zip maule-ch1
+
+pw: package_word
+
+
+render_redoc:
+		@./renderRedoc.R
+rr: render_redoc
 
 render_html:
 		@./renderHTML.R && firefox _main.html
