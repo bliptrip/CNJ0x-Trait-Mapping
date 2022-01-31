@@ -83,7 +83,7 @@ generateReducedTable <- function(tbl, caption=NULL) {
     if( is_html_output() ) {
         qtable2 <- qtable1 %>% kable("html", caption=caption, align='lrrrrrc', escape = FALSE, table.attr="id=\"kableTable\"")
     } else {
-        qtable2 <- qtable1 %>% kable(align='lrrrrrc', caption=caption, escape = FALSE)
+        qtable2 <- qtable1 %>% kable(align='lrrrrrc', caption=caption, escape = TRUE)
     }
     qtable3  <- qtable2 %>%
         kable_paper("striped", full_width=FALSE) %>%
@@ -114,7 +114,7 @@ generateTable <- function(tbl, caption=NULL) {
     if( is_html_output() ) {
         qtable2 <- qtable1 %>% kable("html", caption=caption, align='llrrrrrc', escape = FALSE, table.attr="id=\"kableTable\"")
     } else {
-        qtable2 <- qtable1 %>% kable(align='llrrrrrc', caption=caption, escape = FALSE)
+        qtable2 <- qtable1 %>% kable(align='llrrrrrc', caption=caption, escape = TRUE)
     }
     qtable3  <- qtable2 %>%
         kable_paper("striped", full_width=FALSE) %>%
