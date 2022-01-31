@@ -176,30 +176,30 @@ workflow=params$workflow
 ### CNJ02 -- All Traits
 
 ```{r trait-corrplots-cnj02-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj02.ts.png"),"A"))
-    system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj02.ts.inv.png"),"B"))
+    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj02.ts.png"),"A"))
+    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj02.ts.inv.png"),"B"))
 ```
 
 ```{r trait-corrplots-cnj02-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","1x2",paste0(params$workflow,"/traits/plots/corrplot.cnj02.ts.A.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj02.ts.inv.B.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj02.ts.combined.png")))
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","1x2",paste0(workflow,"/traits/plots/corrplot.cnj02.ts.A.png"), paste0(workflow,"/traits/plots/corrplot.cnj02.ts.inv.B.png"), paste0(workflow,"/traits/plots/corrplot.cnj02.ts.combined.png")))
 ```
 
 ```{r trait-corrplots-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for population CNJ02, ordered by A) positive correlations and B) negative correlations.  The trait relationships are calculated as Pearson's correlation coefficients, averaged over all years of data."}
-    knitr::include_graphics(paste0(params$workflow,"/traits/plots/corrplot.cnj02.ts.combined.png"))
+    knitr::include_graphics(paste0(workflow,"/traits/plots/corrplot.cnj02.ts.combined.png"))
 ```
 
 ### CNJ04 -- All Traits
 ```{r trait-corrplots-cnj04-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj04.ts.png"),"A"))
-    system2("misc/annotatefig.sh", args=c(paste0(params$workflow,"/traits/plots/corrplot.cnj04.ts.inv.png"),"B"))
+    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj04.ts.png"),"A"))
+    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj04.ts.inv.png"),"B"))
 ```
 
 ```{r trait-corrplots-cnj04-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","1x2",paste0(params$workflow,"/traits/plots/corrplot.cnj04.ts.A.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj04.ts.inv.B.png"), paste0(params$workflow,"/traits/plots/corrplot.cnj04.ts.combined.png")))
+    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","1x2",paste0(workflow,"/traits/plots/corrplot.cnj04.ts.A.png"), paste0(workflow,"/traits/plots/corrplot.cnj04.ts.inv.B.png"), paste0(workflow,"/traits/plots/corrplot.cnj04.ts.combined.png")))
 ```
 
 ```{r trait-corrplots-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for population CNJ04, ordered by A) positive correlations and B) negative correlations.  The trait relationships are calculated as Pearson's correlation coefficients, averaged over all years of data."}
-    knitr::include_graphics(paste0(params$workflow,"/traits/plots/corrplot.cnj04.ts.combined.png"))
+    knitr::include_graphics(paste0(workflow,"/traits/plots/corrplot.cnj04.ts.combined.png"))
 ```
 
 ## Heritability Plots
