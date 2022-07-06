@@ -106,6 +106,11 @@ generateReducedTable <- function(tbl, caption=NULL) {
         column_spec(5, width = "2cm") %>%
         column_spec(6, width = "2cm") %>%
         column_spec(9, width = "7cm")
+    if( is_pdf_output() ) {
+        qtable3 <- qtable3 %>%
+                    landscape() %>%
+                    kable_styling(latex_options=c("scale_down","repeat_header"))
+    }
     return(qtable3)
 }
 
@@ -144,6 +149,11 @@ generateTable <- function(tbl, caption=NULL) {
         add_footnote(c("Significance codes for Genotype:Year Effects\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n", 
                     "Significance codes for Genotype Effects",
                     "Significance codes from QTL pvalues"))
+    if( is_pdf_output() ) {
+        qtable3 <- qtable3 %>%
+                    landscape() %>%
+                    kable_styling(latex_options=c("scale_down","repeat_header"))
+    }
     return(qtable3)
 }
 
@@ -165,7 +175,7 @@ generateFlexTable <- function(tbl, caption=NULL) {
         mk_par(j = "pLOD", part="body", value=as_paragraph(as_equation(., width=1, height=0.5)), use_dot=TRUE) %>%
         flextable::footnote(i = 1, 
                                 j = ~ Trait + Model + pLOD,
-                                value=as_paragraph(c(    "Significance codes for Genotype:Year Effects\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n", 
+                                value=as_paragraph(c(   "Significance codes for Genotype:Year Effects\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n", 
                                                         "Significance codes for Genotype Effects",
                                                         "Significance codes from QTL pvalues")),
                                 ref_symbols=c("a","b","c"),

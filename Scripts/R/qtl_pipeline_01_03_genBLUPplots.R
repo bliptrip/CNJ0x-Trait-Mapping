@@ -25,7 +25,6 @@ workflow <- get0("workflow", ifnotfound="../../Workflows/9")
 P1_Name <- get0("P1_Name", ifnotfound="Mullica_Queen")
 P2_Name <- get0("P2_Name", ifnotfound="Crimson_Queen")
 POP_Name <- get0("POP_Name", ifnotfound="CNJ02")
-table.font_size <- get0("table.font_size", ifnotfound=10)
 table.width <- get0("table.width", ifnotfound=0.85)
 reload_table_functions <- get0("reload_table_functions", ifnotfound=FALSE)
 
@@ -470,29 +469,45 @@ generateFullTableHelper <- function(values.collated.tb) {
     return(tbl1)
 }
 
-generateFullTable <- function(values.collated.tb, caption=NULL) {
+generateFullTable <- function(values.collated.tb, caption=NULL, tfont_size=10) {
     tbl1 <- generateFullTableHelper(values.collated.tb) %>%
                 generateTableSignifSymbols() %>%
                 generateTableRemoveRepeats() %>%
                 dplyr::select(label,model_label,vg,vge,ve,h2,min_Raw,min_BLUPs,mean_Raw,mean_BLUPs,max_Raw,max_BLUPs,range_Raw,range_BLUPs,min_geno_Raw,min_geno_BLUPs,max_geno_Raw,max_geno_BLUPs,P1_Raw,P1_BLUPs,P2_Raw,P2_BLUPs,'Parent Range_Raw','Parent Range_BLUPs')
     tbl2 <- tbl1 %>%
-        rename("Trait[note]"=label,"Model[note]"=model_label,'$σ_{g}^{2}$[note]'=vg,'$σ_{g ε}^{2}$[note]'=vge,'$σ_{ε}^{2}$[note]'=ve,'$h^{2}$[note]'=h2,'$Min_r$'=min_Raw,'$Min_b$'=min_BLUPs,'$Max_r$'=max_Raw,'$Max_b$'=max_BLUPs,"$μ_r$±$SE$"=mean_Raw,"$μ_b$±$SE$"=mean_BLUPs,'$Range_r$'=range_Raw,'$Range_b$'=range_BLUPs,'$Min Geno_r$[note]'=min_geno_Raw,'$Min Geno_b$'=min_geno_BLUPs,'$Max Geno_r$[note]'=max_geno_Raw,'$Max Geno_b$'=max_geno_BLUPs,'$P_{1r}$[note]'=P1_Raw,'$P_{1b}$'=P1_BLUPs,'$P_{2r}$[note]'=P2_Raw,'$P_{2b}$'=P2_BLUPs,'$PRange_r$'='Parent Range_Raw','$PRange_b$'='Parent Range_BLUPs') %>%
-        kable(align='llrrrrrrrrrrrrccccrrrrrr', booktabs=TRUE, escape = FALSE, caption=caption) %>%
+        rename("Trait[note]"=label,"Model[note]"=model_label,'$σ_{g}^{2}$[note]'=vg,'$σ_{g ε}^{2}$[note]'=vge,'$σ_{ε}^{2}$[note]'=ve,'$h^{2}$[note]'=h2,'$Min_r$'=min_Raw,'$Min_b$'=min_BLUPs,'$Max_r$'=max_Raw,'$Max_b$'=max_BLUPs,"$μ_r$±$SE$"=mean_Raw,"$μ_b$±$SE$"=mean_BLUPs,'$R_r$[note]'=range_Raw,'$R_b$[note]'=range_BLUPs,'$MinG_r$[note]'=min_geno_Raw,'$MinG_b$'=min_geno_BLUPs,'$MaxG_r$[note]'=max_geno_Raw,'$MaxG_b$'=max_geno_BLUPs,'$P_{1r}$[note]'=P1_Raw,'$P_{1b}$'=P1_BLUPs,'$P_{2r}$[note]'=P2_Raw,'$P_{2b}$'=P2_BLUPs,'$PR_r$[note]'='Parent Range_Raw','$PR_b$[note]'='Parent Range_BLUPs') %>%
+        kable(align='llrrrrrrrrrrrrccccrrrrrr', booktabs=TRUE, escape = FALSE, longtable = TRUE, caption=caption) %>%
         row_spec(row=which(tbl1$label != " ")-1, hline_after = TRUE) %>%
+        column_spec(column=c(5,7,9,11,13,15,17,19,21), italic=TRUE, color="gray") %>%
+        column_spec(column=c(1), bold=TRUE, width="1.0cm") %>%
+        column_spec(column=c(2,13,15), width="0.65cm") %>%
+        column_spec(column=c(12,14), width="0.75cm") %>%
+        column_spec(column=c(16), border_left=TRUE) %>%
         column_spec(column=c(8,10,12,14,16,18,20,22,24), italic=TRUE, color="gray") %>%
         add_header_above(c(" ", " ", "F1 Progeny"=16, "Parents"=6)) %>%
-        kable_paper("striped", "scale_down", font_size=table.font_size, full_width=FALSE) %>%
+        kable_paper("striped", full_width=FALSE) %>%
         add_footnote(c("Significance codes for Genotype:Year Effects\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n", 
                         "Signficance codes for Genotype Effects",
                         "Additive genomic variance of model.",
                         "Additive genomic by year interaction effect variance of model.",
                         "Residual variance of model.",
                         "Narrow-sense genomic heritability for trait/model.",
+                        "Range of trait values in progeny.",
+                        "Range of BLUP values in progeny.",
                         paste0("F1 progeny genotype with minimum trait value.  Genotype identifier is shortened for visibility.  Translation is g<num> => ",POP_Name,"_<num>.  eg: g1_77 => ",POP_Name,"_1_77"),
                         "F1 progeny genotype with maximum trait value.  Genotype identifier is same format as for maximum genotype.",
                         "Maternal trait value",
-                        "Paternal trait value"),
+                        "Paternal trait value",
+                        "Range (difference) between two parental trait values.",
+                        "Range (difference) between two parental BLUP values."
+                        ),
                     escape=TRUE)
+    if( is_pdf_output() ) {
+        tbl2 <- tbl2 %>%
+                    kable_styling(latex_options=c("repeat_header"),
+                                  font_size=tfont_size,
+                                  repeat_header_continued = TRUE)
+    }
 
     return(tbl2)
 }
@@ -570,12 +585,12 @@ generateFullTableFlex <- function(values.collated.tb, caption=NULL) {
                 mutate(model_label=gsub("$","",model_label,fixed=TRUE)) %>%
                 mutate(model_label=gsub(" ",'\\ ',model_label,fixed=TRUE)) %>%
                 dplyr::select(label,model_label,model_formula, vg,vge,ve,h2,min_Raw,min_BLUPs,mean_Raw,mean_BLUPs,max_Raw,max_BLUPs,range_Raw,range_BLUPs,min_geno_Raw,min_geno_BLUPs,max_geno_Raw,max_geno_BLUPs,P1_Raw,P1_BLUPs,P2_Raw,P2_BLUPs,'Parent Range_Raw','Parent Range_BLUPs') %>%
-                rename(`Trait`=label,`Model`=model_label,`Model Formula`=model_formula, `σ_g^2`=vg,`σ_{gε}^2`=vge,`σ_{ε}^2`=ve,`h^2`=h2,`Min_r`=min_Raw,`Min_b`=min_BLUPs,`Max_r`=max_Raw,`Max_b`=max_BLUPs,`μ_r±SE`=mean_Raw,`μ_b±SE`=mean_BLUPs,`Range_r`=range_Raw,`Range_b`=range_BLUPs,`Min\\ Geno_r`=min_geno_Raw,`Min\\ Geno_b`=min_geno_BLUPs,`Max\\ Geno_r`=max_geno_Raw,`Max\\ Geno_b`=max_geno_BLUPs,`P_{1r}`=P1_Raw,`P_{1b}`=P1_BLUPs,`P_{2r}`=P2_Raw,`P_{2b}`=P2_BLUPs,`PRange_r`=`Parent Range_Raw`,`PRange_b`=`Parent Range_BLUPs`)
+                rename(`Trait`=label,`Model`=model_label,`Model Formula`=model_formula, `σ_g^2`=vg,`σ_{gε}^2`=vge,`σ_{ε}^2`=ve,`h^2`=h2,`Min_r`=min_Raw,`Min_b`=min_BLUPs,`Max_r`=max_Raw,`Max_b`=max_BLUPs,`μ_r±SE`=mean_Raw,`μ_b±SE`=mean_BLUPs,`R_r`=range_Raw,`R_b`=range_BLUPs,`MinG_r`=min_geno_Raw,`MinG_b`=min_geno_BLUPs,`MaxG_r`=max_geno_Raw,`MaxG_b`=max_geno_BLUPs,`P_{1r}`=P1_Raw,`P_{1b}`=P1_BLUPs,`P_{2r}`=P2_Raw,`P_{2b}`=P2_BLUPs,`PR_r`=`Parent Range_Raw`,`PR_b`=`Parent Range_BLUPs`)
     tbl2 <- flextable(tbl1) %>%
         set_caption(caption) %>%
         align(align="center", part="header") %>%
         align(align="right", part="body") %>%
-        align(j =  colnames(tbl1) %in% c('Trait','Model', 'Model\\ Formula', 'Min\\ Geno_r','Max\\ Geno_r','Min\\ Geno_b','Max\\ Geno_b'), align="left", part="body") %>%
+        align(j =  colnames(tbl1) %in% c('Trait','Model', 'Model\\ Formula', 'MinG_r','MaxG_r','MinG_b','MaxG_b'), align="left", part="body") %>%
         italic(j = grep("_b", colnames(tbl1), ignore.case=TRUE), part="body") %>%
         bold(i = ~ Trait != " ", j = 1) %>%
         color(j = grep("_b", colnames(tbl1), ignore.case=TRUE), color="gray", part="body") %>%
@@ -585,7 +600,7 @@ generateFullTableFlex <- function(values.collated.tb, caption=NULL) {
         add_header_row(top=FALSE, values=c(" ", " ", " ", "F1\\ Progeny", "Parents"), colwidths=c(1,1,1,16,6)) %>%
         mk_par(part = "header", value = as_paragraph(as_equation(.,width = .1, height = .2)), use_dot = TRUE) %>%
         flextable::footnote(i = 1, 
-                 j = colnames(tbl1) %in% c('Trait','Model','σ_g^2','σ_{gε}^2','σ_{ε}^2','h^2','Min\\ Geno_r','Max\\ Geno_r','P_{1r}','P_{2r}'),
+                 j = colnames(tbl1) %in% c('Trait','Model','σ_g^2','σ_{gε}^2','σ_{ε}^2','h^2','MinG_r','MaxG_r','P_{1r}','P_{2r}'),
                  value = as_paragraph(c("Significance codes for Genotype:Year Effects\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n", 
                         "Signficance codes for Genotype Effects",
                         "Additive genomic variance of model.",
@@ -604,32 +619,44 @@ generateFullTableFlex <- function(values.collated.tb, caption=NULL) {
     return(tbl2)
 }
 
-generateReducedTable <- function(values.collated.tb, caption=NULL) {
+generateReducedTable <- function(values.collated.tb, caption=NULL, tfont_size=10) {
     tbl1 <- generateFullTableHelper(values.collated.tb) %>%
                 mutate(model_formula = gsub("^","$",model_formula,fixed=FALSE)) %>%
                 mutate(model_formula = gsub("$","$",model_formula,fixed=FALSE)) %>%
                 arrange(desc(h2)) %>% 
                 dplyr::select(label,model_formula,h2,min_Raw,min_BLUPs,mean_Raw,mean_BLUPs,max_Raw,max_BLUPs,range_Raw,range_BLUPs,bottom_genos_Raw,bottom_genos_BLUPs,top_genos_Raw,top_genos_BLUPs,P1_Raw,P1_BLUPs,P2_Raw,P2_BLUPs,'Parent Range_Raw','Parent Range_BLUPs')
     tbl2 <- tbl1 %>%
-        rename("Trait"=label,'Model Terms[note]'=model_formula,'$h^{2}$[note]'=h2,'$Min_r$'=min_Raw,'$Min_b$'=min_BLUPs,'$Max_r$'=max_Raw,'$Max_b$'=max_BLUPs,"$μ_r$±$SE$"=mean_Raw,"$μ_b$±$SE$"=mean_BLUPs,'$Range_r$'=range_Raw,'$Range_b$'=range_BLUPs,'$Min Geno_r$[note]'=bottom_genos_Raw,'$Min Geno_b$'=bottom_genos_BLUPs,'$Max Geno_r$[note]'=top_genos_Raw,'$Max Geno_b$'=top_genos_BLUPs,'$P_{1r}$[note]'=P1_Raw,'$P_{1b}$'=P1_BLUPs,'$P_{2r}$[note]'=P2_Raw,'$P_{2b}$'=P2_BLUPs,'$PRange_r$'='Parent Range_Raw','$PRange_b$'='Parent Range_BLUPs') %>%
-        kable(align='lcrrrrrrrrrccccrrrrrr', booktabs=TRUE, escape = FALSE, caption=caption) %>%
+        rename("Trait"=label,'Model Terms[note]'=model_formula,'$h^{2}$[note]'=h2,'$Min_r$'=min_Raw,'$Min_b$'=min_BLUPs,'$Max_r$'=max_Raw,'$Max_b$'=max_BLUPs,"$μ_r$±$SE$"=mean_Raw,"$μ_b$±$SE$"=mean_BLUPs,'$R_r$[note]'=range_Raw,'$R_b$[note]'=range_BLUPs,'$MinG_r$[note]'=bottom_genos_Raw,'$MinG_b$'=bottom_genos_BLUPs,'$MaxG_r$[note]'=top_genos_Raw,'$MaxG_b$'=top_genos_BLUPs,'$P_{1r}$[note]'=P1_Raw,'$P_{1b}$'=P1_BLUPs,'$P_{2r}$[note]'=P2_Raw,'$P_{2b}$'=P2_BLUPs,'$PR_r$[note]'='Parent Range_Raw','$PR_b$[note]'='Parent Range_BLUPs') %>%
+        kable(align='lcrrrrrrrrrccccrrrrrr', booktabs=TRUE, escape = FALSE, longtable = TRUE, caption=caption) %>%
         column_spec(column=c(5,7,9,11,13,15,17,19,21), italic=TRUE, color="gray") %>%
-        column_spec(column=c(1), bold=TRUE, width="0.5cm") %>%
-        column_spec(column=c(12,13,14,15), width="0.5cm") %>%
+        column_spec(column=c(1), bold=TRUE, width="1.0cm") %>%
+        column_spec(column=c(2,13,15), width="0.65cm") %>%
+        column_spec(column=c(12,14), width="0.75cm") %>%
         column_spec(column=c(16), border_left=TRUE) %>%
         add_header_above(c(" ", " ", "F1 Progeny"=13, "Parents"=6)) %>%
-        kable_paper("striped", "scale_down", font_size=table.font_size, full_width=FALSE) %>%
+        kable_paper("striped", full_width=FALSE) %>%
         add_footnote(c("Optimum model selected using AIC criterium.",
                         "Narrow-sense genomic heritability for trait/model.",
+                        "Range of trait values in progeny.",
+                        "Range of BLUP values in progeny.",
                         paste0("F1 progeny genotype with minimum trait value.  Genotype identifier is shortened for visibility.  Translation is g<num> => ",POP_Name,"_1_<num>.  eg: g1_77 => ",POP_Name,"_1_77"),
                         "F1 progeny genotype with maximum trait value.  Genotype identifier is same format as for minimum genotype.",
                         "Maternal trait value",
-                        "Paternal trait value"),
+                        "Paternal trait value",
+                        "Range (difference) between two parental trait values.",
+                        "Range (difference) between two parental BLUP values."
+                        ),
                      escape=TRUE)
+    if( is_pdf_output() ) {
+        tbl2 <- tbl2 %>%
+                    kable_styling(latex_options=c("repeat_header"),
+                                  font_size=tfont_size,
+                                  repeat_header_continued = TRUE)
+    }
     return(tbl2)
 }
 
-generateTable <- function(values.collated.tb, type, caption=NULL) {
+generateTable <- function(values.collated.tb, type, caption=NULL, tfont_size=10) {
     print(tbl2)
     tbl1 <- values.collated.tb %>%
         arrange(type,trait,model) %>%
@@ -651,11 +678,11 @@ generateTable <- function(values.collated.tb, type, caption=NULL) {
         mutate(P2=signif.digits(P2,3)) %>%
         dplyr::select(label,model_label,vg,vge,ve,h2,min,max,mean,range,min_geno,max_geno,P1,P2,'Parent Range')
     tbl2 <- tbl1 %>%
-        rename("Trait[note]"=label,"Model[note]"=model_label,'$σ_{g}^{2}$[note]'=vg,'$σ_{g ε}^{2}$[note]'=vge,'$σ_{ε}^{2}$[note]'=ve,'$h^{2}$[note]'=h2,Min=min,Max=max,"μ±SE"=mean,Range=range,'Min Geno[note]'=min_geno,'Max Geno[note]'=max_geno,'P1[note]'=P1,'P2[note]'=P2) %>%
-        kable(align='llrrrrrrrrccrrr', booktabs=TRUE, escape = FALSE, caption=caption) %>%
+        rename("Trait[note]"=label,"Model[note]"=model_label,'$σ_{g}^{2}$[note]'=vg,'$σ_{g ε}^{2}$[note]'=vge,'$σ_{ε}^{2}$[note]'=ve,'$h^{2}$[note]'=h2,Min=min,Max=max,"μ±SE"=mean,Range=range,'MinG[note]'=min_geno,'Max\ Geno[note]'=max_geno,'P1[note]'=P1,'P2[note]'=P2) %>%
+        kable(align='llrrrrrrrrccrrr', booktabs=TRUE, escape = FALSE, longtable = TRUE, caption=caption) %>%
         row_spec(row=which(values.collated.tb$trait != " ")-1, hline_after = TRUE) %>%
         add_header_above(c(" ", " ", "F1 Progeny"=10, "Parents"=3)) %>%
-        kable_paper("striped", "scale_down", font_size=table.font_size, full_width=FALSE) %>%
+        kable_paper("striped", full_width=FALSE) %>%
         add_footnote(c("Significance codes for Genotype:Year Effects\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n", 
                         "Signficance codes for Genotype Effects",
                         "Additive genomic variance of model.",
@@ -667,6 +694,12 @@ generateTable <- function(values.collated.tb, type, caption=NULL) {
                         "Maternal trait value",
                         "Paternal trait value"),
                      escape=TRUE)
+    if( is_pdf_output() ) {
+        tbl2 <- tbl2 %>%
+                    kable_styling(latex_options=c("repeat_header"),
+                                  repeat_header_continued = TRUE,
+                                  font_size=tfont_size)
+    }
     summary.path <- normalizePath(paste0(workflow,'/traits/'), mustWork = TRUE);
     summary.file <- paste0(summary.path,'/',type,'.summary.table.png')
     print(tbl2)

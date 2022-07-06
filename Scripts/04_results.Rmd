@@ -253,7 +253,7 @@ that issues with genotype × environment interaction are minimal.
     system2("montage", args=c("-background","white","-geometry","1421x2366+20+0","-tile","2x1","../Data/publication/figures/cnj02.barplot.h2spearman.A.png","../Data/publication/figures/cnj04.barplot.h2spearman.B.png","../Data/publication/figures/cnj0x.barplot.h2spearman.png"))
 ```
 
-```{r h2-brcorr, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Heritabilities and Spearman rank correlation coefficients (ρ) for traits in populations A) CNJ02 and B) CNJ04.  Correlation coefficients represent the associations between genotype BLUPs and their associated phenotypes for the *all years* mixed model."}
+```{r h2-brcorr, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Heritabilities and Spearman rank correlation coefficients ($ρ$) for traits in populations A) CNJ02 and B) CNJ04.  Correlation coefficients represent the associations between genotype BLUPs and their associated phenotypes for the *all years* mixed model."}
     knitr::include_graphics("../Data/publication/figures/cnj0x.barplot.h2spearman.png")
 ```
 
@@ -298,17 +298,17 @@ both for raw traits and for genotype BLUPs, are also shown.
 
 ```{r blups-table-cnj02-all-top, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%"}
 clabel <- knitr::opts_current$get('label')
-caption <- "CNJ02 Population Trait and BLUP Summary for *all years* model with heritability above 0.5.  Only models with significant (*p < 0.05*) genotypic effects are displayed."
+caption <- "CNJ02 Population Trait and BLUP Summary for *all years* model with heritability above 0.5.  Only models with significant ($p < 0.05$) genotypic effects are displayed."
 load(file=paste0(cnj02_workflow,"/.RData.01_genBLUP"))
-tbl <- generateReducedTable(model.collated.summary.wide.tb %>% filter(model == 'all-years') %>% filter(h2 > 0.5) %>% filter(GLRpvalue < 0.05), caption=caption)
+tbl <- generateReducedTable(model.collated.summary.wide.tb %>% filter(model == 'all-years') %>% filter(h2 > 0.5) %>% filter(GLRpvalue < 0.05), caption=caption, tfont_size=table.font_size)
 print_table(tbl, clabel, caption)
 ```
 
 ```{r blups-table-cnj04-all-top, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%"}
 clabel <- knitr::opts_current$get('label')
-caption <- "CNJ04 Population Trait and BLUP Summary for *all years* model with heritability above 0.5.  Only models with significant (*p < 0.05*) genotypic effects are displayed."
+caption <- "CNJ04 Population Trait and BLUP Summary for *all years* model with heritability above 0.5.  Only models with significant ($p < 0.05$) genotypic effects are displayed."
 load(file=paste0(cnj04_workflow,"/.RData.01_genBLUP"))
-tbl <- generateReducedTable(model.collated.summary.wide.tb %>% filter(model == 'all-years') %>% filter(h2 > 0.5) %>% filter(GLRpvalue < 0.05), caption=caption)
+tbl <- generateReducedTable(model.collated.summary.wide.tb %>% filter(model == 'all-years') %>% filter(h2 > 0.5) %>% filter(GLRpvalue < 0.05), caption=caption, tfont_size=table.font_size)
 print_table(tbl, clabel, caption)
 ```
 
@@ -431,7 +431,7 @@ rounder berries (low *ULvW*).  *CNJ04_2_24* combines high *Tacy* with low fruit 
 
 ```{r blups-plot-cnj0x-rank-sum-plot-defs, echo=FALSE, message=FALSE, include=TRUE}
 caption="Rank-sum of top 10 percent of genotypes for a selected subset of trait BLUPs for the *all year* model.  A) Population CNJ02 and b) Population CNJ04.  Genotype identifier is abbreviated: g<num> => CNJ02_<num>.  eg: g1_77 => CNJ02_1_77"
-if( is_latex_output() ) {
+if( is_pdf_output() ) {
     #If we don't properly escape the captions, then the latex code that is generated isn't correct -- it inserts a
     #\texbackslash in front of everything
     caption = knitr:::escape_latex(caption)
@@ -536,7 +536,10 @@ models.filtered <- model.collated.summary.wide.tb %>%
 
 ```{r qtl-table-cnj02-sw, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
 clabel <- knitr::opts_current$get('label')
-caption <- "CNJ02 Population Top 2 QTL for *all years* model, QTL fit using *stepwiseqtl()* function, with effect plots.  Only models with heritability > 0.5 and with significant genotypic effects (*p < 0.05*) are displayed."
+caption <- "CNJ02 Population Top 2 QTL for all years model, QTL fit using stepwiseqtl() function, with effect plots.  Only models with heritability > 0.5 and with significant genotypic effects ($p < 0.05$) are displayed."
+if( is_pdf_output() ) {
+    caption = knitr:::escape_latex(caption)
+}
 load(file=paste0(cnj02_workflow,"/.RData.12_geneffects.2"))
 tbl <- generateReducedTable(effs.complete.tb %>% 
                      filter(model=='all-years' &
@@ -544,7 +547,8 @@ tbl <- generateReducedTable(effs.complete.tb %>%
                             trait %in% models.filtered$trait) %>% 
                      mutate(trait = factor(as.character(trait), levels=levels(models.filtered$trait), ordered=TRUE)) %>%
                      arrange(trait,desc(marker_variance)),
-                     caption=caption)
+                     caption=caption,
+                     tfont_size=table.font_size)
 print_table(tbl, clabel, caption)
 ```
 
@@ -570,9 +574,9 @@ linkages groups 5 and 6.  Other interactions of note include those found for tra
 
 ```{r qtl-table-cnj02-sw-ints, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
 clabel <- knitr::opts_current$get('label')
-caption="CNJ02 Population Top Interaction QTL for *All Years* model, QTL fit using *stepwiseqtl()* function.  Only models with heritability > 0.5, QTL with interaction percent variance explained greater than 5.0%, and models with significant genotypic effects (*p < 0.05*) are displayed."
+caption="CNJ02 Population Top Interaction QTL for all years model, QTL fit using stepwiseqtl() function.  Only models with heritability > 0.5, QTL with interaction percent variance explained greater than 5.0 percent, and models with significant genotypic effects ($p < 0.05$) are displayed."
 load(file=paste0(cnj02_workflow,"/.RData.13_geninteffects.2"))
-if( is_latex_output() ) {
+if( is_pdf_output() ) {
     caption = knitr:::escape_latex(caption)
 }
 tbl <- generateReducedTable(effs.ints.all.tb %>% 
@@ -584,7 +588,8 @@ tbl <- generateReducedTable(effs.ints.all.tb %>%
                     arrange(desc(marker_variance), .by_group = TRUE) %>%
                     slice_head() %>%
                     ungroup(),
-                    caption=caption)
+                    caption=caption,
+                    tfont_size=table.font_size)
 print_table(tbl, clabel, caption)
 ```
 
@@ -688,8 +693,10 @@ models.filtered <- model.collated.summary.wide.tb %>%
 
 ```{r qtl-table-cnj04-sw, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
 clabel <- knitr::opts_current$get('label')
-caption <- "CNJ04 Population Top 2 QTL for *all years* model, QTL fit using *stepwiseqtl()* function, with effect plots.  Only models with heritability > 0.5 and with significant genotypic effects (*p < 0.05*) are displayed."
-
+caption <- "CNJ04 Population Top 2 QTL for all years model, QTL fit using stepwiseqtl() function, with effect plots.  Only models with $heritability > 0.5$ and with significant genotypic effects ($p < 0.05$) are displayed."
+#if( is_pdf_output() ) {
+#    caption = knitr:::escape_latex(caption)
+#}
 load(file=paste0(cnj04_workflow,"/.RData.12_geneffects.2"))
 tbl <- generateReducedTable(effs.complete.tb %>% 
                      filter(model=='all-years' &
@@ -697,7 +704,8 @@ tbl <- generateReducedTable(effs.complete.tb %>%
                             trait %in% models.filtered$trait) %>% 
                      mutate(trait = factor(as.character(trait), levels=levels(models.filtered$trait), ordered=TRUE)) %>%
                      arrange(trait,desc(marker_variance)),
-                     caption = caption)
+                     caption = caption,
+                     tfont_size=table.font_size)
 print_table(tbl, clabel, caption)
 ```
 
@@ -715,17 +723,21 @@ groups 6 and 11 would not likely pass on any meaningful effect on berry taste an
 
 ```{r qtl-table-cnj04-sw-ints, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
 clabel <- knitr::opts_current$get('label')
-caption="CNJ04 Population Top Interaction QTL for *all years* model, QTL fit using *stepwiseqtl()* function.  Only models with heritability > 0.5 and with significant genotypic effects (*p < 0.05*) are displayed."
+caption="CNJ04 Population Top Interaction QTL for all years model, QTL fit using stepwiseqtl() function.  Only models with $heritability > 0.5$ and with significant genotypic effects ($p < 0.05$) are displayed."
+#if( is_pdf_output() ) {
+#    caption = knitr:::escape_latex(caption)
+#}
 load(file=paste0(cnj04_workflow,"/.RData.13_geninteffects.2"))
 tbl <- generateReducedTable(effs.ints.all.tb %>% 
-                     filter(model=='all-years' &
-                            trait %in% models.filtered$trait) %>% 
+                    filter(model=='all-years' &
+                           trait %in% models.filtered$trait) %>% 
                     mutate(trait = factor(as.character(trait), levels=levels(models.filtered$trait), ordered=TRUE)) %>%
                     group_by(trait) %>%
                     arrange(desc(marker_variance), .by_group = TRUE) %>%
                     slice_head() %>%
                     ungroup(),
-                    caption=caption)
+                    caption=caption,
+                    tfont_size=table.font_size)
 print_table(tbl, clabel, caption)
 ```
 

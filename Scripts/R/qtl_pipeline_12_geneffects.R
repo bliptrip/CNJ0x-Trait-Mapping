@@ -235,7 +235,7 @@ generateTableRemoveRepeats <- function(tbl) {
             model_name = ifelse(model_repeat, "",model_name)) )
 }
 
-generateReducedTable <- function(tbl, caption=NULL) {
+generateReducedTable <- function(tbl, caption=NULL, tfont_size=10) {
     etbl1 <- tbl %>%
             generateTableRemoveRepeats() %>%
             mutate(model_variance = percent(model_variance),
@@ -243,13 +243,14 @@ generateReducedTable <- function(tbl, caption=NULL) {
                 position = round.digits(position,2),
                 position_left = round.digits(interval_left,2),
                 position_right = round.digits(interval_right,2),
+                qtl_lod=round.digits(qtl_lod,2),
                 marker_variance = percent(marker_variance))
     if( is_html_output() ) {
         #colorbars only render correctly under html format
         etbl1 <- etbl1 %>%
             mutate(model_variance = ifelse(model_repeat, "", color_bar("lightgreen")(model_variance)),
                 marker_variance = color_bar("lightblue")(marker_variance))
-    } else if (is_latex_output() ) {
+    } else if (is_pdf_output() ) {
         etbl1 <- etbl1 %>%
             mutate(model_variance = knitr:::escape_latex(model_variance),
                    marker_variance = knitr:::escape_latex(marker_variance))
@@ -266,28 +267,34 @@ generateReducedTable <- function(tbl, caption=NULL) {
                     "pLOD[note]"=qtl_lod) %>% 
             mutate('Effect Size Boxplots[note]'="") %>%
             mutate('Effect Difference Plots[note]'="")
-    etbl3 <- etbl2 %>% kable(caption=caption, align='lllrrrllcc', escape = FALSE)
+    etbl3 <- etbl2 %>% kable(caption=caption, align='lllrrrllcc', booktabs=TRUE, escape = FALSE, longtable = TRUE)
     etbl4 <- etbl3 %>%
-                kable_paper("striped", full_width=TRUE) %>%
-                column_spec(1, bold=TRUE, width = "1.5cm") %>%
-                column_spec(2, width = "1cm") %>%
-                column_spec(3, width = "2cm") %>%
-                column_spec(4, width = "2cm") %>%
-                column_spec(5, width = "2cm") %>%
-                column_spec(6, width = "1.5cm") %>%
-                column_spec(7, width = "2.5cm") %>%
-                column_spec(8, width = "2.5cm") %>%
-                column_spec(9, width = "5cm", image=spec_image(etbl1$plot_filename,1280,320)) %>%
-                column_spec(10, width = "4cm", image=spec_image(etbl1$plot_mpieffects_filename,640,320)) %>%
+                kable_paper("striped", full_width=FALSE) %>%
+                column_spec(1, bold=TRUE, width = "1.0cm") %>%
+                column_spec(2, width = "0.5cm") %>%
+                column_spec(3, width = "0.75cm") %>%
+                column_spec(4, width = "0.75cm") %>%
+                column_spec(5, width = "0.75cm") %>%
+                column_spec(6, width = "0.75cm") %>%
+                column_spec(7, width = "1.0cm") %>%
+                column_spec(8, width = "1.0cm") %>%
+                column_spec(9, width = "6.0cm", image=spec_image(etbl1$plot_filename,width=702,height=175,res=300)) %>% #702x175 #To calculate width, take the width defined for column, convert to inches (/2.54), and multiply by res (300 dpi).  Then to find height, simply use aspect ratio to find height in pixels
+                column_spec(10, width = "3.0cm", image=spec_image(etbl1$plot_mpieffects_filename,width=350,height=175,res=300)) %>% #350x175
                 add_footnote(c("Variance of model with all significant QTLs fitted.",
-                        "QTL Penalized LOD Score w/ significance codes:\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n",
+                        "QTL Penalized LOD Score w/ significance codes:\n*** pvalue $≥$ 0 and pvalue<0.001\n**  pvalue $≥$ 0.001 and pvalue<0.01\n*   pvalue $≥$ 0.01 and pvalue<0.05\n.  pvalue $≥$ 0.05 and pvalue<0.01\nNS  Not Significant\n",
                         "Boxplots of nearest marker BLUPs grouped by genotypes.  Haplotypes A and B are from maternal parent P1, and haplotypes C and D are from paternal parent P2.",
                         "Effect differences for mean QTL effect size estimates for each progeny genotype.  A.-B. is the maternal effect, calculated as (AC+AD)-(BC+BD).  .C-.D is the paternal effect, calculated as (AC + BC) – (AD + BD).  Int is the interaction effect, calculated as (AC + BD)-(AD+BC) (Sewell et al., 2002)."),
-                        escape=TRUE)
+                        escape=FALSE)
+    if( is_pdf_output() ) {
+        etbl4 <- etbl4 %>%
+                    kable_styling(latex_options=c("repeat_header"),
+                                  font_size=tfont_size,
+                                  repeat_header_continued = TRUE)
+    }
     return(etbl4)
 }
 
-generateTable <- function(tbl, meths=c("scanone","stepwiseqtl"), caption=NULL) {
+generateTable <- function(tbl, meths=c("scanone","stepwiseqtl"), caption=NULL, tfont_size=10) {
     etbl1 <- tbl %>%
             filter(method %in% meths) %>%
             generateTableSignifSymbols() %>%
@@ -297,13 +304,14 @@ generateTable <- function(tbl, meths=c("scanone","stepwiseqtl"), caption=NULL) {
                 position = round.digits(position,2),
                 position_left = round.digits(interval_left,2),
                 position_right = round.digits(interval_right,2),
+                qtl_lod=round.digits(qtl_lod,2),
                 marker_variance = percent(marker_variance))
     if( is_html_output() ) {
         #colorbars only render correctly under html format
         etbl1 <- etbl1 %>%
             mutate(model_variance = ifelse(model_repeat, "", color_bar("lightgreen")(model_variance)),
                 marker_variance = color_bar("lightblue")(marker_variance))
-    } else if (is_latex_output() ) {
+    } else if (is_pdf_output() ) {
         etbl1 <- etbl1 %>%
             mutate(model_variance = knitr:::escape_latex(model_variance),
                    marker_variance = knitr:::escape_latex(marker_variance))
@@ -322,28 +330,34 @@ generateTable <- function(tbl, meths=c("scanone","stepwiseqtl"), caption=NULL) {
                     "pLOD[note]"=qtl_lod) %>% 
             mutate('Effect Size Boxplots[note]'="") %>%
             mutate('Effect Difference Plots[note]'="")
-    etbl3 <- etbl2 %>% kable(caption=caption, align='llrrrrrrrcc', escape = FALSE)
+    etbl3 <- etbl2 %>% kable(caption=caption, align='llrrrrrrrcc', escape = FALSE, longtable = TRUE, booktabs = TRUE)
     etbl4 <- etbl3 %>%
                 row_spec(row=(which(etbl1$trait_name != "")-1)[-1], hline_after = TRUE) %>%
-                kable_paper("striped", full_width=TRUE) %>%
-                column_spec(1, bold=TRUE, width = "1.5cm") %>%
-                column_spec(2, bold=TRUE, width = "1.5cm") %>%
-                column_spec(3, width = "1cm") %>%
-                column_spec(4, width = "2cm") %>%
-                column_spec(5, width = "2cm") %>%
-                column_spec(6, width = "2cm") %>%
-                column_spec(7, width = "1.5cm") %>%
-                column_spec(8, width = "2.5cm") %>%
-                column_spec(9, width = "2.5cm") %>%
-                column_spec(10, width = "5cm", image=spec_image(etbl1$plot_filename,1280,320)) %>%
-                column_spec(11, width = "4cm", image=spec_image(etbl1$plot_mpieffects_filename,640,320)) %>%
-                add_footnote(c(paste0("All QTLs in table derived from running R/qtl package function ",meths,"().\n","Significance codes for model genotype$*$year effects appended to trait:\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n"), 
+                kable_paper("striped", full_width=FALSE) %>%
+                column_spec(1, bold=TRUE, width = "1.0cm") %>%
+                column_spec(2, bold=TRUE, width = "1.0cm") %>%
+                column_spec(3, width = "0.5cm") %>%
+                column_spec(4, width = "0.75cm") %>%
+                column_spec(5, width = "0.75cm") %>%
+                column_spec(6, width = "0.75cm") %>%
+                column_spec(7, width = "0.75cm") %>%
+                column_spec(8, width = "1.0cm") %>%
+                column_spec(9, width = "1.0cm") %>%
+                column_spec(10, width = "6.0cm", image=spec_image(etbl1$plot_filename,width=702,height=175,res=300)) %>% #702x175 #To calculate width, take the width defined for column, convert to inches (/2.54), and multiply by res (300 dpi).  Then to find height, simply use aspect ratio to find height in pixels
+                column_spec(11, width = "3.0cm", image=spec_image(etbl1$plot_mpieffects_filename,width=350,height=175,res=300)) %>% #350x175
+                add_footnote(c(paste0("All QTLs in table derived from running R/qtl package function ",meths,"().\n","Significance codes for model genotype$*$year effects appended to trait:\n*** pvalue $≥$ 0 and pvalue<0.001\n**  pvalue $≥$ 0.001 and pvalue<0.01\n*   pvalue $≥$ 0.01 and pvalue<0.05\n.  pvalue $≥$ 0.05 and pvalue<0.01\nNS  Not Significant\n"), 
                         "Significance codes for model genotype effects appended to model",
                         "Variance of model with all significant QTLs fitted.",
                         "Penalized LOD Score w/ significance codes for QTL appended",
                         "Boxplots of nearest marker BLUPs grouped by genotypes.  Haplotypes A and B are from maternal parent P1, and haplotypes C and D are from paternal parent P2.",
                         "Effect differences for mean QTL effect size estimates for each progeny genotype.  A.-B. is the maternal effect, calculated as (AC+AD)-(BC+BD).  .C-.D is the paternal effect, calculated as (AC + BC) – (AD + BD).  Int is the interaction effect, calculated as (AC + BD)-(AD+BC) (Sewell et al., 2002)."),
-                        escape=TRUE)
+                        escape=FALSE)
+    if( is_pdf_output() ) {
+        etbl4 <- etbl4 %>%
+                    kable_styling(latex_options=c("repeat_header"),
+                                  font_size=tfont_size,
+                                  repeat_header_continued = TRUE)
+    }
     return(etbl4)
 }
 

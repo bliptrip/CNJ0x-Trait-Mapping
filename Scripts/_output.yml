@@ -2,9 +2,17 @@ bookdown::html_document2:
     toc: true
     css: "style.css"
 bookdown::pdf_document2:
-    latex_engine: xelatex
+    keep_md: TRUE
     keep_tex: true
+    number_sections: true
+    global_numbering: false
+    includes:
+        in_header: "cnj0x-preamble.tex"
     toc: true
+    toc_depth: 3
+    clean: false
+    latex_engine: xelatex
+    pandoc_args: [--template,template.tex]
 bookdown::word_document2:
     toc: true
 redoc::redoc:
@@ -14,4 +22,6 @@ officedown::rdocx_document:
         style: Table
         layout: autofit
         width: 0.85
-
+rmarkdown::md_document:
+    toc: true
+    variant: "markdown"

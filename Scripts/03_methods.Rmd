@@ -21,15 +21,11 @@ traits collected is displayed in Table \@ref(tab:trait-tab-kable).
 trait_tab <- readr::read_delim("../Data/publication/tables/trait_description_table.csv", delim=",", escape_backslash=TRUE, na=c("NA")) 
 trait_tab_cat <- trait_tab %>% 
     mutate(category_repeat=(Category == c("",Category[-length(Category)]))) %>%
-	mutate(Category = ifelse(category_repeat, "", Category))
+	mutate(Category = ifelse(category_repeat, "", Category)) %>%
+    dplyr::select(Trait,Abbreviation,Category,Units,Description)
 ```
 
 ```{r trait-tab-flex, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="Traits collected from populations CNJ02 and CNJ04 in years 2011-2014.", eval=params$trait_tab_flex}
-trait_tab <- readr::read_delim("../Data/publication/tables/trait_description_table.csv", delim=",", escape_backslash=TRUE, na=c("NA")) 
-trait_tab_cat <- trait_tab %>% 
-    mutate(category_repeat=(Category == c("",Category[-length(Category)]))) %>%
-	mutate(Category = ifelse(category_repeat, "", Category)) %>%
-    dplyr::select(Category,Trait,Abbreviation,Units,Description)
 ftrait_tab_cat <-   flextable(trait_tab_cat) %>%
                     mk_par(j = "Units", part="body", value=as_paragraph(as_equation(., width=1, height=0.2)), use_dot=TRUE) %>%
                     flextable::footnote(i = 1, 
@@ -41,6 +37,7 @@ ftrait_tab_cat <-   flextable(trait_tab_cat) %>%
                     theme_booktabs() %>%
                     hline( i = (which(trait_tab_cat$Category != "")-1)[-1], part="body") %>%
                     set_table_properties(width=table.width)
+
 knitr::knit_print(ftrait_tab_cat)
 ```
 
@@ -49,13 +46,15 @@ clabel <- knitr::opts_current$get('label')
 caption <- "Traits collected from populations CNJ02 and CNJ04 in years 2011-2014."
 ktrait_tab_cat <- rename(trait_tab_cat,'Category[note]'=Category,'Abbreviation[note]'=Abbreviation) %>%
     mutate(Units=ifelse(Units != "",paste0("$",Units,"$"),Units)) %>%
-    dplyr::select(!c(category_repeat)) %>%
     kable(  booktabs=TRUE, 
             escape = FALSE,
             caption=caption) %>%
     column_spec(1, bold=TRUE) %>%
-    row_spec(row=(which(trait_tab_cat["Category"] != "")-1), hline_after = TRUE) %>%
-    kable_paper("striped", "scale_down", font_size=table.font_size, full_width=FALSE) %>%
+    column_spec(3, width="2cm") %>%
+    column_spec(5, width="5cm") %>%
+    row_spec(row=(which(trait_tab_cat["Category"] != "")-1)[-1], hline_after = TRUE) %>%
+    kable_paper("striped", font_size=table.font_size, full_width=FALSE) %>%
+    kable_styling(latex_options = "scale_down") %>%
     add_footnote(c("Upright traits were collected on a per fruiting upright basis.  Largest berry traits represent that phenotypic values of the largest berry sampled on a given fruiting upright.  Plot traits were collected by harvesting berries from square foot samples of plots and running appropriate assays.  All plot traits were collected amd assayed onsite at NJAES.  Upright and largest berry traits were collected at NJAES, but assayed at UW-Madison.",
                    "Trait abbreviations are used to label subsequent figures."))
 print_table(ktrait_tab_cat, clabel, caption) #Render
@@ -103,7 +102,7 @@ Other chimera shape descriptors outlined in Table \@ref(tab:trait-tab-kable) inc
 mathematical descriptor for the curvature of an ellipse, with zero indicating a perfect circle and anything less than
 one, but higher, indicating a higher length versus width.  Tortuosity describes the *'waviness'* of an object's contour,
 and in this case, a slope chain code (SCC) method was applied to generate this tortuosity value [@Bribiesca2013].  Solidity
-describes the hape density relative to it’s convex hull.  Lower solidity values indicate more *'waviness'* in the berry
+describes the shape density relative to it’s convex hull.  Lower solidity values indicate more *'waviness'* in the berry
 contour, while higher values have smoother contour curvature.
 
 
@@ -167,7 +166,9 @@ ftrait_tab_cat <-   flextable(cat_trait_tab %>% dplyr::select(Trait,'Categorical
 				    bold(j=1, bold=TRUE) %>%
                     theme_booktabs() %>%
                     hline( i = (which(cat_trait_tab$Trait != "")-1)[-1], part="body") %>%
-                    set_table_properties(width=table.width)
+                    set_table_properties(layout="autofit", width=table.width) %>%
+                    fontsize(8)
+
 
 #ktrait_tab_cat <- kable(cat_trait_tab %>% dplyr::select(Trait,'Categorical Value','Numeric Value'), 
 #    booktabs=TRUE, 

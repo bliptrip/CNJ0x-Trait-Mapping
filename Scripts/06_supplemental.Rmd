@@ -277,8 +277,8 @@ workflow=params$workflow
 load(file=paste0(cnj02_workflow,"/.RData.01_genBLUP"))
 clabel <- knitr::opts_current$get('label')
 caption <- "CNJ02 Population Complete Trait and BLUP Summary."
-tbl <- generateFullTable(model.collated.summary.wide.tb, caption=caption)
-print_table(tbl, clabel, caption)
+#tbl <- generateFullTable(model.collated.summary.wide.tb, caption=caption, tfont_size=table.font_size)
+#print_table(tbl, clabel, caption)
 ```
 
 ### CNJ04 - BLUP Summary Statistics - Complete
@@ -287,8 +287,8 @@ print_table(tbl, clabel, caption)
 load(file=paste0(cnj04_workflow,"/.RData.01_genBLUP"))
 clabel <- knitr::opts_current$get('label')
 caption <- "CNJ04 Population Complete Trait and BLUP Summary."
-tbl <- generateFullTable(model.collated.summary.wide.tb, caption=caption)
-print_table(tbl, clabel, caption)
+#tbl <- generateFullTable(model.collated.summary.wide.tb, caption=caption, tfont_size=table.font_size)
+#print_table(tbl, clabel, caption)
 ```
 
 ## QTL Tables
@@ -301,7 +301,8 @@ clabel <- knitr::opts_current$get('label')
 caption <- "CNJ02 Population Top 2 QTL for all Trait x Model combinations, fit using scanone() function, with effect plots."
 tbl <- generateTable(effs.complete.tb %>% arrange(model,trait,desc(marker_variance)),
                      meths = "scanone",
-                     caption = caption)
+                     caption = caption,
+                     tfont_size = table.font_size)
 print_table(tbl, clabel, caption)
 ```
 
@@ -311,7 +312,8 @@ clabel <- knitr::opts_current$get('label')
 caption <- "CNJ02 Population Top 2 QTL for all Trait x Model combinations, fit using stepwiseqtl() function, with effect plots."
 tbl <- generateTable(effs.complete.tb %>% arrange(model,trait,desc(marker_variance)),
                      meths = "stepwiseqtl",
-                     caption = caption)
+                     caption = caption,
+                     tfont_size = table.font_size)
 print_table(tbl, clabel, caption)
 ```
 
@@ -323,7 +325,8 @@ clabel <- knitr::opts_current$get('label')
 caption <- "CNJ04 Population Top 2 QTL for all Trait x Model combinations, fit using scanone() function, with effect plots."
 tbl <- generateTable(effs.complete.tb %>% arrange(model,trait,desc(marker_variance)),
                      meths = "scanone",
-                     caption = caption)
+                     caption = caption,
+                     tfont_size = table.font_size)
 print_table(tbl, clabel, caption)
 ```
 
@@ -333,7 +336,8 @@ clabel <- knitr::opts_current$get('label')
 caption <- "CNJ04 Population Top 2 QTL for all Trait x Model combinations, fit using stepwiseqtl() function, with effect plots."
 tbl <- generateTable(effs.complete.tb %>% arrange(model,trait,desc(marker_variance)),
                      meths = "stepwiseqtl",
-                     caption = caption)
+                     caption = caption,
+                     tfont_size = table.font_size)
 print_table(tbl, clabel, caption)
 ```
 

@@ -3,7 +3,7 @@ title: "A Comparative Study of Phenotyping Methods and their Utility in Mapping 
 author: "Andrew Maule"
 date: "2022-01-22"
 site: bookdown::bookdown_site
-documbookentclass: article
+documentclass: article
 always_allow_html: true
 bibliography: [book.bib] 
 biblio-style: apalike
@@ -20,6 +20,38 @@ params:
     fig_gen_annotations: FALSE
     fig_gen_montages: FALSE
     install_deps: FALSE
+output:
+    bookdown::html_document2:
+        toc: true
+        css: "style.css"
+    bookdown::pdf_document2:
+        keep_md: TRUE
+        keep_tex: true
+        number_sections: true
+        global_numbering: false
+        includes:
+            in_header: "cnj0x-preamble.tex"
+        toc: true
+        toc_depth: 3
+        clean: false
+        latex_engine: xelatex
+        pandoc_args: [--template,template.tex]
+    bookdown::word_document2:
+        toc: true
+    redoc::redoc:
+        keep_md: true
+    officedown::rdocx_document:
+        tables:
+            style: Table
+            layout: autofit
+            width: 0.85
+    rmarkdown::md_document:
+        toc: true
+        variant: "markdown"
+fontsize: 10pt
+papersize: letter
+geometry: 
+    - margin=0.75in
 ---
 
 ```{r lib-deps, echo=FALSE, message=FALSE, include=FALSE, eval=params$install_deps}
@@ -69,8 +101,8 @@ print_table <- function(tbl, label, caption) {
 
 ```{r style-defs, echo=FALSE, message=FALSE, include=FALSE}
 options(knitr.kable.NA='') #So we don't display NA's in kable table renderings.
-table.font_size =10
-table.width = 0.85
+table.font_size = 4
+table.width = 0.75
 set_flextable_defaults( font.size=table.font_size,
                         table.layout="autofit"
                       )

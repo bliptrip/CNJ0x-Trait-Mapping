@@ -15,7 +15,6 @@ library(tidyverse)
 #Defaults (can be overridden with command-line invocation)
 workflow        <- get0("workflow", ifnotfound="../../Workflows/1")
 num_top_qtls    <- get0("num_top_qtls", ifnotfound=2) #Number of top interaction QTLs to show per trait
-table.font_size <- get0("table.font_size", ifnotfound=10)
 table.width     <- get0("table.width", ifnotfound=0.85)
 collate_effects <- get0("collate_effects", ifnotfound=TRUE)
 reload_table_functions <- get0("reload_table_functions", ifnotfound=FALSE)
@@ -251,7 +250,7 @@ generateTableRemoveRepeats <- function(tbl) {
                model_name = ifelse(model_repeat, "",model_name)) )
 }
 
-generateReducedTable <- function(tbl, caption=NULL) {
+generateReducedTable <- function(tbl, caption=NULL, tfont_size=10) {
     etbl1 <- tbl %>%
         generateTableRemoveRepeats() %>%
         select(trait_name,chr,position,chr2,position2,qtl_lod,mad,nmad,marker_variance,marker_variance1,marker_variance2,plot_filename) %>%
@@ -266,7 +265,7 @@ generateReducedTable <- function(tbl, caption=NULL) {
                    marker_variance=color_bar(spec_color(marker_variance,option="E",alpha=0.3,scale_from=c(0,20)))(marker_variance),
                    marker_variance1=color_bar(spec_color(marker_variance1,option="E",alpha=0.3,scale_from=c(0,20)))(marker_variance1),
                    marker_variance2=color_bar(spec_color(marker_variance2,option="E",alpha=0.3,scale_from=c(0,20)))(marker_variance2))
-    } else if ( is_latex_output() ) {
+    } else if ( is_pdf_output() ) {
         etbl1 <- etbl1 %>%
             mutate(nmad = knitr:::escape_latex(nmad),
                    marker_variance = knitr:::escape_latex(marker_variance),
@@ -287,35 +286,41 @@ generateReducedTable <- function(tbl, caption=NULL) {
                "QTL1 Variance"=marker_variance1,
                "QTL2 Variance"=marker_variance2) %>%
         mutate("Interaction Effect Boxplots[note]"="") %>%
-        kable(align='lrrrrrrrrrrc', caption=caption, escape = FALSE)
+        kable(align='lrrrrrrrrrrc', caption=caption, escape = FALSE, longtable=TRUE, booktabs=TRUE)
     etbl3  <- etbl2 %>%
         kable_paper("striped", full_width=FALSE) %>%
         column_spec(1, width = "1cm", bold=TRUE) %>%
         column_spec(2, width = "0.5cm") %>%
-        column_spec(3, width = "1cm") %>%
+        column_spec(3, width = "0.75cm") %>%
         column_spec(4, width = "0.5cm") %>%
-        column_spec(5, width = "1cm") %>%
-        column_spec(6, width = "1.5cm") %>%
+        column_spec(5, width = "0.75cm") %>%
+        column_spec(6, width = "0.75cm") %>%
         column_spec(7, width = ".5cm") %>%
         column_spec(8, width = ".5cm") %>%
         column_spec(9, width = ".75cm") %>%
         column_spec(10, width = ".75cm") %>%
         column_spec(11, width = ".75cm") %>%
-        column_spec(12, image=spec_image(tbl$plot_filename,2400,960),
+        column_spec(12, width = "6cm", image=spec_image(tbl$plot_filename,width=708,height=283,res=300),
                         popover=paste0("<img src='",tbl$plot_filename,"' width='1024' height='410'>")) %>%
-        add_footnote(c("QTL Penalized LOD Score w/ significance codes:\n*** pvalue≥0 and pvalue<0.001\n**  pvalue≥0.001 and pvalue<0.01\n*   pvalue≥0.01 and pvalue<0.05\n.  pvalue≥0.05 and pvalue<0.01\nNS  Not Significant\n",
+        add_footnote(c("QTL Penalized LOD Score w/ significance codes:\n*** pvalue $≥$ 0 and pvalue<0.001\n**  pvalue $≥$ 0.001 and pvalue<0.01\n*   pvalue $≥$ 0.01 and pvalue<0.05\n.  pvalue $≥$ 0.05 and pvalue<0.01\nNS  Not Significant\n",
                        "Max Average Difference - Maximum of all differences between mean interaction effects and and expected mean effect under additive models only.",
                        "Normalized Max Average Difference - Normalized value of Max Average Difference, using BLUP range as a normalization factor.",
                        "Percent of model variance explained by interaction effect.",
                        "Interaction effects are shown in subplot *a*, with boxplots showing the distribution of trait BLUPs organized by QTL 1 genotype (x-axis) and 
                        QTL 2 genotype (y-axis).  Subplot *c* is the marginal BLUP distributions factored by QTL genotype 1 (x-axis).
-                       Subplot *b* is the marginal BLUP distributions factored by QTL genotype 2 (y-axis)."))
+                       Subplot *b* is the marginal BLUP distributions factored by QTL genotype 2 (y-axis)."),
+						escape=FALSE)
     if( is_html_output() ) {
         #This is necessary b/c some component of knitr kable is escaping some html that I don't want escaped, despite using the flag 'escape=FALSE'
         etbl3 <- gsub("&lt;","<",etbl3,fixed=T)
         etbl3 <- gsub("&gt;",">",etbl3,fixed=T)
         etbl3 <- gsub("&quot;","\"",etbl3,fixed=T)
         etbl3 <- gsub("data-placement=\"right\"","data-placement=\"auto\"",etbl3,fixed=T)
+    } else if( is_pdf_output() ) {
+        etbl3 <- etbl3 %>%
+                    kable_styling(latex_options=c("repeat_header"),
+                                  font_size=tfont_size,
+                                  repeat_header_continued = TRUE)
     }
     return(etbl3)
 }

@@ -38,15 +38,15 @@ chimeric berry shape parameters.
 
 Although many of the traits with strong positive and negative correlations are expected, a few non-obvious correlations
 suggest genetic linkage or pleiotropy.  In the CNJ02 population, the inverse correlation of *Tacy* and *PAC* with *SFY*
-($ρ =  `r p.cnj02.c['SFY','Tacy']`$ and $ρ =  `r p.cnj02.c['SFY','PAC']`$, respectively)
-and positive correlation with *PFR* ($ρ =  `r p.cnj02.c['PFR','Tacy']`$ and $ρ =  `r p.cnj02.c['PFR','PAC']`$,
+($ρ = $  `r p.cnj02.c['SFY','Tacy']` and $ρ = $  `r p.cnj02.c['SFY','PAC']`, respectively)
+and positive correlation with *PFR* ($ρ = $  `r p.cnj02.c['PFR','Tacy']` and $ρ = $  `r p.cnj02.c['PFR','PAC']`,
 respectively) suggest negative linkage drag between separate QTL, or could simply be a
 consequence of biochemical patterns that coordinate with the timing of cranberry ripening.  A strong positive correlation
-between CNJ02's plot trait *MFM* and upright traits *UMFM*, *UBM*, *UBL*, and *UBW* ($ρ =  `r p.cnj02.c['MFM','UMFM']`$,
- $ρ =  `r p.cnj02.c['MFM','UBM']`$, $ρ =  `r p.cnj02.c['MFM','UBL']`$, and $ρ =  `r p.cnj02.c['MFM','UBW']`$,
+between CNJ02's plot trait *MFM* and upright traits *UMFM*, *UBM*, *UBL*, and *UBW* ($ρ = $  `r p.cnj02.c['MFM','UMFM']`,
+ $ρ = $  `r p.cnj02.c['MFM','UBM']`, $ρ = $  `r p.cnj02.c['MFM','UBL']`, and $ρ = $  `r p.cnj02.c['MFM','UBW']`,
  respectively) establishes an important link between a plot and upright traits.  This link is also mirrored in CNJ04, with 
-respective correlations of ($ρ =  `r p.cnj04.c['MFM','UMFM']`$, $ρ =  `r p.cnj04.c['MFM','UBM']`$,$ρ =  `r p.cnj04.c['MFM','UBL']`$,
-and $ρ =  `r p.cnj04.c['MFM','UBW']`$).  For both CNJ02 and CNJ04 populations, a moderately strong positive correlation
+respective correlations of ($ρ = $  `r p.cnj04.c['MFM','UMFM']`, $ρ = $  `r p.cnj04.c['MFM','UBM']`,$ρ = $  `r p.cnj04.c['MFM','UBL']`,
+and $ρ = $  `r p.cnj04.c['MFM','UBW']`).  For both CNJ02 and CNJ04 populations, a moderately strong positive correlation
 between *ULvW* and *UKLvW* validates that berry chimeras derived from berry shape categories track with more numerically
 precise, accurately measured traits.  For the CNJ02 population, modest but significant positive correlations
 between plot trait *TY* and upright traits *UTBM*, *UBW*, *UBM*, *UMFM*, *UNP*, and *UNB* ($ρ =
@@ -55,7 +55,7 @@ $`r p.cnj02.c['TY','UNP']`$, and $`r p.cnj02.c['TY','UNB']`$) also tie together 
 plot yield - upright traits correlations are not as prominent in the CNJ04 population, with *TY* × *UNP*, *UNB*, and *UTBM*
 correlations of  $`r p.cnj04.c['TY','UNP']`$, $`r p.cnj04.c['TY','UNB']`$, $`r p.cnj04.c['TY','UTBM']`$, respectively.
 Interestingly, *UTBM*, an upright-level trait expected to correlate most with *TY*, is highest rank for CNJ02 but is
-below both *UNP* and *UNB* for CNJ04.  A lower *TY* and *MFM* correlation in CNJ04 versus CNJ02 ($ρ =  `r p.cnj04.c['TY','MFM']`$
+below both *UNP* and *UNB* for CNJ04.  A lower *TY* and *MFM* correlation in CNJ04 versus CNJ02 ($ρ = $  `r p.cnj04.c['TY','MFM']`
 vs. $`r p.cnj02.c['TY','MFM']`$) could explain some of this decoupling of plot yield - upright associations in CNJ04.
 
 ## Heritabilities and BLUPs
