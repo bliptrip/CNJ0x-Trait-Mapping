@@ -1,0 +1,59 @@
+################################################################################
+# 24-color palette for deuteranopia color blindness
+# 18:05:40 Tue 19 May 2020
+# Martin Krzywinski martink@bcgsc.ca
+# Methods and details: http://mkweb.bcgsc.ca/colorblind
+# Color names: http://mkweb.bcgsc.ca/colornames
+################################################################################
+# Main palette colors are N-main with N-alt being (one of many) alternatives
+# that are indistinguishable to deuteranopes.
+################################################################################
+id	type	hex	r	g	b
+1	main	003D30	0	61	48
+1	alt	5A0A33	90	10	51
+2	main	005745	0	87	69
+2	alt	810D49	129	13	73
+3	main	00735C	0	115	92
+3	alt	AB0D61	171	13	97
+4	main	009175	0	145	117
+4	alt	D80D7B	216	13	123
+5	main	00AF8E	0	175	142
+5	alt	FF2E95	255	46	149
+6	main	00CBA7	0	203	167
+6	alt	FF78AD	255	120	173
+7	main	00EBC1	0	235	193
+7	alt	FFACC6	255	172	198
+8	main	86FFDE	134	255	222
+8	alt	FFD7E1	255	215	225
+9	main	00306F	0	48	111
+9	alt	460B70	70	11	112
+10	main	00489E	0	72	158
+10	alt	6B069F	107	6	159
+11	main	005FCC	0	95	204
+11	alt	8E06CD	142	6	205
+12	main	0079FA	0	121	250
+12	alt	B40AFC	180	10	252
+13	main	009FFA	0	159	250
+13	alt	ED0DFD	237	13	253
+14	main	00C2F9	0	194	249
+14	alt	FF66FD	255	102	253
+15	main	00E5F8	0	229	248
+15	alt	FFA3FC	255	163	252
+16	main	7CFFFA	124	255	250
+16	alt	FFD5FD	255	213	253
+17	main	004002	0	64	2
+17	alt	5F0914	95	9	20
+18	main	005A01	0	90	1
+18	alt	86081C	134	8	28
+19	main	007702	0	119	2
+19	alt	B20725	178	7	37
+20	main	009503	0	149	3
+20	alt	DE0D2E	222	13	46
+21	main	00B408	0	180	8
+21	alt	FF4235	255	66	53
+22	main	00D302	0	211	2
+22	alt	FF8735	255	135	53
+23	main	00F407	0	244	7
+23	alt	FFB935	255	185	53
+24	main	AFFF2A	175	255	42
+24	alt	FFE239	255	226	57
