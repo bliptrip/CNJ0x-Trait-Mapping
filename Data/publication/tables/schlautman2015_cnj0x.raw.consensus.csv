@@ -1,0 +1,15 @@
+method,trait,chr,model,position,nearest_marker,qtl_lod,marker_variance,interval_left,interval_right,population,study,id
+CIM,MFM,6,all-years,74.47,SCF171621,5.16***,9.3,79.54,74.47,cnj02,schlautman,841
+CIM,MFM,10,all-years,39.03,SCF35507,5.51***,10.0,44.99,39.03,cnj02,schlautman,842
+CIM,MFM,11,all-years,11.07,SCF122746,5.24***,9.5,8.3,13.447659574468085,cnj02,schlautman,843
+CIM,MFM,11,all-years,84.31,SCF118608,5.15***,9.3,81.03802739726027,84.31,cnj02,schlautman,844
+CIM,MFM,10,2011,39.03,SCF35507,6.07***,11.5,44.99,39.03,cnj02,schlautman,845
+CIM,MFM,11,2011,39.89,SCF21596,5.08***,9.5,37.5,46.33166666666666,cnj02,schlautman,846
+CIM,MFM,11,2011,84.31,SCF118608,4.68**,8.7,81.03802739726027,84.31,cnj02,schlautman,847
+CIM,MFM,10,2012,31.73,SCF172906,4.59**,10.6,34.87,31.73,cnj02,schlautman,848
+CIM,MFM,11,2012,11.07,SCF122746,3.99*,9.2,8.3,13.447659574468085,cnj02,schlautman,849
+CIM,TY,4,all-years,77.19,SCF11084,6.65***,11.8,77.19,83.27940397350991,cnj02,schlautman,850
+CIM,TY,6,all-years,42.97,1TRIMCONTIG344502,4.29**,7.6,45.8,36.007433155080214,cnj02,schlautman,851
+CIM,TY,11,all-years,23.86,SCF204332,4.8**,8.6,14.62,23.86,cnj02,schlautman,852
+CIM,TY,11,2012,23.86,SCF204332,6.79***,11.9,14.62,23.86,cnj02,schlautman,853
+CIM,BBITY,11,all-years,23.86,SCF204332,6.37***,15.3,14.62,23.86,cnj02,schlautman,854
