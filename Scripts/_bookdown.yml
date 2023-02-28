@@ -1,3 +1,3 @@
-rmd_files: ["index.Rmd", "01_abstract.Rmd", "02_intro.Rmd", "03_methods.Rmd", "04_results.Rmd", "05_discuss.Rmd", "06_supplemental.Rmd", "07_references.Rmd"]
+rmd_files: ["index.Rmd", "01_abstract.Rmd", "02_intro.Rmd", "03_methods.Rmd","04_results.Rmd","05_discuss.Rmd","07_references.Rmd"]
 delete_merged_file: false
 install_deps: true #Whether to install dependencies
