@@ -11,6 +11,7 @@ params:
 ---
 
 ## Setup
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, include=TRUE, message=FALSE);
 workflow  = paste0("../../Workflows/",params$workflow);
@@ -21,9 +22,11 @@ Sys.setenv(SANDBOX=params$sandbox)
 ```
 
 ## Load universally important libraries, and source local library of usefulFunctions
+
 ```{r imports, include=FALSE}
 setwd(rRoot)
 library(tidyverse)
+library(cowplot)
 library(corrplot)
 library(ggcorrplot)
 library(magrittr)
@@ -32,6 +35,7 @@ source("usefulFunctions.R")
 ```
 
 ## Install Package Dependencies
+
 ```{r deps, eval=params$install_deps, include=FALSE}
 setwd(rRoot)
 source('packagedeps.R', echo=TRUE)
@@ -56,8 +60,6 @@ setwd(rRoot);
 source('analyze_remove_outliers.R', echo=TRUE);
 ```
 
-
-
 ------------------------------------------------------------------------
 
 ## Calculate Upright Means Within Years
@@ -81,7 +83,6 @@ cnjpop.pheno.p2.means.df <- read_csv(pheno_dpath2fpath("Data-combined-collated.c
 cnjpop.pheno.p2.means.df <- cnjpop.pheno.p2.means.df %>% mutate(ULvW = berry_length/berry_width, UMFM = total_berry_weight/num_berries)
 cnjpop.pheno.p1.means.df <- cnjpop.pheno.p1.means.df %>% mutate(ULvW = berry_length/berry_width, UMFM = total_berry_weight/num_berries)
 ```
-
 
 ## Merge Upright and Plot Datasets
 
@@ -221,12 +222,14 @@ write_csv(cnj04.merged.mmeans.std.tb, file=pheno_dpath2fpath("MergedData/CNJ04_P
 ```
 
 #Use seriation package to generate simililarity matrix b/w genotypes and traits -- use standardized values for traits
+
 ```{r plot-seriation, include=TRUE, echo=TRUE}
 d_cnj02 <- dist(cnj02.merged.mmeans.std.tb %>% select(BBI_UTBM:PAC))
 dissplot(d_cnj02)
 ```
 
 ### Generate Density Graphs (Histograms) of All Traits and Plot
+
 ```{r plot-densities, include=TRUE, echo=TRUE}
 setwd(rRoot)
 
@@ -305,7 +308,7 @@ dist2order = function(corr, method, ...) {
   return(i)
 }
 
-gencorrplot <- function(data.tb, data_is_cor=FALSE, filename=NULL, min_cor=0.0, width=1280, height=1024, seriate_method=NULL, method="square", type="lower", cl.pos='r', rect.spec=NULL, invert=FALSE, ...) {
+gencorrplot <- function(data.tb, data_is_cor=FALSE, filename=NULL, min_cor=0.0, width=1280, height=1024, seriate_method=NULL, method="square", type="lower", cl.pos='r', rect.spec=NULL, rect.labels=NULL, invert=FALSE, ...) {
     if( !is.null(filename) ) {
         png(filename=filename, bg="transparent", width=width, height=height, units='px')
     }
@@ -351,18 +354,26 @@ gencorrplot <- function(data.tb, data_is_cor=FALSE, filename=NULL, min_cor=0.0, 
             p = corrplot(corr.tb, p.mat=pvals, order="original", insig="blank", tl.col="black", method=method, type=type, col=col.gradient, cl.pos=cl.pos, diag=FALSE, na.label=" ", ...)
         }
         )
+        if(!exists("p")) { #For some reason errors aren't being caught and p is left undefined
+            p = corrplot(corr.tb, p.mat=pvals, order="original", insig="blank", tl.col="black", method=method, type=type, col=col.gradient, cl.pos=cl.pos, diag=FALSE, na.label=" ", ...)
+        }
     }
     if( !is.null(rect.spec) ) {
         p %>% corrRect(namesMat=rect.spec)
     }
+    if( !is.null(rect.labels) ) {
+        p %>% corrRect(name=rect.labels)
+    }
     if( !is.null(filename) ) {
         dev.off()
     }
+    p$rect.spec <- rect.spec
+    p$rect.labels <- rect.labels
     p$p.mat <- pvals
     return(p)
 }
 
-gencorrplot.mixed <- function(data.tb, data_is_cor=FALSE, filename=NULL, min_cor=0.0, width=1280, height=1024, seriate_method=NULL, lower="square", upper="number", cl.pos='r', na.label = " ", invert=FALSE, rect.spec=NULL, ...) {
+gencorrplot.mixed <- function(data.tb, data_is_cor=FALSE, filename=NULL, min_cor=0.0, width=1280, height=1024, seriate_method=NULL, lower="square", upper="number", cl.pos='r', na.label = " ", invert=FALSE, rect.spec=NULL, rect.labels=NULL, ...) {
     if( !is.null(filename) ) {
         png(filename=filename, bg="transparent", width=width, height=height, units='px')
     }
@@ -408,20 +419,27 @@ gencorrplot.mixed <- function(data.tb, data_is_cor=FALSE, filename=NULL, min_cor
             p = corrplot.mixed(corr.tb, p.mat=pvals, order="original", insig="blank", tl.col="black", lower=lower, upper=upper, lower.col=col.gradient, upper.col=col.gradient, na.label = " ", ...)
         }
         )
+        if(!exists("p")) { #For some reason errors aren't being caught and p is left undefined
+            p = corrplot(corr.tb, p.mat=pvals, order="original", insig="blank", tl.col="black", method=method, type=type, col=col.gradient, cl.pos=cl.pos, diag=FALSE, na.label=" ", ...)
+        }
     }
     if( !is.null(rect.spec) ) {
         p %>% corrRect(namesMat=rect.spec)
     }
+    if( !is.null(rect.labels) ) {
+        p %>% corrRect(name=rect.labels)
+    }
     if( !is.null(filename) ) {
         dev.off()
     }
+    p$rect.spec <- rect.spec
+    p$rect.labels <- rect.labels
     p$p.mat <- pvals
     return(p)
 }
 ```
 
 ## Generate Plots of Correlation Matrices Across All Traits, Across Years
-
 
 ```{r plotdata-corrs, include=TRUE, echo=TRUE}
 setwd(rRoot)
@@ -447,6 +465,7 @@ cnj04.alltraits.pw.tb <- cnj04.merged.mmeans.tb %>%
                                   pivot_wider(names_from=year, values_from=value)
 gencorrplot(cnj04.alltraits.pw.tb %>% select(!c(accession_name, accession, row, column, trait)), filename=paste0(workflow,"/traits/plots/corrplot.cnj04.alltraits.png"), method="number", cl.pos='n')
 ```
+
 ### Generate Correlation Matrices Across Months and Years
 
 ```{r include=TRUE, warning=FALSE, echo=FALSE}
@@ -458,6 +477,7 @@ cnj04.merged.wider.tb <- pivot_wider(cnj04.merged.tb %>% filter(year != 13), nam
 setwd(rRoot)
 gencorrplot(cnj04.merged.wider.tb %>% select(!c(accession_name, accession, row, column)), filename=paste0(workflow,"/traits/plots/corrplot.cnj04.ym.png"), width=2560, height=2048, tl.srt=45, tl.cex=2, cl.cex=2)
 ```
+
 ### Generate Correlation Matrices Across Years
 
 ```{r include=TRUE, warning=FALSE, echo=FALSE}
@@ -471,6 +491,7 @@ cnj04.merged.mmeans.wider.tb <- cnj04.merged.mmeans.tb %>%
 gencorrplot(cnj04.merged.mmeans.wider.tb %>% select(!c(accession_name, accession, row, column)), filename=paste0(workflow,"/traits/plots/corrplot.cnj04.y.png"), width=2048, height=2200, tl.srt=45, tl.cex=1.8, cl.cex=1.8)
 
 ```
+
 ### Generate Correlation Matrices With Traits Averaged Across Months and Years
 
 ```{r include=TRUE, warning=FALSE, echo=FALSE}
@@ -497,7 +518,7 @@ write.csv(cnj04.merged.means.cor, file=paste0(workflow,"/traits/plots/corrplot.c
 
 ## A different approach, but see if seriation of data based on raw trait values offers any insights into trait/genotype structure.
 
-Run the following repeatedly until you like how the graph looks.  This is because th results are not determinisitic.
+Run the following repeatedly until you like how the graph looks. This is because th results are not determinisitic.
 
 ```{r seriation-cnj02-pre, include=TRUE, warning=FALSE, echo=FALSE}
 setwd(rRoot)
@@ -519,21 +540,23 @@ write_csv(pf.cnj02.inv, file=paste0(workflow,"/traits/plots/corrplot.cnj02.flatt
 pf.cnj02.extremes <- rbind(pf.cnj02 %>% head(top_rank), pf.cnj02 %>% tail(top_rank)) %>%
                         mutate(row_column=paste0(row," × ",column)) %>%
                         mutate(row_column=factor(row_column, levels=row_column, ordered=TRUE))
-png(filename=paste0(workflow,"/traits/plots/corrplot.cnj02.flat.png"), bg="white", width=2048, height=1024, units='px')
+png(filename=paste0(workflow,"/traits/plots/corrplot.cnj02.flat.png"), bg="white", width=840, height=2048, units='px')
 p <- ggplot(pf.cnj02.extremes, aes(x=row_column,y=cor)) + 
         geom_bar(aes(fill=cor), stat="identity", alpha=0.75, show.legend=FALSE) + 
 		scale_fill_distiller(
 				type="div",
 				palette="RdBu",
 				direction=-1) +
-        geom_text(aes(label=sprintf("%0.2f", round(cor, digits = 2)),fontface="bold"),size=7,nudge_y=ifelse(pf.cnj02.extremes$cor < 0, -0.05, 0.05)) +
+        geom_text(aes(label=sprintf("%0.2f", round(cor, digits = 2)),fontface="bold"),size=7,nudge_y=ifelse(pf.cnj02.extremes$cor < 0, -0.10, 0.10)) +
         ylim(-1.2,1.2) +
         theme_minimal() +
-        theme(axis.title = element_text(face="bold",size=14),
-              axis.text.x  = element_text(face="bold",size=16,angle=75),
-              axis.text.y  = element_text(size=16)) +
+        theme(plot.margin = margin(l=50,unit='pt'),
+              axis.title = element_text(face="bold",size=14),
+              axis.text.x  = element_text(face="bold",size=18,angle=30,vjust=0.2),
+              axis.text.y  = element_text(face="bold",size=18,angle=30)) +
         ylab("") + 
-        xlab("")
+        xlab("") +
+        coord_flip()
 p
 dev.off()
 ```
@@ -564,21 +587,23 @@ write_csv(pf.cnj04.inv, file=paste0(workflow,"/traits/plots/corrplot.cnj04.flatt
 pf.cnj04.extremes <- rbind(pf.cnj04 %>% head(top_rank), pf.cnj04 %>% tail(top_rank)) %>%
                         mutate(row_column=paste0(row," × ",column)) %>%
                         mutate(row_column=factor(row_column, levels=row_column, ordered=TRUE))
-png(filename=paste0(workflow,"/traits/plots/corrplot.cnj04.flat.png"), bg="white", width=2048, height=1024, units='px')
+png(filename=paste0(workflow,"/traits/plots/corrplot.cnj04.flat.png"), bg="white", width=840, height=2048, units='px')
 p <- ggplot(pf.cnj04.extremes, aes(x=row_column,y=cor)) + 
         geom_bar(aes(fill=cor), stat="identity", alpha=0.75, show.legend=FALSE) + 
 		scale_fill_distiller(
 				type="div",
 				palette="RdBu",
 				direction=-1) +
-        geom_text(aes(label=sprintf("%0.2f", round(cor, digits = 2)),fontface="bold"),size=7,nudge_y=ifelse(pf.cnj04.extremes$cor < 0, -0.05, 0.05)) +
+        geom_text(aes(label=sprintf("%0.2f", round(cor, digits = 2)),fontface="bold"),size=7,nudge_y=ifelse(pf.cnj04.extremes$cor < 0, -0.1, 0.1)) +
         ylim(-1.2,1.2) +
         theme_minimal() +
-        theme(axis.title = element_text(face="bold",size=14),
-              axis.text.x  = element_text(face="bold",size=16,angle=75),
-              axis.text.y  = element_text(size=16)) +
+        theme(plot.margin = margin(l=30,unit='pt'),
+              axis.title = element_text(face="bold",size=14),
+              axis.text.x  = element_text(face="bold",size=18,angle=30,vjust=0.2),
+              axis.text.y  = element_text(face="bold",size=18,angle=30)) +
         ylab("") + 
-        xlab("")
+        xlab("") +
+        coord_flip()
 p
 dev.off()
 
@@ -602,21 +627,25 @@ gencorrplot.mixed(p.cnj04, data_is_cor=TRUE, filename=paste0(workflow,"/traits/p
 p.cnj04.inv = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj04.inv.rds"))
 gencorrplot.mixed(p.cnj04.inv, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj04.ts.inv.png"), width=2048, height=2048, tl.cex=1, cl.cex=1, number.cex=1.5, rect.spec=rbind(c("UBL","UBL","UBM","UBM"),c("PAC","PAC","TY","TY"),c("UCLP","UCLP","UCLS","UCLS"),c("UNB","UNB","PFR","PFR"),c("URB","URB","UNS","UNS"),c("MFM","MFM","UBW","UBW"),c("UNP","UNP","TA","TA")))
 ```
+
 ```{r seriation-cnj02-pre-refined, include=TRUE, warning=FALSE, echo=FALSE}
 setwd(rRoot)
 p.cnj02.refined = gencorrplot.mixed(cnj02.merged.means.tb %>% select(!c(accession_name, row, column)) %>% select(c(UKUX,UKLvW,UKEC,ULvW,UBL,MFM,UMFM,UBM,UBW,UTBM,UNB,UNP,TA,TY,SFY,UNAB,UNS)), width=2048, height=2048, tl.cex=0.75, cl.cex=0.75, number.cex=0.75,seriate_method="TSP")
 saveRDS(p.cnj02.refined, file=paste0(workflow,"/traits/plots/corrplot.cnj02.refined.rds"))
 ```
+
 ```{r seriation-cnj02-inv-pre-refined, include=TRUE, warning=FALSE, echo=FALSE}
 setwd(rRoot)
 p.cnj02.inv.refined = gencorrplot.mixed(cnj02.merged.means.tb %>% select(!c(accession_name, row, column)) %>% select(c(PAC,TY,SFY,UCLP,UCLS,ULvW,UKTO,Brix,MFM,UMFM)), width=2048, height=2048, tl.cex=0.75, cl.cex=0.75, number.cex=0.75,seriate_method="TSP", invert=TRUE)
 saveRDS(p.cnj02.inv.refined, file=paste0(workflow,"/traits/plots/corrplot.cnj02.inv.refined.rds"))
 ```
+
 ```{r seriation-cnj04-pre-refined, include=TRUE, warning=FALSE, echo=FALSE}
 setwd(rRoot)
 p.cnj04.refined = gencorrplot.mixed(cnj04.merged.means.tb %>% select(!c(accession_name, row, column)) %>% select(c(UTBM,UBW,MFM,UMFM,UBM,UBL,ULvW,UKEC,UKLvW,UKUX)), width=2048, height=2048, tl.cex=0.75, cl.cex=0.75, number.cex=0.75,seriate_method="TSP")
 saveRDS(p.cnj04.refined, file=paste0(workflow,"/traits/plots/corrplot.cnj04.refined.rds"))
 ```
+
 ```{r seriation-cnj04-inv-pre-refined, include=TRUE, warning=FALSE, echo=FALSE}
 setwd(rRoot)
 p.cnj04.inv.refined = gencorrplot.mixed(cnj04.merged.means.tb %>% select(!c(accession_name, row, column)) %>% select(c(URB,USL,UNS,MFM,BBITBM,UBW,UCLP,UCLS,UNB,PFR,PAC,TY,UBL,Brix,UBM,UNP,TA)), width=2048, height=2048, tl.cex=0.75, cl.cex=0.75, number.cex=0.75,seriate_method="TSP", invert=TRUE)
@@ -633,6 +662,78 @@ p.cnj04.refined = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj04.refined.
 gencorrplot.mixed(p.cnj04.refined, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj04.refined.png"), width=2048, height=2048, tl.cex=2, cl.cex=2, number.cex=2.5)
 p.cnj04.inv.refined = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj04.inv.refined.rds"))
 gencorrplot.mixed(p.cnj04.inv.refined, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj04.inv.refined.png"), width=2048, height=2048, tl.cex=2, cl.cex=2, number.cex=2.5, invert=TRUE)
+```
+
+##Generate correlation plots using hclust and only rendering non-singletons in clustering cut
+
+```{r hclust-nonsingletons-cnj02-pre-refined, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+data <- cnj02.merged.means.tb %>% select(!c(accession_name, row, column))
+corr.tb <- cor(data, use="pairwise.complete.obs") 
+pvals <- tryCatch( {
+    ggcorrplot::cor_pmat(data.tb)
+},
+error = function(e) NULL
+);
+hclusts <- hclust(as.dist(1-abs(corr.tb)), method="complete")
+#clusts <- sort(cutree(hclusts, h = .60 ))
+clusts <- cutree(hclusts, h = .60)[hclusts$order]
+clusts.d <- duplicated(clusts)
+clusts.d.lshift <- c(clusts.d[2:length(clusts.d)],FALSE)
+clusts.nsingleton <- clusts[clusts.d | clusts.d.lshift]
+nns <- names(clusts.nsingleton)
+rl <- rle(clusts.nsingleton)$lengths
+corr.tb <- corr.tb[nns,nns] #Prune out singletons
+rect.labels <- nns[c(cumsum(c(1,rl[1:length(rl)-1])),length(nns))]
+if( !is.null(pvals) ) {
+    pvals <- pvals[ns,ns]
+}
+data.tb <- list(corr=corr.tb, p.mat=pvals)
+p.cnj02.nonsingletons = gencorrplot(data.tb, data_is_cor = TRUE, width=2048, height=2048, tl.cex=0.4, cl.cex=0.75, number.cex=0.40, type="full", rect.labels=rect.labels,page=FALSE)
+saveRDS(p.cnj02.nonsingletons, file=paste0(workflow,"/traits/plots/corrplot.cnj02.nonsingletons.squares.rds"))
+p.cnj02.nonsingletons = gencorrplot(data.tb, data_is_cor = TRUE, width=2048, height=2048, tl.cex=0.4, cl.cex=0.75, number.cex=0.40, method="number", type="full", rect.labels=rect.labels)
+saveRDS(p.cnj02.nonsingletons, file=paste0(workflow,"/traits/plots/corrplot.cnj02.nonsingletons.numbers.rds"))
+```
+
+```{r hclust-nonsingletons-cnj04-pre-refined, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+data <- cnj04.merged.means.tb %>% select(!c(accession_name, row, column))
+corr.tb <- cor(data, use="pairwise.complete.obs") 
+pvals <- tryCatch( {
+    ggcorrplot::cor_pmat(data.tb)
+},
+error = function(e) NULL
+);
+hclusts <- hclust(as.dist(1-abs(corr.tb)), method="complete")
+#clusts <- sort(cutree(hclusts, h = .60 ))
+clusts <- cutree(hclusts, h = .60)[hclusts$order]
+clusts.d <- duplicated(clusts)
+clusts.d.lshift <- c(clusts.d[2:length(clusts.d)],FALSE)
+clusts.nsingleton <- clusts[clusts.d | clusts.d.lshift]
+nns <- names(clusts.nsingleton)
+rl <- rle(clusts.nsingleton)$lengths
+corr.tb <- corr.tb[nns,nns] #Prune out singletons
+rect.labels <- nns[c(cumsum(c(1,rl[1:length(rl)-1])),length(nns))]
+if( !is.null(pvals) ) {
+    pvals <- pvals[ns,ns]
+}
+data.tb <- list(corr=corr.tb, p.mat=pvals)
+p.cnj04.nonsingletons = gencorrplot(data.tb, data_is_cor = TRUE, width=2048, height=2048, tl.cex=0.4, cl.cex=0.75, number.cex=0.40, type="full", rect.labels=rect.labels)
+saveRDS(p.cnj04.nonsingletons, file=paste0(workflow,"/traits/plots/corrplot.cnj04.nonsingletons.squares.rds"))
+p.cnj04.nonsingletons = gencorrplot(data.tb, data_is_cor = TRUE, width=2048, height=2048, tl.cex=0.4, cl.cex=0.75, number.cex=0.40, method="number", type="full", rect.labels=rect.labels)
+saveRDS(p.cnj04.nonsingletons, file=paste0(workflow,"/traits/plots/corrplot.cnj04.nonsingletons.numbers.rds"))
+```
+
+```{r nonsingletons-refined, include=TRUE, warning=FALSE, echo=FALSE}
+setwd(rRoot)
+p.cnj02.nonsingletons.squares = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj02.nonsingletons.squares.rds"))
+gencorrplot(p.cnj02.nonsingletons.squares, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj02.nonsingletons.squares.png"), width=2048, height=2048, tl.cex=2, cl.cex=2, number.cex=2.5, type='full', rect.labels=p.cnj02.nonsingletons.squares$rect.labels)
+p.cnj02.nonsingletons.numbers = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj02.nonsingletons.numbers.rds"))
+gencorrplot(p.cnj02.nonsingletons.numbers, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj02.nonsingletons.numbers.png"), width=2048, height=2048, tl.cex=2, cl.cex=2, number.cex=2.5, method="number", type='full', rect.labels=p.cnj02.nonsingletons.numbers$rect.labels)
+p.cnj04.nonsingletons.squares = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj04.nonsingletons.squares.rds"))
+gencorrplot(p.cnj04.nonsingletons.squares, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj04.nonsingletons.squares.png"), width=2048, height=2048, tl.cex=2, cl.cex=2, number.cex=2.5, type='full', rect.labels=p.cnj04.nonsingletons.squares$rect.labels)
+p.cnj04.nonsingletons.numbers = readRDS(paste0(workflow,"/traits/plots/corrplot.cnj04.nonsingletons.numbers.rds"))
+gencorrplot(p.cnj04.nonsingletons.numbers, data_is_cor=TRUE, filename=paste0(workflow,"/traits/plots/corrplot.cnj04.nonsingletons.numbers.png"), width=2048, height=2048, tl.cex=2, cl.cex=2, number.cex=2.5, method="number", type='full', rect.labels=p.cnj04.nonsingletons.numbers$rect.labels)
 ```
 
 ## Fit and Analyze Models
@@ -763,6 +864,7 @@ source('qtl_pipeline_10_01_genQTLtables.R', echo=FALSE);
 ```
 
 ## Display QTL Table Results - StepwiseQTL
+
 ```{r qtl-table-sw}
 setwd(rRoot);
 num_top_qtl = 2; #Specifies the number of top QTL to return per trait
@@ -790,7 +892,6 @@ Calculate QTL effect sizes and generate effect plots/tables.
 ```{r qtl-circos}
 ```
 
-
 ```{r qtl-circos}
 setwd(rRoot);
 source('qtl_pipeline_11_gencircos.R', echo=FALSE);
@@ -804,7 +905,6 @@ source('qtl_pipeline_12_geneffects.R', echo=FALSE);
 ------------------------------------------------------------------------
 
 ## Generate Circos Plots of Significant QTL
-
 
 Generate the necessary files to display significant QTL found in circos plot format. Uses [Circos.js](https://github.com/nicgirault/circosJS) library as framework to generate interactive circos plots in javascript.
 
