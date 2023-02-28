@@ -39,7 +39,7 @@ generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, trait, lo
     qtl.model.terms  <- deconstruct_qtl_formula(formula(qtl))
     qtl.num          <- length(qtl.model.terms)
     #Now add in anova p-values for genotype effects (BLUPs), and if applicable, for GxE
-	cat(paste0("Collated QTLs for trait: ",trait,", model: ", model, ", method: ",method,",", "formula: ",formula(qtl),".\n"))
+    cat(paste0("Collated QTLs for trait: ",trait,", model: ", model, ", method: ",method,",", "formula: ",formula(qtl),".\n"))
     anova.df <- read.csv(file=paste0(workflow,'/traits/',model,'--',trait,'/anova.csv'), header=TRUE, row.names=2)
     GLRpvalue    <- anova.df['vs(id, Gu = A)','PrChisq']
     GZRpvalue    <- anova.df['vs(id, Gu = A)','PrNorm']
@@ -64,9 +64,9 @@ generate_qtl_collate <- function(cross, qtl, qtl_model, method, model, trait, lo
         mypos              <- qtl$pos[qtl_idx1]
         #single-additive effect
         if( length(qtl.model.term.v) == 1 ) {
-		    qtl_lod.df    <- lodint(qtl,qtl.index=qtl_idx1)
-			qtl_lodint.l  <- qtl_lod.df[1,]
-			qtl_lodint.r  <- qtl_lod.df[3,]
+            qtl_lod.df    <- lodint(qtl,qtl.index=qtl_idx1)
+            qtl_lodint.l  <- qtl_lod.df[1,]
+            qtl_lodint.r  <- qtl_lod.df[3,]
             qtl_lodint    <- diff(qtl_lod.df[c(1,3),"pos"])
             f             <- which(supermap.bin.df$LG==mychr)
             x             <- supermap.bin.df[f,]
