@@ -50,8 +50,8 @@ if( !reload_table_functions ) {
         #than, say, 95% probability of being a given genotype, and choose that as the representative genotype (assigning the entire BLUP and/or trait to that genotype for organization)
         #Determine which index corresponds to QTL
         qtl.i <- which(qtl$name == qtl.mname)
-        #print(paste0("qtl.mname = ", qtl.mname, ", qtl.i = ",qtl.i))
-        #print(paste0("qtl$name = ", qtl$name))
+        print(paste0("qtl.mname = ", qtl.mname, ", qtl.i = ",qtl.i))
+        print(paste0("qtl$name = ", qtl$name))
         qtl.p <- data.frame(qtl$prob[[qtl.i]])
         qtl.p$id_i <- rownames(qtl.p)
         qtl.p.nest <- qtl.p %>% 
@@ -124,12 +124,14 @@ if( !reload_table_functions ) {
                     unnest(data) %>%
                     unnest(blups)
 
-    effs.filtered1.tb <- effs.1.tb %>% 
-                            group_by(method,trait) %>%
-                                mutate(min_blup = min(blup), max_blup=max(blup)) %>%
-                                ungroup() %>%
-                                group_by(method, trait, model, chr, position) %>%
-                                mutate(genotype = factor(levels=rev(c("AC","AD","BC","BD")),genotype)) %>%
+    effs.1b.tb <- effs.1.tb %>% 
+                    group_by(method,trait) %>%
+                    mutate(min_blup = min(blup), max_blup=max(blup)) %>%
+                    ungroup() %>%
+                    group_by(method, trait, model, chr, position) %>%
+                    mutate(genotype = factor(levels=rev(c("AC","AD","BC","BD")),genotype))
+
+    effs.filtered1.tb <- effs.1b.tb %>%
                                 do(plot  = ggplot(., aes(x=factor(genotype), y=blup, fill=factor(genotype))) +
                                                     geom_blank(aes(y=min_blup)) +
                                                     geom_blank(aes(y=max_blup)) +
@@ -165,13 +167,22 @@ if( !reload_table_functions ) {
     min_effect_value <- floor(min(effs.2.tb$effect_value))
     max_effect_value <- ceiling(max(effs.2.tb$effect_value))
 
-    effs.filtered2.tb <- effs.2.tb %>%
+    #Filter out only columns desired for final effs.complete.tb
+    effs.2a.tb <- effs.2.tb %>% 
+                    pivot_wider(names_from=effect_type, values_from=effect_value) %>%
+                    select(method,trait,model,chr,position,effect_mean_AC,effect_mean_AD,effect_mean_BC,effect_mean_BD,effect_se_AC,effect_se_AD,effect_se_BC,effect_se_BD, AvB, CvD, Int)
+
+
+    effs.2b.tb <- effs.2.tb %>%
                                 group_by(method,trait) %>%
                                 mutate(min_effect_value = min(effect_value), max_effect_value = max(effect_value)) %>%
                                 ungroup() %>%
                                 mutate(effect.label = gsub("AvB","A.-B.",effect_type)) %>%
                                 mutate(effect.label = gsub("CvD",".C-.D",effect.label)) %>%
-                                mutate(effect.label = factor(levels=rev(c("A.-B.",".C-.D","Int")), effect.label)) %>%
+                                mutate(effect.label = factor(levels=rev(c("A.-B.",".C-.D","Int")), effect.label))
+
+
+    effs.filtered2.tb <- effs.2b.tb %>%
                                 group_by(method, trait, model, chr, position) %>%
                                 do(plot  = ggplot(.,aes(x=effect.label, y=effect_value, fill=effect.label)) +
                                                     geom_blank(aes(y=min_effect_value)) +
@@ -209,6 +220,7 @@ if( !reload_table_functions ) {
                             arrange(method,trait,model,desc(marker_variance)) %>%
                             inner_join(effs.filtered1.tb, by=c("method","trait","model","chr","position"), suffix=c("qtl","effs")) %>%
                             inner_join(effs.filtered2.tb, by=c("method","trait","model","chr","position"), suffix=c("qtl","effs")) %>%
+                            inner_join(effs.2a.tb, by=c("method","trait","model","chr","position")) %>%
                             mutate(marker = gsub(".+cM_(.+)", "\\1",nearest_marker), 
                                 trait_name = trait_to_name(trait.cfg.tb,model,trait), 
                                 model_name = model_to_name(trait.cfg.tb,model,trait),
@@ -267,24 +279,158 @@ generateReducedTable <- function(tbl, caption=NULL, tfont_size=10) {
                     "pLOD[note]"=qtl_lod) %>% 
             mutate('Effect Size Boxplots[note]'="") %>%
             mutate('Effect Difference Plots[note]'="")
-    etbl3 <- etbl2 %>% kable(caption=caption, align='lllrrrllcc', booktabs=TRUE, escape = FALSE, longtable = TRUE)
-    etbl4 <- etbl3 %>%
-                kable_paper("striped", full_width=FALSE) %>%
-                column_spec(1, bold=TRUE, width = "1.0cm") %>%
-                column_spec(2, width = "0.5cm") %>%
-                column_spec(3, width = "0.75cm") %>%
-                column_spec(4, width = "0.75cm") %>%
-                column_spec(5, width = "0.75cm") %>%
-                column_spec(6, width = "0.75cm") %>%
-                column_spec(7, width = "1.0cm") %>%
-                column_spec(8, width = "1.0cm") %>%
-                column_spec(9, width = "6.0cm", image=spec_image(etbl1$plot_filename,width=702,height=175,res=300)) %>% #702x175 #To calculate width, take the width defined for column, convert to inches (/2.54), and multiply by res (300 dpi).  Then to find height, simply use aspect ratio to find height in pixels
-                column_spec(10, width = "3.0cm", image=spec_image(etbl1$plot_mpieffects_filename,width=350,height=175,res=300)) %>% #350x175
-                add_footnote(c("Variance of model with all significant QTLs fitted.",
-                        "QTL Penalized LOD Score w/ significance codes:\n*** pvalue $≥$ 0 and pvalue<0.001\n**  pvalue $≥$ 0.001 and pvalue<0.01\n*   pvalue $≥$ 0.01 and pvalue<0.05\n.  pvalue $≥$ 0.05 and pvalue<0.01\nNS  Not Significant\n",
-                        "Boxplots of nearest marker BLUPs grouped by genotypes.  Haplotypes A and B are from maternal parent P1, and haplotypes C and D are from paternal parent P2.",
-                        "Effect differences for mean QTL effect size estimates for each progeny genotype.  A.-B. is the maternal effect, calculated as (AC+AD)-(BC+BD).  .C-.D is the paternal effect, calculated as (AC + BC) – (AD + BD).  Int is the interaction effect, calculated as (AC + BD)-(AD+BC) (Sewell et al., 2002)."),
-                        escape=FALSE)
+    if( is_word_output() ) {
+        etbl4 <- etbl2 %>% knitr::kable(caption = caption, format = 'pipe', align = 'llrrrrrrrcc', escape = FALSE, longtable = TRUE, booktabs = TRUE)
+    } else {
+        etbl3 <- etbl2 %>% kable(caption=caption, align='lllrrrllcc', booktabs=TRUE, escape = FALSE, longtable = TRUE)
+        etbl4 <- etbl3 %>%
+                    kable_paper("striped", full_width=FALSE) %>%
+                    column_spec(1, bold=TRUE, width = "1.0cm") %>%
+                    column_spec(2, width = "0.5cm") %>%
+                    column_spec(3, width = "0.75cm") %>%
+                    column_spec(4, width = "0.75cm") %>%
+                    column_spec(5, width = "0.75cm") %>%
+                    column_spec(6, width = "0.75cm") %>%
+                    column_spec(7, width = "1.0cm") %>%
+                    column_spec(8, width = "1.0cm") %>%
+                    column_spec(9, width = "6.0cm", image=spec_image(etbl1$plot_filename,width=702,height=175,res=300)) %>% #702x175 #To calculate width, take the width defined for column, convert to inches (/2.54), and multiply by res (300 dpi).  Then to find height, simply use aspect ratio to find height in pixels
+                    column_spec(10, width = "3.0cm", image=spec_image(etbl1$plot_mpieffects_filename,width=350,height=175,res=300)) %>% #350x175
+                    add_footnote(c("Variance of model with all significant QTLs fitted.",
+                            "QTL Penalized LOD Score w/ significance codes:\n*** pvalue $≥$ 0 and pvalue<0.001\n**  pvalue $≥$ 0.001 and pvalue<0.01\n*   pvalue $≥$ 0.01 and pvalue<0.05\n.  pvalue $≥$ 0.05 and pvalue<0.01\nNS  Not Significant\n",
+                            "Boxplots of nearest marker BLUPs grouped by genotypes.  Haplotypes A and B are from maternal parent P1, and haplotypes C and D are from paternal parent P2.",
+                            "Effect differences for mean QTL effect size estimates for each progeny genotype.  A.-B. is the maternal effect, calculated as (AC+AD)-(BC+BD).  .C-.D is the paternal effect, calculated as (AC + BC) – (AD + BD).  Int is the interaction effect, calculated as (AC + BD)-(AD+BC) (Sewell et al., 2002)."),
+                            escape=FALSE)
+    }
+    if( is_pdf_output() ) {
+        etbl4 <- etbl4 %>%
+                    kable_styling(latex_options=c("repeat_header"),
+                                  font_size=tfont_size,
+                                  repeat_header_continued = TRUE)
+    }
+    return(etbl4)
+}
+
+effs.table.tbl <- effs.complete.tb %>% 
+                    filter(model=='all-years' &
+                            method=='stepwiseqtl' &
+                            !is.na(nearest_marker)) %>%
+                    group_by(trait,model) %>%
+                    mutate(top_qtls = c(rep(TRUE,min(1,length(marker_variance))),rep(FALSE,length(marker_variance)-min(1,length(marker_variance))))) %>%
+                    filter(top_qtls == TRUE) %>%
+                    select(-top_qtls) %>%
+                    ungroup() %>%
+                    arrange(trait,desc(marker_variance))
+
+generateReducedTableNoPlots <- function(tbl, caption=NULL, tfont_size=10) {
+    scipen_save = getOption('scipen') #Save current scipen value
+    options(scipen=-3) #Set to negative value to render small doubles in scientific notation.
+    #View(etbl1)
+    #etbl1 <- effs.table.tbl %>%
+    etbl1 <- tbl %>%
+            generateTableRemoveRepeats() %>%
+            mutate(model_variance = percent(model_variance),
+                marker = ifelse(is.na(marker)," ",marker),
+                position = round.digits(position,2),
+                position_left = round.digits(interval_left,2),
+                position_right = round.digits(interval_right,2),
+                qtl_lod=round.digits(qtl_lod,2),
+                marker_variance = percent(marker_variance)) %>%
+            mutate(AC_stat = paste0(signif.digits(effect_mean_AC,2), "±", signif.digits(effect_se_AC,2)),
+                   AD_stat = paste0(signif.digits(effect_mean_AD,2), "±", signif.digits(effect_se_AD,2)),
+                   BC_stat = paste0(signif.digits(effect_mean_BC,2), "±", signif.digits(effect_se_BC,2)),
+                   BD_stat = paste0(signif.digits(effect_mean_BD,2), "±", signif.digits(effect_se_BD,2))) %>%
+            mutate(AvB = signif.digits(AvB, 2),
+                   CvD = signif.digits(CvD, 2),
+                   Int = signif.digits(Int, 2))
+    options(scipen=scipen_save)
+    if( is_html_output() ) {
+        #colorbars only render correctly under html format
+        etbl1 <- etbl1 %>%
+            mutate(model_variance = ifelse(model_repeat, "", color_bar("lightgreen")(model_variance)),
+                marker_variance = color_bar("lightblue")(marker_variance))
+    } else if (is_pdf_output() ) {
+        etbl1 <- etbl1 %>%
+            mutate(model_variance = knitr:::escape_latex(model_variance),
+                   marker_variance = knitr:::escape_latex(marker_variance))
+    }
+    if( is_word_output() ) {
+        caption = paste0( caption,
+                          "**Variance Explained by QTL**: Genetic variance of model with all significant QTLs fitted.",
+                          "**pLOD**: QTL Penalized LOD Score w/ significance codes:\n*** pvalue $≥$ 0 and pvalue<0.001\n**  pvalue $≥$ 0.001 and pvalue<0.01\n*   pvalue $≥$ 0.01 and pvalue<0.05\n.  pvalue $≥$ 0.05 and pvalue<0.01\nNS  Not Significant\n",
+                          "**A.-B.**: Maternal effect size - (AC+AD)-(BC+BD)",
+                          "**.C-.D**: Paternal effect size - (AC+BC)–(AD+BD)",
+                          "**Int**: Interaction effect size - (AC+BD)-(AD+BC)",
+                          "**eff~AC~**: AC effect size",
+                          "**eff~AD~**: AD effect size",
+                          "**eff~BC~**: BC effect size",
+                          "**eff~BD~**: BD effect size",
+                          sep='  ',
+                          collapse='  ')
+        etbl2 <- etbl1 %>%
+                select(trait_name,chr,position,position_left,position_right,qtl_lod,marker_variance,model_variance,AvB,CvD,Int,AC_stat,AD_stat,BC_stat,BD_stat) %>%
+                rename("Trait"=trait_name, 
+                       "LG"=chr, 
+                       "Position (cM)"=position, 
+                       "1.5-LOD Min (cM)"=position_left,
+                       "1.5-LOD Max (cM)"=position_right,
+                       "Variance Explained by QTL"=marker_variance,
+                       "Model Variance"=model_variance,
+                       "pLOD"=qtl_lod,
+                       "A.-B."=AvB,
+                       ".C-.D"=CvD,
+                       "Int"=Int,
+                       "eff~AC~"=AC_stat,
+                       "eff~AD~"=AD_stat,
+                       "eff~BC~"=BC_stat,
+                       "eff~BD~"=BD_stat)
+        etbl4 <- etbl2 %>% knitr::kable(caption = caption, format = 'pipe', align = 'llrrrrrrrcc', escape = FALSE, booktabs = TRUE)
+    } else {
+        etbl2 <- etbl1 %>%
+                select(trait_name,chr,position,position_left,position_right,qtl_lod,marker_variance,model_variance,AvB,CvD,Int,AC_stat,AD_stat,BC_stat,BD_stat) %>%
+                rename("Trait"=trait_name, 
+                        "LG"=chr, 
+                        "Position (cM)"=position, 
+                        "1.5-LOD Min (cM)"=position_left,
+                        "1.5-LOD Max (cM)"=position_right,
+                        "Variance Explained by QTL"=marker_variance,
+                        "Model Variance[note]"=model_variance,
+                        "pLOD[note]"=qtl_lod,
+                        "A.-B.[note]"=AvB,
+                        ".C-.D[note]"=CvD,
+                        "Int[note]"=Int,
+                        "$eff_{AC}$[note]"=AC_stat,
+                        "$eff_{AD}$[note]"=AD_stat,
+                        "$eff_{BC}$[note]"=BC_stat,
+                        "$eff_{BD}$[note]"=BD_stat)
+        etbl3 <- etbl2 %>% kable(caption=caption, align='llrrrrrrrrrrrr', booktabs=TRUE, escape = FALSE, longtable = TRUE)
+        etbl4 <- etbl3 %>%
+                    kable_paper("striped", full_width=FALSE) %>%
+                    column_spec(1, bold=TRUE, width = "1.0cm") %>%
+                    column_spec(2, width = "0.5cm") %>%
+                    column_spec(3, width = "0.75cm") %>%
+                    column_spec(4, width = "0.75cm") %>%
+                    column_spec(5, width = "0.75cm") %>%
+                    column_spec(6, width = "0.75cm") %>%
+                    column_spec(7, width = "1.0cm") %>%
+                    column_spec(8, width = "1.0cm") %>%
+                    column_spec(9, width = "0.75cm") %>%
+                    column_spec(10, width = "0.75cm") %>%
+                    column_spec(11, width = "0.75cm") %>%
+                    column_spec(12, width = "1.0cm") %>%
+                    column_spec(13, width = "1.0cm") %>%
+                    column_spec(14, width = "1.0cm") %>%
+                    column_spec(15, width = "1.0cm") %>%
+                    add_footnote(c("Variance of model with all significant QTLs fitted.",
+                            "QTL Penalized LOD Score w/ significance codes:\n*** pvalue $≥$ 0 and pvalue<0.001\n**  pvalue $≥$ 0.001 and pvalue<0.01\n*   pvalue $≥$ 0.01 and pvalue<0.05\n.  pvalue $≥$ 0.05 and pvalue<0.01\nNS  Not Significant\n",
+                            "Maternal effect size - (AC+AD)-(BC+BD)",
+                            "Paternal effect size - (AC+BC)–(AD+BD)",
+                            "Interaction effect size - (AC+BD)-(AD+BC)",
+                            "AC effect size",
+                            "AD effect size",
+                            "BC effect size",
+                            "BD effect size"),
+                            escape=FALSE)
+    }
     if( is_pdf_output() ) {
         etbl4 <- etbl4 %>%
                     kable_styling(latex_options=c("repeat_header"),
@@ -330,28 +476,28 @@ generateTable <- function(tbl, meths=c("scanone","stepwiseqtl"), caption=NULL, t
                     "pLOD[note]"=qtl_lod) %>% 
             mutate('Effect Size Boxplots[note]'="") %>%
             mutate('Effect Difference Plots[note]'="")
-    etbl3 <- etbl2 %>% kable(caption=caption, align='llrrrrrrrcc', escape = FALSE, longtable = TRUE, booktabs = TRUE)
-    etbl4 <- etbl3 %>%
-                row_spec(row=(which(etbl1$trait_name != "")-1)[-1], hline_after = TRUE) %>%
-                kable_paper("striped", full_width=FALSE) %>%
-                column_spec(1, bold=TRUE, width = "1.0cm") %>%
-                column_spec(2, bold=TRUE, width = "1.0cm") %>%
-                column_spec(3, width = "0.5cm") %>%
-                column_spec(4, width = "0.75cm") %>%
-                column_spec(5, width = "0.75cm") %>%
-                column_spec(6, width = "0.75cm") %>%
-                column_spec(7, width = "0.75cm") %>%
-                column_spec(8, width = "1.0cm") %>%
-                column_spec(9, width = "1.0cm") %>%
-                column_spec(10, width = "6.0cm", image=spec_image(etbl1$plot_filename,width=702,height=175,res=300)) %>% #702x175 #To calculate width, take the width defined for column, convert to inches (/2.54), and multiply by res (300 dpi).  Then to find height, simply use aspect ratio to find height in pixels
-                column_spec(11, width = "3.0cm", image=spec_image(etbl1$plot_mpieffects_filename,width=350,height=175,res=300)) %>% #350x175
-                add_footnote(c(paste0("All QTLs in table derived from running R/qtl package function ",meths,"().\n","Significance codes for model genotype$*$year effects appended to trait:\n*** pvalue $≥$ 0 and pvalue<0.001\n**  pvalue $≥$ 0.001 and pvalue<0.01\n*   pvalue $≥$ 0.01 and pvalue<0.05\n.  pvalue $≥$ 0.05 and pvalue<0.01\nNS  Not Significant\n"), 
-                        "Significance codes for model genotype effects appended to model",
-                        "Variance of model with all significant QTLs fitted.",
-                        "Penalized LOD Score w/ significance codes for QTL appended",
-                        "Boxplots of nearest marker BLUPs grouped by genotypes.  Haplotypes A and B are from maternal parent P1, and haplotypes C and D are from paternal parent P2.",
-                        "Effect differences for mean QTL effect size estimates for each progeny genotype.  A.-B. is the maternal effect, calculated as (AC+AD)-(BC+BD).  .C-.D is the paternal effect, calculated as (AC + BC) – (AD + BD).  Int is the interaction effect, calculated as (AC + BD)-(AD+BC) (Sewell et al., 2002)."),
-                        escape=FALSE)
+        etbl3 <- etbl2 %>% kable(caption = caption, align = 'llrrrrrrrcc', escape = FALSE, longtable = TRUE, booktabs = TRUE)
+        etbl4 <- etbl3 %>%
+                    row_spec(row=(which(etbl1$trait_name != "")-1)[-1], hline_after = TRUE) %>%
+                    kable_paper("striped", full_width=FALSE) %>%
+                    column_spec(1, bold=TRUE, width = "1.0cm") %>%
+                    column_spec(2, bold=TRUE, width = "1.0cm") %>%
+                    column_spec(3, width = "0.5cm") %>%
+                    column_spec(4, width = "0.75cm") %>%
+                    column_spec(5, width = "0.75cm") %>%
+                    column_spec(6, width = "0.75cm") %>%
+                    column_spec(7, width = "0.75cm") %>%
+                    column_spec(8, width = "1.0cm") %>%
+                    column_spec(9, width = "1.0cm") %>%
+                    column_spec(10, width = "6.0cm", image=spec_image(etbl1$plot_filename,width=702,height=175,res=300)) %>% #702x175 #To calculate width, take the width defined for column, convert to inches (/2.54), and multiply by res (300 dpi).  Then to find height, simply use aspect ratio to find height in pixels
+                    column_spec(11, width = "3.0cm", image=spec_image(etbl1$plot_mpieffects_filename,width=350,height=175,res=300)) %>% #350x175
+                    add_footnote(c(paste0("All QTLs in table derived from running R/qtl package function ",meths,"().\n","Significance codes for model genotype$*$year effects appended to trait:\n*** pvalue $≥$ 0 and pvalue<0.001\n**  pvalue $≥$ 0.001 and pvalue<0.01\n*   pvalue $≥$ 0.01 and pvalue<0.05\n.  pvalue $≥$ 0.05 and pvalue<0.01\nNS  Not Significant\n"), 
+                            "Significance codes for model genotype effects appended to model",
+                            "Variance of model with all significant QTLs fitted.",
+                            "Penalized LOD Score w/ significance codes for QTL appended",
+                            "Boxplots of nearest marker BLUPs grouped by genotypes.  Haplotypes A and B are from maternal parent P1, and haplotypes C and D are from paternal parent P2.",
+                            "Effect differences for mean QTL effect size estimates for each progeny genotype.  A.-B. is the maternal effect, calculated as (AC+AD)-(BC+BD).  .C-.D is the paternal effect, calculated as (AC + BC) – (AD + BD).  Int is the interaction effect, calculated as (AC + BD)-(AD+BC) (Sewell et al., 2002)."),
+                            escape=FALSE)
     if( is_pdf_output() ) {
         etbl4 <- etbl4 %>%
                     kable_styling(latex_options=c("repeat_header"),

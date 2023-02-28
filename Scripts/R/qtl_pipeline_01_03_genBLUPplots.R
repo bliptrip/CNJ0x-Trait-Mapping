@@ -269,6 +269,36 @@ if( !reload_table_functions ) {
                                 plot.title   = element_text(face="bold",size=52, hjust=0.5),
                                 plot.subtitle = element_text(size=48, hjust = 0.5),
                                 plot.margin = ggplot2::unit(c(1,1,1,1),"cm")))
+    
+    gs_all <- model.collated.long.tb %>% 
+        filter(model == 'all-years') %>%
+        group_by(model,trait,type) %>%
+        filter(min(value) != max(value)) %>%
+        ungroup() %>%
+        group_nest(trait) %>%
+        left_join(model.collated.long.stats.tb, by="trait") %>%
+        left_join(model.collated.long.ylims.tb, by="trait") %>%
+        group_by(trait) %>%
+        do(
+            plot = ggplot(.$data[[1]], aes(x=factor(type), y=value, fill=factor(type))) +
+                geom_boxplot(alpha=0.4, position=position_dodge(1)) +
+                geom_jitter(alpha=0.1, position=position_jitterdodge(jitter.width=0.5, dodge.width=1)) +
+                geom_text(data=.$stats[[1]], position=position_dodge(1), aes(y=min, label=min_geno), size=8, fontface='bold', vjust=1.5, hjust=1.5, angle=45) +
+                geom_text(data=.$stats[[1]], position=position_dodge(1), aes(y=max, label=max_geno), size=8, fontface='bold', vjust=-1.5, hjust=0, angle=45) +
+                geom_blank(data=.$ylims[[1]] %>% filter((limit == "min") | (limit == "max"))) +
+                ylab("") +
+                xlab("") + 
+                guides(fill='none') +
+                ggtitle(label=.$data[[1]]$label_short) +
+                theme(  axis.text.x = element_text(face="bold", size=32, angle = 60, hjust = 1),
+                        axis.text.y = element_text(face="bold", size=32),
+                        legend.title = element_text(fac="bold", size=32),
+                        legend.text = element_text(fac="bold", size=24),
+                        legend.key.size = ggplot2::unit(5,"cm"),
+                        axis.title  = element_text(face="bold",size=48),
+                        plot.title   = element_text(face="bold",size=52, hjust=0.5),
+                        plot.subtitle = element_text(size=48, hjust = 0.5),
+                        plot.margin = ggplot2::unit(c(1,1,1,1),"cm")))
 
 #Yield-related traits
 ##Upright Yield
@@ -625,28 +655,53 @@ generateReducedTable <- function(values.collated.tb, caption=NULL, tfont_size=10
                 mutate(model_formula = gsub("$","$",model_formula,fixed=FALSE)) %>%
                 arrange(desc(h2)) %>% 
                 dplyr::select(label,model_formula,h2,min_Raw,min_BLUPs,mean_Raw,mean_BLUPs,max_Raw,max_BLUPs,range_Raw,range_BLUPs,bottom_genos_Raw,bottom_genos_BLUPs,top_genos_Raw,top_genos_BLUPs,P1_Raw,P1_BLUPs,P2_Raw,P2_BLUPs,'Parent Range_Raw','Parent Range_BLUPs')
-    tbl2 <- tbl1 %>%
-        rename("Trait"=label,'Model Terms[note]'=model_formula,'$h^{2}$[note]'=h2,'$Min_r$'=min_Raw,'$Min_b$'=min_BLUPs,'$Max_r$'=max_Raw,'$Max_b$'=max_BLUPs,"$μ_r$±$SE$"=mean_Raw,"$μ_b$±$SE$"=mean_BLUPs,'$R_r$[note]'=range_Raw,'$R_b$[note]'=range_BLUPs,'$MinG_r$[note]'=bottom_genos_Raw,'$MinG_b$'=bottom_genos_BLUPs,'$MaxG_r$[note]'=top_genos_Raw,'$MaxG_b$'=top_genos_BLUPs,'$P_{1r}$[note]'=P1_Raw,'$P_{1b}$'=P1_BLUPs,'$P_{2r}$[note]'=P2_Raw,'$P_{2b}$'=P2_BLUPs,'$PR_r$[note]'='Parent Range_Raw','$PR_b$[note]'='Parent Range_BLUPs') %>%
-        kable(align='lcrrrrrrrrrccccrrrrrr', booktabs=TRUE, escape = FALSE, longtable = TRUE, caption=caption) %>%
-        column_spec(column=c(5,7,9,11,13,15,17,19,21), italic=TRUE, color="gray") %>%
-        column_spec(column=c(1), bold=TRUE, width="1.0cm") %>%
-        column_spec(column=c(2,13,15), width="0.65cm") %>%
-        column_spec(column=c(12,14), width="0.75cm") %>%
-        column_spec(column=c(16), border_left=TRUE) %>%
-        add_header_above(c(" ", " ", "F1 Progeny"=13, "Parents"=6)) %>%
-        kable_paper("striped", full_width=FALSE) %>%
-        add_footnote(c("Optimum model selected using AIC criterium.",
-                        "Narrow-sense genomic heritability for trait/model.",
-                        "Range of trait values in progeny.",
-                        "Range of BLUP values in progeny.",
-                        paste0("F1 progeny genotype with minimum trait value.  Genotype identifier is shortened for visibility.  Translation is g<num> => ",POP_Name,"_1_<num>.  eg: g1_77 => ",POP_Name,"_1_77"),
-                        "F1 progeny genotype with maximum trait value.  Genotype identifier is same format as for minimum genotype.",
-                        "Maternal trait value",
-                        "Paternal trait value",
-                        "Range (difference) between two parental trait values.",
-                        "Range (difference) between two parental BLUP values."
-                        ),
-                     escape=TRUE)
+    if( is_word_output() ) 
+    {
+        caption <- paste0( caption,
+                           "**Model Terms**: Optimum model selected using AIC criterium.",
+                           "**h^2^**: Narrow-sense genomic heritability for trait/model.",
+                           "**R~r~**: Range of trait values in progeny.",
+                           "**R~b~**: Range of BLUP values in progeny.",
+                           paste0("**MinG~r~**: F1 progeny genotypes with minimum trait values.  Genotype identifier is shortened for visibility.  Translation is g<num> => ",POP_Name,"_1_<num>.  eg: g1_77 => ",POP_Name,"_1_77"),
+                           "**MinG~b~**: F1 progeny genotypes with minimum BLUP values.  Genotype identifier is same format as for **MinG~r~**",
+                           "**MaxG~r~**: F1 progeny genotypes with maximum trait values.  Genotype identifier is same format as for **MinG~r~**",
+                           "**MaxG~b~**: F1 progeny genotype with maximum BLUP values.  Genotype identifier is same format as for **MinG~r~**",
+                           "**P~1r~**: Maternal trait value",
+                           "**P~1b~**: Maternal BLUE value",
+                           "**P~2r~** Paternal trait value",
+                           "**P~2b~**: Paternal BLUE value",
+                           "**PR~r~**: Range (difference) between two parental trait values.",
+                           "**PR~b~**: Range (difference) between two parental BLUE values.",
+                           sep='  ',
+                           collapse='  ' )
+        tbl2 <- tbl1 %>%
+                rename("Trait"=label,'Model Terms'=model_formula,'h^2^'=h2,'Min~r~'=min_Raw,'Min~b~'=min_BLUPs,'Max~r~'=max_Raw,'Max~b~'=max_BLUPs,"μ~r~±SE"=mean_Raw,"μ~b~±SE"=mean_BLUPs,'R~r~'=range_Raw,'R~b~'=range_BLUPs,'MinG~r~'=bottom_genos_Raw,'MinG~b~'=bottom_genos_BLUPs,'MaxG~r~'=top_genos_Raw,'MaxG~b~'=top_genos_BLUPs,'P~1r~'=P1_Raw,'P~1b~'=P1_BLUPs,'P~2r~'=P2_Raw,'P~2b~'=P2_BLUPs,'PR~r~'='Parent Range_Raw','PR~b~'='Parent Range_BLUPs') %>%
+                kable(align='lcrrrrrrrrrccccrrrrrr', booktabs=TRUE, format = 'pipe', escape = FALSE, caption=caption)
+    } 
+    else {
+        tbl2 <- tbl1 %>%
+                rename("Trait"=label,'Model Terms[note]'=model_formula,'$h^{2}$[note]'=h2,'$Min_r$'=min_Raw,'$Min_b$'=min_BLUPs,'$Max_r$'=max_Raw,'$Max_b$'=max_BLUPs,"$μ_r$±$SE$"=mean_Raw,"$μ_b$±$SE$"=mean_BLUPs,'$R_r$[note]'=range_Raw,'$R_b$[note]'=range_BLUPs,'$MinG_r$[note]'=bottom_genos_Raw,'$MinG_b$'=bottom_genos_BLUPs,'$MaxG_r$[note]'=top_genos_Raw,'$MaxG_b$'=top_genos_BLUPs,'$P_{1r}$[note]'=P1_Raw,'$P_{1b}$'=P1_BLUPs,'$P_{2r}$[note]'=P2_Raw,'$P_{2b}$'=P2_BLUPs,'$PR_r$[note]'='Parent Range_Raw','$PR_b$[note]'='Parent Range_BLUPs') %>%
+                kable(align='lcrrrrrrrrrccccrrrrrr', booktabs=TRUE, escape = FALSE, longtable = TRUE, caption=caption) %>%
+                column_spec(column=c(5,7,9,11,13,15,17,19,21), italic=TRUE, color="gray") %>%
+                column_spec(column=c(1), bold=TRUE, width="1.0cm") %>%
+                column_spec(column=c(2,13,15), width="0.65cm") %>%
+                column_spec(column=c(12,14), width="0.75cm") %>%
+                column_spec(column=c(16), border_left=TRUE) %>%
+                add_header_above(c(" ", " ", "F1 Progeny"=13, "Parents"=6)) %>%
+                kable_paper("striped", full_width=FALSE) %>%
+                add_footnote(c("Optimum model selected using AIC criterium.",
+                                "Narrow-sense genomic heritability for trait/model.",
+                                "Range of trait values in progeny.",
+                                "Range of BLUP values in progeny.",
+                                paste0("F1 progeny genotype with minimum trait value.  Genotype identifier is shortened for visibility.  Translation is g<num> => ",POP_Name,"_1_<num>.  eg: g1_77 => ",POP_Name,"_1_77"),
+                                "F1 progeny genotype with maximum trait value.  Genotype identifier is same format as for minimum genotype.",
+                                "Maternal trait value",
+                                "Paternal trait value",
+                                "Range (difference) between two parental trait values.",
+                                "Range (difference) between two parental BLUE values."
+                                ),
+                        escape=TRUE)
+    }
     if( is_pdf_output() ) {
         tbl2 <- tbl2 %>%
                     kable_styling(latex_options=c("repeat_header"),
