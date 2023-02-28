@@ -111,24 +111,6 @@ pheno.means.df$rowf <- as.factor(pheno.means.df$row) #Needed for modeling row ef
 pheno.means.df$columnf <- as.factor(pheno.means.df$column) #Needed for modeling column effects
 pheno.means.df$year <- as.factor(pheno.means.df$year) #Needed for modeling column effects
 
-generate_bin_id <- function(LG, position) {
-    return(paste0("bin_",LG,"@",position,"cM"))
-}
-#Convert consensus map to bins
-#First convert a map into a 3-column dataset with following column names: 'marker', 'LG', and 'consensus'
-#before passing to this function.
-condense_map_bins <- function(map.df, filter_scaffolds=FALSE) {
-    map.df$marker <- rownames(map.df)
-    if( filter_scaffolds ) {
-        map.df <- map.df %>%
-                    filter(grepl("^scaffold_", marker, ignore.case=T))
-    }
-    map.df <- map.df %>%
-            group_by(LG, consensus) %>%
-            summarize(marker=marker[1], binID = generate_bin_id(LG[1],consensus[1]))
-    map.df <- data.frame(map.df, row.names=map.df$marker)
-    return(map.df)
-}
 superMap.df       <- read.csv(geno_rpath2fpath(geno_consensus_file),header=T)[,c("marker","LG","consensus")] %>%
                         mutate(binID = generate_bin_id(LG,consensus))
 rownames(superMap.df) <- superMap.df$marker
