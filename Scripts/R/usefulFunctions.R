@@ -83,6 +83,24 @@ mtrait_subfolder <- function(trait.cfg) {
     return(trait_subfolder)
 }
 
+generate_bin_id <- function(LG, position) {
+    return(paste0("bin_",LG,"@",position,"cM"))
+}
+#Convert consensus map to bins
+#First convert a map into a 3-column dataset with following column names: 'marker', 'LG', and 'consensus'
+#before passing to this function.
+condense_map_bins <- function(map.df, filter_scaffolds=FALSE) {
+    map.df$marker <- rownames(map.df)
+    if( filter_scaffolds ) {
+        map.df <- map.df %>%
+                    filter(grepl("^scaffold_", marker, ignore.case=T))
+    }
+    map.df <- map.df %>%
+            group_by(LG, consensus) %>%
+            summarize(marker=marker[1], binID = generate_bin_id(LG[1],consensus[1]))
+    map.df <- data.frame(map.df, row.names=map.df$marker)
+    return(map.df)
+}
 
 generate_cross_file <- function(trait.cfg, blups, gData, superMap.df, file.path) {
     print(paste0("Population Analysis Set: ", trait.cfg["model"]))
@@ -114,7 +132,7 @@ generate_cross_file <- function(trait.cfg, blups, gData, superMap.df, file.path)
 
     #Now write the cross file as a csv in the appropriate folder
     write.csv(gData.sub,file=paste0(file.path,"/cross.csv"),row.names=FALSE)
-    cross <- read.cross(format = "csv", file=paste0(file.path,"/cross.csv"), genotypes = NULL)
+    cross <- read.cross(format = "csv", file=paste0(file.path,"/cross.csv"), genotypes = NULL) #NULL genotype for 4-way cross
     cross <- jittermap(cross)
     cross <- calc.genoprob(cross,step=0,map.function="kosambi")
     saveRDS(cross, file=paste0(file.path,"/cross.rds"), compress=TRUE)
@@ -137,8 +155,8 @@ rename_traits <- function(traits, abbrevmap) {
 }
 
 circosfile2path <- function(filename) {
-		#For now, this is the relative path to the location of the interactive circos qtl html file/javascript set
-		return(paste0("configs/circos/",filename))
+        #For now, this is the relative path to the location of the interactive circos qtl html file/javascript set
+        return(paste0("configs/circos/",filename))
 }
 
 
@@ -174,15 +192,18 @@ siginfo <- function(x){
 }
 
 round.digits <- function(values,digits) {
-	rvalue <- gsub("NA", "", format(round(values,digits=digits),nsmall=digits))
+    values <- as.numeric(values)
+    rvalue <- gsub("NA", "", format(round(values,digits=digits),nsmall=digits))
 }
 
 signif.digits <- function(values,digits) {
-	rvalue <- as.numeric(gsub("NA", "", format(round(values,digits=digits),nsmall=digits)))
+    values <- as.numeric(values)
+    #rvalue <- as.numeric(gsub("NA", "", format(round(values,digits=digits),nsmall=digits)))
+    rvalue <- as.numeric(signif(values,digits=digits))
 }
 
 
-									
+                                    
 #Function for looping through all unmasked traits in the configs/model-traits.cfg.csv file.
 
 
