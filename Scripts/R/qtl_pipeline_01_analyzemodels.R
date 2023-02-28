@@ -130,11 +130,11 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
     for (j in seq_along(randomtermss)) {
         usef <- setdiff(randomtermss,randomtermss[k])
         randomf <- paste("~",paste(usef,collapse = " + "))
-		if( length(usef) > 0 ) {
-				mmer.expr <- paste0(c("mmer(fixed=", fixed, ", random=", randomf, ", rcov=", rcov, ", data=model$dataOriginal"), collapse="")
-		} else {
-				mmer.expr <- paste0(c("mmer(fixed=", fixed, ", rcov=", rcov, ", data=model$dataOriginal"), collapse="")
-		}
+        if( length(usef) > 0 ) {
+                mmer.expr <- paste0(c("mmer(fixed=", fixed, ", random=", randomf, ", rcov=", rcov, ", data=model$dataOriginal"), collapse="")
+        } else {
+                mmer.expr <- paste0(c("mmer(fixed=", fixed, ", rcov=", rcov, ", data=model$dataOriginal"), collapse="")
+        }
         if( !is.empty(trait.cfg["mmer_args"]) ) {
                 mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
         }
