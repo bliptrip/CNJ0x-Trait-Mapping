@@ -1,4 +1,6 @@
 sandbox/
+circos-cnj02/
+circos-cnj04/
 Workflows/*
 !Workflows/templates
 .*.icloud
@@ -26,6 +28,69 @@ package-lock.json
 Scripts/_main.*
 Scripts/_book/
 *notes.Rmd
+Data/genetic_data/RawData/CNJ04_AllASMapData.ods
+Data/genetic_data/RawData/CompositeMap_FileS2.ods
+Data/genetic_data/RawData/GCA_000775335.2_ASM77533v2_genomic.fna
+Data/genetic_data/RawData/V_macrocarpon_Stevens_v1.fna
+Data/genetic_data/RawData/cnj02.vcf
+Data/genetic_data/RawData/cnj0x.all.mergedSNPs.vcf.gz
+Data/genetic_data/RawData/crGenome_scaffolds.fasta
+Data/genetic_data/RawData/crGenome_scaffolds.fasta.fai
+Data/genetic_data/RawData/crGenome_scaffolds.headers
+Data/genetic_data/RawData/gryg.all.mergedSNPs.vcf.gz
+Data/genetic_data/RawData/gryg.vcf
+Data/genetic_data/RawData/gmap_cnj02-p1p2.csv
+Data/genetic_data/RawData/gmap_cnj02-p1p2.ods
+Data/genetic_data/RawData/db/
+Data/genetic_data/RawData/gmap_gryg-p1.csv
+Data/genetic_data/RawData/gmap_gryg-p2.csv
+Data/genetic_data/RawData/ids
+Data/genetic_data/RawData/pheno_cnj02-p1.csv
+Data/genetic_data/RawData/pheno_cnj02-p2.csv
+Data/genetic_data/RawData/pheno_gryg-p1.csv
+Data/genetic_data/RawData/pheno_gryg-p2.csv
+Data/genetic_data/RawData/vorsa_ref.fasta
+Data/phenotypic data/DerivedData/MergedData/CNJ02_PlotData.mmeans.std.csv
+Data/phenotypic data/DerivedData/MergedData/CNJ04_PlotData.mmeans.std.csv
+Data/phenotypic data/DerivedData/berry_templates/
+Data/publication/tables/blups-table-cnj02-all-top.html
+Data/publication/tables/blups-table-cnj02.html
+Data/publication/tables/blups-table-cnj04-all-top.html
+Data/publication/tables/blups-table-cnj04.html
+Data/publication/tables/cnj02_qtl_collated.consensus.xlsx
+Data/publication/tables/cnj02_qtl_collated.grouped.consensus.xlsx
+Data/publication/tables/cnj04_qtl_collated.grouped.consensus.xlsx
+Data/publication/tables/cnj0x_qtl_collated.grouped.consensus.xlsx
+Data/publication/tables/corrplot.cnj02.xlsx
+Data/publication/tables/corrplot.cnj04.xlsx
+Data/publication/tables/diazGarcia2018ImagePhenotyping.supplemental.grouped.consensus.qtls.xlsx
+Data/publication/tables/diazGarcia2018MassivePhenotyping.supplemental.grouped.consensus.qtls.xlsx
+Data/publication/tables/diazGarciaImagePhenotyping2018_cnj0x.grouped.consensus.xlsx
+Data/publication/tables/diazGarciaMassivePhenotyping2018_cnj0x.grouped.consensus.xlsx
+Data/publication/tables/effects_collated.cnj04.xlsx
+Data/publication/tables/qtl-table-cnj02-sw-ints.html
+Data/publication/tables/qtl-table-cnj02-sw.html
+Data/publication/tables/qtl-table-cnj04-sw-ints.html
+Data/publication/tables/qtl-table-cnj04-sw.html
+Data/publication/tables/qtl-table-scanone-cnj02.html
+Data/publication/tables/qtl-table-scanone-cnj04.html
+Data/publication/tables/qtl-table-stepwiseqtl-cnj02.html
+Data/publication/tables/qtl-table-stepwiseqtl-cnj04.html
+Data/publication/tables/schlautman2015_cnj0x.grouped.consensus.xlsx
+Data/publication/tables/schlautman2015_diazGarciaImagePhenotyping2018_cnj0x.grouped.consensus.xlsx
+Data/publication/tables/trait-tab-kable.html
+Scripts/R/renv
+Scripts/errata.txt
+Scripts/errors
+Scripts/images/
+Scripts/maule-ch1.zip
+Scripts/maule-ch1/
+Scripts/renv
+Scripts/zalapa.qtl.zip
+Software/
+renv/
+
+
 
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
