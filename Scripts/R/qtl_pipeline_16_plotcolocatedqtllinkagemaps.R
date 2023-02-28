@@ -6,8 +6,8 @@
 # loading libraries
 library(RColorBrewer)
 library(tidyverse)
-#library(LinkageMapView)
-devtools::load_all("~/software/bio-services/LinkageMapView")
+library(LinkageMapView)
+#devtools::load_all("~/software/bio-services/LinkageMapView")
 
 cnj02_workflow="../../Workflows/9"
 cnj04_workflow="../../Workflows/10"
