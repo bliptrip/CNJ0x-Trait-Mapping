@@ -93,7 +93,34 @@ estimates found in CNJ04 ($h2 ≈ 0.46$) could be due to lower statistical power
 ## QTL Discovery
 
 This study takes one of the most comprehensive approaches to date to map QTL in cranberry, in number of traits
-assessed, number of factors modeled, and assessment of epistatic QTL interactions.  Linkage group 10 demonstrated 
+assessed, number of factors modeled, and assessment of epistatic QTL interactions.  
+
+** Note: Add how composite QTL tables were generated and filter parameters for tables mentioned in results and discussion. **
+
+** Note: Put this in results instead? **
+
+Table X highlights salient, multi-trait collocated QTL in population CNJ02, with meaningful linkages found on chromosomes
+3, 10, 11, and 12.  Berry quality 
+traits important to the production of sweetened dried cranberries (SDCs), such as *ULvW*, "*UKLvW*, *UBL*, and *UKEC*, have a stable and 
+collocated QTL on linkage group 11@29.4cM.   Quality traits *ULvW*, *UKLvW*, and *UKEC* have 
+a significant association in linkage group 11@18.7cM, while *UKLvW* and *UKEC* have a colocated QTL at 3@30.7cM.  *ULvW* and *UBL* have a shared QTL around 10@52.3cM.
+The yield-related traits *UBM*, *UTBM*, *UBW*, and *UMFM*, and *MFM* show significant, stable, colocated QTL on linkage group 10@29.4cM, and
+a QTL at 10@30.7 is likely identical or pleiotropic with the quality trait QTL on 11@29.4cM.
+Upright yield traits *UBW*, *UBM*, *UTBM*, and *UMFM* also exhibit strong QTL on linkage group 
+11 at 38.9cM.    Although the plot traits *TY* 
+and *SFY* do not have any meaningful QTL collocated with upright yield traits, they do have a modest QTL found on linkage 
+group 12 at 41.6cM.
+
+Table Y features prominent (mean_model_variance >= 10), stable (model_count >= 4), multi-trait QTL found in linkage groups 2, 3, 4, 6, and 11 for population CNJ04.  Quality 
+traits *UKLvW*, *ULvW*, *UKEC*, and *UBL* have collocated QTL around 2@42.7cM and 4@10.5cM.   Traits *UKLvW*, *ULvW*, and *UBL* have a QTL on 11@10.3cM.  Yield traits *UTBM*, 
+*UNB*, and *TY* have a colocalized QTL around 3@36.3cM, while yield traits *UBW*, *MFM*, and *UNS* have a QTL around 3@38.0cM.  Yield traits *TY*, *UTBM*, *SFY*, and *UNB* have consistent
+QTL on 6@29.6cM and 11@34.8cM.
+
+Across both cnj02 and cnj04 (table ZZ), prominent composite QTL for yield tratis are found on linkage groups 3, 8, and 11.  Yield traits *UBW*, *UMFM*, *MFM*, and *UBM* have notable QTL
+on linkage group 3 between 38.2cM and 43.1cM and on linkage group 11 between 29.4 and 38.4cM.  Noteworthy QTL for berry quality traits *ULvW*, *UBL*, *UKLvW*, and *UKEC* can be found on linkage
+group 8@56.5cM and on linkage group 11 between 9.6cM and 18.7cM.
+
+demonstrated 
 consistent importance in berry size and weight parameters across both CNJ02 and CNJ04.  Although *TY* had a modest 
 positive correlation with berry size traits, none of its largest QTL overlapped with those found for berry size.
 Given that *TY* is a complex trait involving the interplay of multiple berry and upright parameters, along with lower
@@ -136,6 +163,4 @@ a modestly positive correlation between yield and berry size parameters loses mo
 the genetic basis of these traits.  In the end, plot-sampled traits likely provide a more realistic picture of genotypic
 performance for traits important to growers, and the application of digital imaging processing algorithms to 
 cranberries serves to more accurately assess berry-level traits with higher throughput.  
-
-
-
+f
