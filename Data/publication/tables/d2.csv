@@ -1,0 +1,7 @@
+group_category,method,model,trait,chr,position,chr2,position2,nearest.marker,qtl.lod,marker.variance,qtl.pvalue,model.variance,interval.left,interval.marker.left,interval,interval.right,interval.marker.right,GLRpvalue,GxYLRpvalue,GZRpvalue,GxYZRpvalue,position.consensus
+1,m3,all,A21,1,6,,,m7,5,26,,,5,,,8,,,,,,
+1,m3,all,B21,1,7,,,m8,5,22,,,6,,,10,,,,,,
+2,m3,all,C22,1,7.5,,,m9,5,45,,,7,,,8,,,,,,
+2,m3,none,D22,1,14.25,,,m10,5,50,,,14,,,14.5,,,,,,
+3,m3,all,E23,1,15.5,,,m11,5,45,,,15,,,16,,,,,,
+3,m3,all,F23,2,15.5,,,m12,5,30,,,15,,,17,,,,,,
