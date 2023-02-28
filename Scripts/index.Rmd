@@ -1,5 +1,5 @@
---- 
-title: "A Comparative Study of Phenotyping Methods and their Utility in Mapping Quantitative Trait Loci for the Advancement of _Vaccinium macrocarpon Ait._ Breeding Germplasm"
+---
+title: 'Of Buds and Bits: A QTL Inference Study on Conventional Upright Traits and Their Relevance to Digital Phenotyping in *Vaccinium macrocarpon Ait.*' 
 author: "Andrew Maule"
 date: "2022-01-22"
 site: bookdown::bookdown_site
@@ -16,28 +16,29 @@ params:
     cnj02_workflow: "../Workflows/9"
     cnj04_workflow: "../Workflows/10"
     trait_tab_flex: FALSE
+    h2_plots_polar: FALSE
     table_gen_berry_chimera: FALSE
-    fig_gen_annotations: FALSE
-    fig_gen_montages: FALSE
+    fig_gen_annotations: TRUE
+    fig_gen_montages: TRUE
     install_deps: FALSE
 output:
     bookdown::html_document2:
         toc: true
         css: "style.css"
     bookdown::pdf_document2:
-        keep_md: TRUE
+        keep_md: true
         keep_tex: true
         number_sections: true
         global_numbering: false
         includes:
             in_header: "cnj0x-preamble.tex"
-        toc: true
+        toc: false
         toc_depth: 3
         clean: false
         latex_engine: xelatex
         pandoc_args: [--template,template.tex]
     bookdown::word_document2:
-        toc: true
+        toc: false
     redoc::redoc:
         keep_md: true
     officedown::rdocx_document:
@@ -83,20 +84,24 @@ library(tidyverse)
 DATA_REL_PATH = ".."
 source('./R/usefulFunctions.R')
 
-print_table <- function(tbl, label, caption) {
-    if( is_word_output() ) {
-        target_file <- paste0("Data/publication/tables/",label,".html")
+print_table <- function(tbl, label, caption, save=FALSE) {
+#    if( is_word_output() ) {
+#        target_file <- paste0("Data/publication/tables/",label,".html")
+#        save_kable(tbl, file=paste0("../",target_file))
+#        cat(paste0("\n\nTable: (\\#tab:",label,") ", caption, "\n\n",
+#                "--------\n",
+#                "![",label,"](../Data/publication/figures/table-32x32.png) [Table Link](",target_file,")\n",
+#                "--------\n\n"
+#                ))
+#    } else 
+     if( is_pdf_output() && (save==TRUE) ) {
+        target_file <- paste0("Data/publication/tables/",label,".png")
         save_kable(tbl, file=paste0("../",target_file))
-        cat(paste0("\n\nTable: (\\#tab:",label,") ", caption, "\n\n",
-                "--------\n",
-                "![",label,"](../Data/publication/figures/table-32x32.png) [Table Link](",target_file,")\n",
-                "--------\n\n"
-                ))
+        tbl
     } else {
         tbl
     }
 }
-
 ```
 
 ```{r style-defs, echo=FALSE, message=FALSE, include=FALSE}
