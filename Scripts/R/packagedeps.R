@@ -14,14 +14,16 @@ install.packages(c("lme4"), repos = "http://mirror.las.iastate.edu/CRAN/", depen
 install.packages(c("qtl"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("devtools"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 #require(devtools)
-#install_version("sommer", version = "4.1.3", repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) #Install specific version of sommer since every release breaks shit
-install.packages(c("sommer"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+#install_version("sommer", version = "4.1.2", repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) #Install specific version of sommer since every release breaks shit
+install.packages("https://cran.r-project.org/src/contrib/Archive/sommer/sommer_4.1.2.tar.gz", repos=NULL, type='source')
+#install.packages(c("sommer"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) #Don't install latest sommer or you're guaranteed to break your code
 install.packages(c("lattice"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 #IRanges is a part of bioconductor package: ## try http:// if https:// URLs are not supported
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages("BiocManager", repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 BiocManager::install(version = "3.12")
-BiocManager::install(c("IRanges","GenomicRanges"))
+BiocManager::install(c("IRanges","GenomicRanges","Biostrings"))
+
 install.packages(c("intervals"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) #The following may need to be run as a superuser for the first time on a macosx.  Also, one may manually need to install openmpi.
 install.packages(c("Rmpi"), repos = "http://mirror.las.iastate.edu/CRAN/", configure.args="--with-Rmpi-include=/opt/openmpi/include --with-Rmpi-libpath=/opt/openmpi/lib --with-Rmpi-type=OPENMPI", dependencies=TRUE, verbose=TRUE)
 install.packages(c("snow"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
@@ -44,3 +46,5 @@ install.packages(c("cowplot"), repos = "http://mirror.las.iastate.edu/CRAN/", de
 install.packages(c("rlist"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 
 remotes::install_github("noamross/redoc")
+
+install.packages('rBLAST', repos = 'https://mhahsler.r-universe.dev')
