@@ -40,7 +40,7 @@ decorate_h2_label <- function(model, h2) {
     model_h2            <- vector("character", length(model))
     nul.tf              <- (h2 == 0)
     model_h2[nul.tf]   <- as.character(model[nul.tf])
-    model_h2[!nul.tf]  <- paste0(model[!nul.tf],": ",round(h2[!nul.tf],3))
+    model_h2[!nul.tf]  <- paste0(model[!nul.tf],": ",round(h2[!nul.tf],2))
     return(model_h2)
 }
 
@@ -54,6 +54,7 @@ generateH2Plot <- function(h2.data, traits, subtitle) {
     h2.data <- h2.data %>%
                 mutate(model_trait=paste0(model,"-",label_short)) %>%
                 mutate(model_h2=decorate_h2_label(model,h2))
+    h2.data$h2[h2.data$h2 == 0] <- NA
     
     
     #Derived from https://www.r-graph-gallery.com/297-circular-barplot-with-groups/
@@ -64,8 +65,12 @@ generateH2Plot <- function(h2.data, traits, subtitle) {
             value=h2.data$h2,
             model=as.character(h2.data$model),
             model_h2=as.character(h2.data$model_h2),
+            h2=round(h2.data$h2,2),
             se=h2.data$se
             )
+
+    data$h2[data$h2 == 0] <- NA
+    data$h2 <- as.character(data$h2)
     
     # Set a number of 'empty bar' to add at the end of each group
     empty_bar=3
@@ -102,60 +107,56 @@ generateH2Plot <- function(h2.data, traits, subtitle) {
             scale_fill_manual(values=brewer.pal(4,"Accent")) +
             #geom_errorbar(aes(x=as.factor(id), ymin=value-(se/2), ymax=value+(se/2))) +
             #geom_pointrange(aes(x=as.factor(id), y=value, ymin=value-(se/2), ymax=value+(se/2)), na.rm=TRUE) +
-                # Add a val=100/75/50/25 lines. I do it at the beginning to make sur barplots are OVER it.
-                geom_segment(data=grid_data, aes(x = end, y = 1.0, xend = start, yend = 1.0), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-                geom_segment(data=grid_data, aes(x = end, y = 0.75, xend = start, yend = 0.75), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-                geom_segment(data=grid_data, aes(x = end, y = 0.5, xend = start, yend = 0.5), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-                geom_segment(data=grid_data, aes(x = end, y = 0.25, xend = start, yend = 0.25), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-                # Add text showing the value of each 100/75/50/25 lines
-                annotate("text", x = rep(max(data$id),4), y = c(0.25, 0.5, 0.75, 1.0), label = c("0.25", "0.50", "0.75", "1.00") , color="grey", size=3 , angle=0, fontface="bold", hjust=1) +
-                ylim(-0.5,1.25) +
-                theme_minimal() +
-                #theme_solarized(light=F) +
-                theme(
-                        legend.position = "none",
-                        axis.text = element_blank(),
-                        axis.title = element_blank(),
-                        panel.grid = element_blank(),
-                        plot.margin = unit(rep(-1,4), "cm") 
-                    ) +
-                coord_polar() + 
-                geom_text(data=label_data, aes(x=id, y=value+0.1, label=model_h2, hjust=hjust), color="black", fontface="bold",alpha=0.8, size=4, angle= label_data$angle, inherit.aes = FALSE ) +
-                # Add base line information
-                geom_segment(data=base_data, aes(x = start, y = -0.1, xend = end, yend = -0.1), colour = "black", alpha=0.9, size=0.6 , inherit.aes = FALSE )  +
-                geom_text(data=base_data, aes(x = title, y = -.2, label=group), hjust=0.5, colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE)
+            # Add a val=100/75/50/25 lines. I do it at the beginning to make sur barplots are OVER it.
+            geom_segment(data=grid_data, aes(x = end, y = 1.0, xend = start, yend = 1.0), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+            geom_segment(data=grid_data, aes(x = end, y = 0.75, xend = start, yend = 0.75), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+            geom_segment(data=grid_data, aes(x = end, y = 0.5, xend = start, yend = 0.5), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+            geom_segment(data=grid_data, aes(x = end, y = 0.25, xend = start, yend = 0.25), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+            # Add text showing the value of each 100/75/50/25 lines
+            annotate("text", x = rep(max(data$id),4), y = c(0.25, 0.5, 0.75, 1.0), label = c("0.25", "0.50", "0.75", "1.00") , color="grey", size=3 , angle=0, fontface="bold", hjust=1) +
+            ylim(-0.5,1.25) +
+            theme_minimal() +
+            #theme_solarized(light=F) +
+            theme(
+                    legend.position = "none",
+                    axis.text = element_blank(),
+                    axis.title = element_blank(),
+                    panel.grid = element_blank(),
+                    plot.margin = unit(rep(-1,4), "cm") 
+                ) +
+            coord_polar() + 
+            geom_text(data=label_data, aes(x=id, y=value+0.1, label=model_h2, hjust=hjust), color="black", fontface="bold",alpha=0.8, size=4, angle= label_data$angle, inherit.aes = FALSE ) +
+            # Add base line information
+            geom_segment(data=base_data, aes(x = start, y = -0.1, xend = end, yend = -0.1), colour = "black", alpha=0.9, size=0.6 , inherit.aes = FALSE )  +
+            geom_text(data=base_data, aes(x = title, y = -.2, label=group), hjust=0.5, colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE)
     
     ggsave(filename=paste0(workflow,"/traits/plots/h2_barplot.polar.",subtitle,".png"), plot=p, device="png", bg="white", width=33, height=25, units="cm", dpi=300)
-    
+
     #Make a non-polar version of plot
-    p = ggplot(data, aes(x=as.factor(id), y=value, fill=group)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
-            geom_bar(aes(x=as.factor(id), y=value, fill=group), stat="identity", alpha=0.5) +
-            #geom_errorbar(aes(x=as.factor(id), ymin=value-(se/2), ymax=value+(se/2))) +
-            geom_pointrange(aes(x=as.factor(id), y=value, ymin=value-(se/2), ymax=value+(se/2)), na.rm=TRUE) +
-                # Add a val=100/75/50/25 lines. I do it at the beginning to make sur barplots are OVER it.
-                geom_segment(data=grid_data, aes(x = end, y = 1.0, xend = start, yend = 1.0), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-                geom_segment(data=grid_data, aes(x = end, y = 0.75, xend = start, yend = 0.75), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-                geom_segment(data=grid_data, aes(x = end, y = 0.5, xend = start, yend = 0.5), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-                geom_segment(data=grid_data, aes(x = end, y = 0.25, xend = start, yend = 0.25), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-                # Add text showing the value of each 100/75/50/25 lines
-                annotate("text", x = rep(max(data$id),4), y = c(0.25, 0.5, 0.75, 1.0), label = c("0.25", "0.50", "0.75", "1.00") , color="grey", size=3 , angle=0, fontface="bold", hjust=1) +
-                geom_bar(aes(x=as.factor(id), y=value, fill=group), stat="identity", alpha=0.5) +
-                ylim(-0.5,1.25) +
-                theme_minimal() +
-                #theme_solarized(light=F) +
-                theme(
-                        legend.position = "none",
-                        axis.text = element_blank(),
-                        axis.title = element_blank(),
-                        panel.grid = element_blank(),
-                        plot.margin = unit(rep(-1,4), "cm") 
-                    ) +
-                geom_text(data=label_data, aes(x=id, y=value+0.1, label=model_h2, hjust=0), color="black", fontface="bold",alpha=0.8, size=4, angle=0, inherit.aes = FALSE ) +
-                # Add base line information
-                geom_segment(data=base_data, aes(x = start, y = -0.1, xend = end, yend = -0.1), colour = "black", alpha=0.9, size=0.6 , inherit.aes = FALSE )  +
-                geom_text(data=base_data, aes(x = title, y = -.2, label=group), hjust=0.5, colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE)
-    
-    ggsave(filename=paste0(workflow,"/traits/plots/h2_barplot.cartesian.",subtitle,".png"), plot=p, device="png", bg="white", width=33, height=25, units="cm", dpi=300)
+    p = ggplot(data, aes(x=as.factor(id), y=value, fill=as.factor(model))) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+    		geom_bar(stat="identity", color='black', alpha=0.9, show.legend=TRUE) +
+            scale_fill_manual(values=brewer.pal(4,"Accent")) +
+            geom_segment(data=grid_data, aes(x = end, y = 1.0, xend = start, yend = 1.0), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+            geom_segment(data=grid_data, aes(x = end, y = 0.75, xend = start, yend = 0.75), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+            geom_segment(data=grid_data, aes(x = end, y = 0.5, xend = start, yend = 0.5), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+            geom_segment(data=grid_data, aes(x = end, y = 0.25, xend = start, yend = 0.25), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
+            annotate("text", x = rep(max(data$id),4), y = c(0.25, 0.5, 0.75, 1.0), label = c("0.25", "0.50", "0.75", "1.00") , color="grey", size=3 , angle=0, fontface="bold", hjust=1) +
+            ylim(-0.5,1.25) +
+            theme_minimal() +
+            theme(
+                    legend.title = element_text(face="bold"),
+                    axis.text = element_blank(),
+                    axis.title = element_blank(),
+                    panel.grid = element_blank(),
+                    plot.margin = unit(c(-1.0,0.5,-2,1.0), "cm") 
+                ) +
+            geom_text(aes(x=id, y=value, label=as.character(h2)), color="black", fontface="bold",alpha=0.8, size=3, angle=90, hjust=-0.2, vjust=0.5, inherit.aes = FALSE ) +
+            # Add base line information
+            geom_segment(data=base_data, aes(x = start, y = -0.1, xend = end, yend = -0.1), colour = "black", alpha=0.9, size=0.6 , inherit.aes = FALSE)  +
+            geom_text(data=base_data, aes(x = title, y = -.2, label=group), hjust=0.5, colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE) +
+            guides(fill=guide_legend(title="Model"))
+
+    ggsave(filename=paste0(workflow,"/traits/plots/h2_barplot.cartesian.",subtitle,".png"), plot=p, device="png", bg="white", width=20, height=15, units="cm", dpi=300)
     
     p = ggplot(h2.tb,aes(x=model,y=h2,fill=model,label=sprintf("%0.2f", round(h2, digits = 2)))) +
     		geom_bar(stat="identity", color='black', alpha=0.9, show.legend=FALSE) +
