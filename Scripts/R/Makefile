@@ -178,6 +178,13 @@ CopyReactSandbox:
 		ssh -X -Y -p 7262 maule@vaccinium.vcru.wisc.edu rm -fr /var/www/html/$(CIRCOS_FOLDER)
 		scp -r -P 7262 $(SANDBOX)/build maule@vaccinium.vcru.wisc.edu:/var/www/html/$(CIRCOS_FOLDER)
 
+GenColocatedQTL:
+	R CMD BATCH qtl_pipeline_16_plotcolocatedqtllinkagemaps.R
+	cd ../../Data/publication/figures && ../../../Scripts/misc/annotatefig.sh cnj02_qtl_collated.grouped.consensus.png A && ../../../Scripts/misc/annotatefig.sh cnj04_qtl_collated.grouped.consensus.png B && ../../../Scripts/misc/annotatefig.sh cnj0x_qtl_collated.grouped.consensus.png C
+	cd ../../Data/publication/figures && montage -background white -mode concatenate -tile 3x1 cnj02_qtl_collated.grouped.consensus.A.png cnj04_qtl_collated.grouped.consensus.B.png cnj0x_qtl_collated.grouped.consensus.C.png cnj0x_qtl_collated.grouped.consensus.ABC.png
+
+	#cd ../../Data/publication/figures && for qtlpdf in *.grouped.consensus.pdf; do qtlbasename=$${qtlpdf%%.pdf}; cmd="pdf2svg $${qtlpdf} $${qtlbasename}.svg"; echo "$$cmd"; eval "$$cmd"; done
+
 clean:
 		rm *.Rout
 		make -C $(HTCONDOR) $@
