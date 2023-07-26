@@ -63,6 +63,8 @@ def generate_submit_data(num_clusters, num_perms, seed, workflow, model, trait, 
         subprocess.call("tar -rf %s %s" % (tarfile,masterfold), shell=True)
         #Now that the master folder has been added to the tarball, remove the folder from current path.
         shutil.rmtree(masterfold)
+    else:
+        print("All BLUPs NA: mmer failed to fit Model {}, trait {}.".format(model,trait))
 
 
 if __name__ == '__main__':
@@ -83,7 +85,7 @@ if __name__ == '__main__':
     #Loop through entries in the config file and generate a submit file for each entry
     #Don't forget to look for masked items and ignore them.
     #Generate a submit file for each model-trait under consideration.
-    with open(workflow+'/configs/model-traits.cfg.csv', 'rU') as csvfile:
+    with open(workflow+'/configs/model-traits.cfg.csv', 'r') as csvfile:
         config_reader = csv.DictReader(csvfile, delimiter=',', quotechar='"')
         i = 0
         for model_trait in config_reader:
@@ -92,5 +94,7 @@ if __name__ == '__main__':
             mask = model_trait["mask"]
             if( (not mask) or (mask != "TRUE") ):
                 generate_submit_data(num_cluster_per_trait,num_perms_per_trait,initial_seed+(i),workflow,model,trait,qtl_method,r_version,template,tarfile)
+            else:
+                print("Model {}, Trait {} is masked with value {}.".format(model,trait,mask))
             i += 1
         csvfile.close()
