@@ -60,7 +60,7 @@ cnjpop.pheno.df <- cnjpop.pheno.df %>%
 #Calculate means of uprights
 cnjpop.pheno.means.df <- cnjpop.pheno.df %>%
                             group_by(population,year,accession_name,accession,row,column) %>%
-                            summarize(across(num_peds:chimera_umccLogY,mean,na.rm=T))
+                            summarize(across(num_peds:chimera_umccLogY, \(x) mean(x,na.rm=T)))
 
 #Filter out parents for comparing parental values to children values
 #cnjpop.pheno.parents.df <- cnjpop.pheno.df %>% filter(!grepl("CNJ0.*", cnjpop.pheno.df$accession_name))
