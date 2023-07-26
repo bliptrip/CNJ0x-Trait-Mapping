@@ -6,17 +6,17 @@ output: html_document
 params:
   install_deps: FALSE #Whether to install dependencies
   clean_traits: FALSE #Whether to run the code to clean up the trait data: Remove outliers, etc
-  workflow: 9
+  workflow: 11 
   sandbox: sandbox #Name of folder to place circos files needed to render QTL circos plots.
 ---
 
 ## Setup
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, include=TRUE, message=FALSE);
+knitr::opts_chunk$set(echo = FALSE, include=TRUE, message=FALSE, root.dir=paste0(getwd(),"/R"));
 workflow  = paste0("../../Workflows/",params$workflow);
 rRoot     = paste0(getwd(),"/R")
-# Set environment variables that will be available for bash scripts (Make invocation)
+# Set environment variables that will be available for bash scripts (Make invocation)   
 Sys.setenv(WORKFLOW=workflow)
 Sys.setenv(SANDBOX=params$sandbox)
 ```
@@ -65,7 +65,7 @@ source('analyze_remove_outliers.R', echo=TRUE);
 ## Calculate Upright Means Within Years
 
 ```{r means}
-setwd(rRoot);
+setwd(rRoot)
 source('qtl_pipeline_00_1_means.R');
 ```
 
@@ -671,7 +671,7 @@ setwd(rRoot)
 data <- cnj02.merged.means.tb %>% select(!c(accession_name, row, column))
 corr.tb <- cor(data, use="pairwise.complete.obs") 
 pvals <- tryCatch( {
-    ggcorrplot::cor_pmat(data.tb)
+    ggcorrplot::cor_pmat(data)
 },
 error = function(e) NULL
 );
@@ -686,7 +686,7 @@ rl <- rle(clusts.nsingleton)$lengths
 corr.tb <- corr.tb[nns,nns] #Prune out singletons
 rect.labels <- nns[c(cumsum(c(1,rl[1:length(rl)-1])),length(nns))]
 if( !is.null(pvals) ) {
-    pvals <- pvals[ns,ns]
+    pvals <- pvals[nns,nns]
 }
 data.tb <- list(corr=corr.tb, p.mat=pvals)
 p.cnj02.nonsingletons = gencorrplot(data.tb, data_is_cor = TRUE, width=2048, height=2048, tl.cex=0.4, cl.cex=0.75, number.cex=0.40, type="full", rect.labels=rect.labels,page=FALSE)
@@ -700,7 +700,7 @@ setwd(rRoot)
 data <- cnj04.merged.means.tb %>% select(!c(accession_name, row, column))
 corr.tb <- cor(data, use="pairwise.complete.obs") 
 pvals <- tryCatch( {
-    ggcorrplot::cor_pmat(data.tb)
+    ggcorrplot::cor_pmat(data)
 },
 error = function(e) NULL
 );
@@ -715,7 +715,7 @@ rl <- rle(clusts.nsingleton)$lengths
 corr.tb <- corr.tb[nns,nns] #Prune out singletons
 rect.labels <- nns[c(cumsum(c(1,rl[1:length(rl)-1])),length(nns))]
 if( !is.null(pvals) ) {
-    pvals <- pvals[ns,ns]
+    pvals <- pvals[nns,nns]
 }
 data.tb <- list(corr=corr.tb, p.mat=pvals)
 p.cnj04.nonsingletons = gencorrplot(data.tb, data_is_cor = TRUE, width=2048, height=2048, tl.cex=0.4, cl.cex=0.75, number.cex=0.40, type="full", rect.labels=rect.labels)
@@ -745,7 +745,7 @@ setwd(rRoot);
 source('qtl_pipeline_01_genmodels.R', echo=FALSE);
 ```
 
-```{r model-analyze, include=FALSE}
+```{r model-analyze}
 setwd(rRoot);
 source('qtl_pipeline_01_analyzemodels.R', echo=FALSE);
 ```

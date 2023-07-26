@@ -20,42 +20,69 @@ traits collected is displayed in Table \@ref(tab:trait-tab-kable).
 ```{r trait-tab-setup, echo=FALSE, message=FALSE, include=TRUE, results='asis'}
 trait_tab <- readr::read_delim("../Data/publication/tables/trait_description_table.csv", delim=",", escape_backslash=TRUE, na=c("NA")) 
 trait_tab_cat <- trait_tab %>% 
-    mutate(category_repeat=(Category == c("",Category[-length(Category)]))) %>%
-	mutate(Category = ifelse(category_repeat, "", Category)) %>%
-    dplyr::select(Trait,Abbreviation,Category,Units,Description)
+    dplyr::select(Trait,Abbreviation,Category,Units,Description) %>%
+    group_by(Category) %>%
+    mutate(category_repeat=TRUE) %>%
+    do(tibble::add_row(.,
+                       Trait=.$Category[1], #Replace trait with category for making a more compact table
+                       Abbreviation="",
+                       Category=.$Category[1],
+                       Units="",
+                       Description="",
+                       category_repeat=FALSE,
+                       .before=1 #Inject at top of tibble
+                       )) %>%
+    ungroup()
 ```
 
-```{r trait-tab-flex, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="Traits collected from populations CNJ02 and CNJ04 in years 2011-2014.", eval=params$trait_tab_flex}
-ftrait_tab_cat <-   flextable(trait_tab_cat) %>%
-                    mk_par(j = "Units", part="body", value=as_paragraph(as_equation(., width=1, height=0.2)), use_dot=TRUE) %>%
-                    flextable::footnote(i = 1, 
-                            j = ~ Category + Abbreviation,
-                            value = as_paragraph(c("Upright traits were collected on a per fruiting upright basis.  Largest berry traits represent that phenotypic values of the largest berry sampled on a given fruiting upright.  Plot traits were collected by harvesting berries from square foot samples of plots and running appropriate assays.  All plot traits were collected amd assayed onsite at NJAES.  Upright and largest berry traits were collected at NJAES, but assayed at UW-Madison.",
-                                                    "Trait abbreviations are used to label subsequent figures.")),
-                            ref_symbols = c("a","b"),
-                            part = "header") %>%
-                    theme_booktabs() %>%
-                    hline( i = (which(trait_tab_cat$Category != "")-1)[-1], part="body") %>%
-                    set_table_properties(width=table.width)
-knitr::knit_print(ftrait_tab_cat)
-```
-
-```{r trait-tab-kable, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="Traits collected from populations CNJ02 and CNJ04 in years 2011-2014.", eval=!params$trait_tab_flex}
+```{r trait-tab-kable, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="Summary of traits collected from cranberry (Vaccinium macrocarpon Ait.) populations CNJ02 and CNJ04 in years 2011-2014."}
 clabel <- knitr::opts_current$get('label')
 caption <- knitr::opts_current$get('tab.cap')
+trait_foot <- "Upright Traits were measured on 10 fruiting-uprights. Largest berry traits represent phenotypic values of the largest berry on a given fruiting upright. Plot traits were collected by harvesting berries from a 0.09 m2 plot sample and running appropriate assays onsite at Marucci Center. Upright Traits and Largest Berry Traits were collected at Rutgers and assayed at UW-Madison. Trait abbreviations are used to label subsequent figures.  Berry Shape Chimera Parameters were derived from canonical representations of berry shapes.  Expressions between parentheses indicate trait units or categorical values."
+abbreviation_foot <- "Trait abbreviations are used to label subsequent figures."
+
 if ( is_word_output() ) {
-    caption <- paste0(caption,
-                      "Upright traits were collected on a per fruiting upright basis.  Largest berry traits represent that phenotypic values of the largest berry sampled on a given fruiting upright.  Plot traits were collected by harvesting berries from square foot samples of plots and running appropriate assays.  All plot traits were collected amd assayed onsite at NJAES.  Upright and largest berry traits were collected at NJAES, but assayed at UW-Madison.",
-                      "Trait abbreviations are used to label subsequent figures.")
-    trait_tab_cat <- trait_tab_cat %>%
-        mutate(Units=ifelse(Units != "",paste0("$",Units,"$"),Units))
-#    trait_tab_maxlen = trait_tab_cat %>% mutate(across(.fns=~nchar(.x))) %>% summarize(across(.fns=~paste0(rep('-',max(.x)),collapse='')))
-#    for( catlinei in which(trait_tab_cat$Category != '') ) {
-#        trait_tab_cat <- trait_tab_cat %>% add_row(trait_tab_maxlen, .before=catlinei)
-#    }
-    ktrait_tab_cat <- trait_tab_cat %>% knitr::kable(booktabs=TRUE, format = 'pipe', escape = FALSE, caption=caption)
+ftrait_tab_cat <-   
+    dplyr::select(trait_tab_cat,c(Trait,Abbreviation,Units,Description)) %>%
+                    mutate(Units=gsub("^\\$","",Units)) %>%
+                    mutate(Units=gsub("\\$$","",Units)) %>%
+                    flextable(col_keys=c("Trait","Abbreviation","Description")) %>%
+                    set_header_labels(Abbreviation="Abbv") %>%
+                    fontsize(part="body",
+                            size=11) %>%
+                    hline( i = which(trait_tab_cat$category_repeat == TRUE), part="body", border=fp_border_default(color="#DDDDDD", width=0.25)) %>%
+                    hline( i = (which(trait_tab_cat$category_repeat == FALSE)-1)[-1], part="body") %>%
+                    padding(j = "Trait",
+                            padding.left = 12) %>%
+                    bold(i = ~ trait_tab_cat$category_repeat == FALSE, 
+                             j = "Trait", 
+                             part = "body") %>% 
+                    fontsize(i = ~ trait_tab_cat$category_repeat == FALSE, 
+                             j = "Trait", 
+                             part = "body",
+                             size = 12) %>%
+                    padding(i = ~ trait_tab_cat$category_repeat == FALSE, 
+                            j = "Trait", 
+                            part="body",
+                            padding.left=0) %>%
+                    mk_par(i = (which(!is.empty(trait_tab_cat$Units))), j = "Trait", part="body", value=as_paragraph(Trait,"\n(",as_equation(Units),")")) %>%
+                    fontsize(part="header",
+                             size = 12) %>%
+                    bold(i = 1,
+                         part="header") %>%
+                    flextable::footnote(i = 1, 
+                            j = c("Trait", "Abbreviation"),
+                            value = as_paragraph(c(trait_foot, abbreviation_foot)),
+                            ref_symbols = c("a","b"),
+                            part = "header") %>%
+                    fontsize(part="footer",
+                             size=10)
+    flextable::save_as_docx(ftrait_tab_cat, 
+                            path="../Data/publication/tables/categorical_traits.docx", 
+                            pr_section=prop_section(page_size = page_size(orient="landscape"), type="continuous"),
+                            align="center")
 } else {
-    ktrait_tab_cat <- rename(trait_tab_cat,'Category[note]'=Category,'Abbreviation[note]'=Abbreviation) %>%
+    ftrait_tab_cat <- rename(trait_tab_cat,'Category[note]'=Category,'Abbreviation[note]'=Abbreviation) %>%
         mutate(Units=ifelse(Units != "",paste0("$",Units,"$"),Units)) %>%
         kable(  booktabs=TRUE, 
                 escape = FALSE,
@@ -66,22 +93,154 @@ if ( is_word_output() ) {
         row_spec(row=(which(trait_tab_cat["Category"] != "")-1)[-1], hline_after = TRUE) %>%
         kable_paper("striped", font_size=table.font_size, full_width=FALSE) %>%
         kable_styling(latex_options = "scale_down") %>%
-        add_footnote(c("Upright traits were collected on a per fruiting upright basis.  Largest berry traits represent that phenotypic values of the largest berry sampled on a given fruiting upright.  Plot traits were collected by harvesting berries from square foot samples of plots and running appropriate assays.  All plot traits were collected amd assayed onsite at NJAES.  Upright and largest berry traits were collected at NJAES, but assayed at UW-Madison.",
+        add_footnote(c(caption_ext,
                 "Trait abbreviations are used to label subsequent figures."))
 }
-print_table(ktrait_tab_cat, clabel, caption) #Render
+print_table(ftrait_tab_cat, clabel, caption) #Render
 ```
 
-```{r berry-shape-template, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="50%", fig.cap="Examples of categories of berry shape parameters, used to help classify cranberry shape [@Franklin1958]."}
-    knitr::include_graphics(c("../Data/publication/figures/fruit_shape_slide.jpg"))
+```{r cross-study-trait-tab-setup, echo=FALSE, message=FALSE, include=TRUE, results='asis'}
+cross_study_trait_tab <- readr::read_delim("../Data/publication/tables/crossstudy_trait_description_table.csv", delim=",", escape_backslash=TRUE, na=c("NA")) 
+cross_study_trait_tab_study <- cross_study_trait_tab %>% 
+    group_by(Study) %>%
+    mutate(study_repeat=TRUE) %>%
+    do(tibble::add_row(.,
+                       Study=.$Study[1],
+                       Trait=.$Study[1], #Replace trait with category for making a more compact table
+                       Abbreviation="",
+                       Units="",
+                       Description="",
+                       study_repeat=FALSE,
+                       .before=1 #Inject at top of tibble
+                       )) %>%
+    ungroup()
 ```
 
-```{r calyx-lobe-shape, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="50%", fig.cap="Examples of categories of cranberry calyx lobe and shape parameters used to inform conventional phenotyping methods [@Franklin1958]"}
-    knitr::include_graphics(c("../Data/publication/figures/fruit_calyx_slide.jpg"))
+```{r cross-study-trait-tab, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="Abbreviations and descriptions for relevant traits referenced from Diaz-Garcia et al. (2018a), Diaz-Garcia et al. (2018b), and Schlautman et al. (2015)."}
+clabel <- knitr::opts_current$get('label')
+caption <- knitr::opts_current$get('tab.cap')
+
+if ( is_word_output() ) {
+ftrait_cross_study_tab_study <- cross_study_trait_tab_study %>%
+                    mutate(Units=gsub("^\\$","",Units)) %>%
+                    mutate(Units=gsub("\\$$","",Units)) %>%
+                    flextable(col_keys=c("Trait","Abbreviation","Description")) %>%
+                    set_header_labels(Abbreviation="Abbv") %>%
+                    fontsize(part="body",
+                            size=11) %>%
+                    hline( i = which(cross_study_trait_tab_study$study_repeat == TRUE), part="body", border=fp_border_default(color="#DDDDDD", width=0.25)) %>%
+                    hline( i = (which(cross_study_trait_tab_study$study_repeat == FALSE)-1)[-1], part="body") %>%
+                    bold( i = which(cross_study_trait_tab_study$study_repeat == FALSE), part="body") %>%
+                    italic( i = which(cross_study_trait_tab_study$study_repeat == FALSE), part="body") %>%
+                    flextable::footnote(i = 1, 
+                            j = c("Trait"),
+                            value = as_paragraph("Bold italic text indicates the study of origin.  Entries between parentheses indicate the units of measurement."),
+                            ref_symbols = c("a"),
+                            part = "header") %>%
+                    padding(j = "Trait",
+                            padding.left = 12) %>%
+                    fontsize(i = ~ study_repeat == FALSE, 
+                             j = ~ Trait, 
+                             part = "body",
+                             size = 12) %>%
+                    padding(i = ~ study_repeat == FALSE, 
+                            j = ~ Trait, 
+                            part="body" ,
+                            padding.left=0) %>%
+                    fontsize(part="header",
+                             size = 12) %>%
+                    bold(part="header") %>%
+                    mk_par(i = (which(!is.empty(cross_study_trait_tab_study$Units))), 
+                           j = ~ Trait, 
+                           part="body", 
+                           value=as_paragraph(Trait,"\n(",as_equation(Units),")")) %>%
+                    fontsize(part="footer",
+                             size=10)
+
+    flextable::save_as_docx(ftrait_cross_study_tab_study,
+                            path="../Data/publication/tables/cross_study_traits.docx", 
+                            pr_section=prop_section(page_size = page_size(orient="landscape"), type="continuous"),
+                            align="center")
+} else {
+}
 ```
 
-```{r upright-length, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="50%", fig.cap="Picture clarifying how to traditionally measure upright length [@Eck1931-1990]."}
-    knitr::include_graphics(c("../Data/publication/figures/upright_length_bw.png"))
+```{r cross-study-trait-groups-setup, echo=FALSE, message=FALSE, include=TRUE, results='asis'}
+cross_study_trait_groups_tab_orig <- readr::read_delim("../Data/publication/tables/crossstudy_trait_groups_table.csv", delim=",", escape_backslash=TRUE, na=c("NA")) 
+cross_study_trait_groups_tab <- cross_study_trait_groups_tab_orig %>% 
+    group_by(Set) %>%
+    mutate(set_repeat=TRUE) %>%
+    do(tibble::add_row(.,
+                       Set=.$Set[1],
+                       Trait_Groups=.$Set[1], #Replace trait groups with set
+                       Studies=.$Studies[1],
+                       Populations=.$Populations[1],
+                       Filter="",
+                       set_repeat=FALSE,
+                       .before=1 #Inject at top of tibble
+                       )) %>%
+    ungroup() %>%
+    mutate(Set=ifelse(set_repeat,"",Set),
+           Studies=ifelse(set_repeat,"",Studies),
+           Populations=ifelse(set_repeat,"",Populations))
+```
+
+```{r cross-study-trait-groups-tab, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="Trait groupings for each set of collocated QTL. Trait groups were selected based on correlated clusters or similar categories of traits. The Filter column details the constraints applied to the synthetic metaQTL that are displayed in the linkage maps. ▁(R^(2 ) ) is the mean percent marker variance explained across all composite QTL."}
+clabel <- knitr::opts_current$get('label')
+caption <- knitr::opts_current$get('tab.cap')
+
+if ( is_word_output() ) {
+wf <- which(cross_study_trait_groups_tab$set_repeat == FALSE)
+wt <- which(cross_study_trait_groups_tab$set_repeat == TRUE)
+fcross_study_trait_groups_tab <- cross_study_trait_groups_tab %>%
+                    mutate(Filter=gsub("^\\$","",Filter)) %>%
+                    mutate(Filter=gsub("\\$$","",Filter)) %>%
+                    flextable(col_keys=c("Trait_Groups","Studies","Populations","Filter")) %>%
+                    set_header_labels(Trait_Groups="Trait Groups") %>%
+                    fontsize(part="body",
+                             size=11) %>%
+                    hline(i = wt[1:length(wt)-1], 
+                          j = ~Trait_Groups,
+                          part="body", 
+                          border=fp_border_default(color="#DDDDDD", width=0.25)) %>%
+                    hline(i = (wf-1)[-1], 
+                          part="body") %>%
+                    bold(i = wf, 
+                         j = ~Trait_Groups,
+                         part="body") %>%
+                    italic(i = wf, 
+                           j = ~Trait_Groups,
+                           part="body") %>%
+                    flextable::footnote(i = 1, 
+                            j = c("Trait_Groups"),
+                            value = as_paragraph("Bold entries designate the separate sets used in colocation QTL analysis."),
+                            ref_symbols = c("a"),
+                            part = "header") %>%
+                    padding(j = ~ Trait_Groups,
+                            padding.left = 12) %>%
+                    fontsize(i = wf, 
+                             j = ~ Trait_Groups, 
+                             part = "body",
+                             size = 12) %>%
+                    padding(i = wf, 
+                            j = ~ Trait_Groups, 
+                            part="body" ,
+                            padding.left=0) %>%
+                    fontsize(part="header",
+                             size = 12) %>%
+                    bold(part="header") %>%
+                    mk_par(j = ~ Filter, 
+                           part="body", 
+                           value=as_paragraph(as_equation(Filter))) %>%
+                    fontsize(part="footer",
+                             size=10)
+                    
+    flextable::save_as_docx(fcross_study_trait_groups_tab,
+                            path="../Data/publication/tables/cross_study_trait_groups.docx", 
+                            pr_section=prop_section(page_size = page_size(orient="landscape"), type="continuous"),
+                            align="center")
+} else {
+}
 ```
 
 
@@ -116,91 +275,6 @@ one, but higher, indicating a higher length versus width.  Tortuosity describes 
 and in this case, a slope chain code (SCC) method was applied to generate this tortuosity value [@Bribiesca2013].  Solidity
 describes the shape density relative to it’s convex hull.  Lower solidity values indicate more *'waviness'* in the berry
 contour, while higher values have smoother contour curvature.
-
-
-```{r berry-chimera-table-gen, echo=FALSE, message=FALSE, include=TRUE, eval=params$table_gen_berry_chimera}
-    shapes <- c("round","oblong","oval","pyriform","spindle","oblong","oblong","round","oval","round")
-    system2("misc/berry_diffdistance.sh", args=shapes)
-
-    tbl <- tibble(upright_no=c(1:length(shapes)), shape=shapes) %>%
-            mutate("Template"="",
-                   "Distance Transform"="",
-                   "Composite Distance Transform"="",
-                   "Composite Chimera"="",
-                   normalized=cell_spec(spec_image(paste0(normalizePath(paste0("../Data/phenotypic\ data/DerivedData/berry_templates/fruit_template_",shape,"_binary.png"))),
-                   diffDistance=paste0(normalizePath(paste0("../Data/publication/figures/fruit_template_",shape,"_diffdistance.png"))),
-                   compositeDiffDistance=paste0(normalizePath("../Data/publication/figures/fruit_chimera_diffdistance.png")),
-                   compositeBinary=paste0(normalizePath("../Data/publication/figures/fruit_chimera_binary.png"))) %>%
-            rename(`Upright Number`=upright_no, `Berry Shape`=shape)
-
-    tbl <- tibble(upright_no=c(1:length(shapes)), shape=shapes) %>%
-            mutate("Template"="",
-                   "Distance Transform"="",
-                   "Composite Distance Transform"="",
-                   "Composite Chimera"="",
-                   normalized=paste0(normalizePath(paste0("../Data/phenotypic\ data/DerivedData/berry_templates/fruit_template_",shape,"_binary.png"))),
-                   diffDistance=paste0(normalizePath(paste0("../Data/publication/figures/fruit_template_",shape,"_diffdistance.png"))),
-                   compositeDiffDistance=c(rep(paste0(normalizePath("../Data/publication/figures/blank_berry.png")),4),paste0(normalizePath("../Data/publication/figures/fruit_chimera_diffdistance.png")),rep(paste0(normalizePath("../Data/publication/figures/blank_berry.png")),5)),
-                   compositeBinary=c(rep(paste0(normalizePath("../Data/publication/figures/blank_berry.png")),4),paste0(normalizePath("../Data/publication/figures/fruit_chimera_binary.png")),rep(paste0(normalizePath("../Data/publication/figures/blank_berry.png")),5))) %>%
-            rename(`Upright Number`=upright_no, `Largest Berry Shape Class`=shape)
-    ktbl <- tbl %>%
-                select(!c(normalized,diffDistance,compositeDiffDistance,compositeBinary)) %>%
-                kable(align='cccccc', escape = FALSE) %>%
-                kable_minimal("basic", full_width=FALSE) %>%
-                column_spec(1, bold=TRUE) %>%
-                column_spec(2, bold=TRUE) %>%
-                column_spec(3, width="1cm", image=spec_image(paste0('file://',tbl$normalized),131,202)) %>%
-                column_spec(4, width="1cm", image=spec_image(paste0('file://',tbl$diffDistance),131,202)) %>%
-                column_spec(5, width="1cm", image=spec_image(paste0('file://',tbl$compositeDiffDistance),131,202)) %>%
-                column_spec(6, width="1cm", image=spec_image(paste0('file://',tbl$compositeBinary),131,202))
-
-    ktbl %>% save_kable("../Data/publication/figures/berry_chimera_table.png")
-
-    #Flextable's as_image() wasn't working for me, and I grew increasingly frustrated with it.
-    #flxtbl <- flextable(tbl, col_keys=c("upright_no", "shape", "normalized_img", "diffDistance_img")) %>%
-    #            flextable::compose(j = "diffDistance_img", value = as_paragraph(as_image(src="diffDistance",width=0.826,height=1.27,unit="cm")), use_dot=TRUE, part="body") %>%
-    #            set_header_labels(upright_no="Upright Number", shape="Shape", normalized_img="Normalized Template Image", diffDistance_img="Differential Distance Transform Image")
-```
-
-```{r berry-chimera-table, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%", fig.cap="Example showing the methodology for generating representative genotype shape, or berry chimera.  This berry chimera is subsequently used as an image to generate digital image processing shape descriptors used in creating quantifying features for QTL mapping."}
-    knitr::include_graphics(c("../Data/publication/figures/berry_chimera_table.png"))
-```
-
-
-```{r cat-trait-tab, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="List of categorical traits and their mapped numeric values.  Generally, numeric values were chosen such that larger values represented more desirable breeding attributes."}
-cat_trait_tab <- readr::read_csv("../Data/publication/tables/categorical_traits.csv", na=c("NA")) %>%
-                    mutate(trait_repeat=(Trait== c("",Trait[-length(Trait)]))) %>%
-                	mutate(Trait = ifelse(trait_repeat, "", Trait))  
-clabel <- knitr::opts_current$get('label')
-caption <- knitr::opts_current$get('tab.cap')
-#ftrait_tab_cat <-   flextable(cat_trait_tab %>% dplyr::select(Trait,'Categorical Value','Numeric Value')) %>%
-#				    align(j=c(1,2), align="left", part="body") %>%
-#				    align(j=c(3), align="center", part="body") %>%
-#				    bold(j=1, bold=TRUE) %>%
-#                    theme_booktabs() %>%
-#                    hline( i = (which(cat_trait_tab$Trait != "")-1)[-1], part="body") %>%
-#                    set_table_properties(layout="autofit", width=table.width) %>%
-#                    fontsize(8)
-
-if ( is_word_output() ) {
-        ktrait_tab_cat <- knitr::kable( cat_trait_tab %>% dplyr::select(Trait,'Categorical Value','Numeric Value'), 
-                                        format='pipe',
-                                        booktabs=TRUE, 
-                                        escape = FALSE,
-                                        align="llr",
-                                        caption=caption)
-} else {
-        ktrait_tab_cat <-   kable(cat_trait_tab %>% dplyr::select(Trait,'Categorical Value','Numeric Value'), 
-                                booktabs=TRUE, 
-                                escape = FALSE,
-                                align="llr",
-                                caption=caption) %>%
-                            column_spec(1, bold=TRUE) %>%
-                            row_spec(row=(which(cat_trait_tab$Trait != "")-1), hline_after = TRUE) %>%
-                            kable_paper("striped", "scale_down", font_size=table.font_size, full_width=FALSE)
-}
-print_table(ktrait_tab_cat, clabel, caption) #Render
-```
 
 All traits were curated by removing entries marked as rotten, and outliers were detected and trimmed by assessing residuals of each trait regressed by population, genotype, and year.  Additional observations were culled if 
 they exceeded three standard deviation units from the mean under a Gaussian standard distribution.   Subsequent analysis and trait mapping was applied to all traits based the mean trait values across the ten sampled uprights, for each genotype-year.
@@ -260,8 +334,8 @@ variances estimated from the mixed model\@ref(eq:mm-year-ge).
 
 ## QTL mapping
 
-QTL mapping was performed by using the `R/qtl` [CRAN](https://cran.r-project.org/) package, a software toolkit for mapping experimental crosses [@Broman2003].  Genetic linkage maps consisting of SSR and microsatellite markers were used for QTL mapping
-each respective population, CNJ02 ($n=3925$) and CNJ04 ($n=3081$) [@Schlautman2017].  To infer QTLs, previously modeled genotype BLUPs were substituted in lieu of 
+QTL mapping was performed by using the `R/qtl` [CRAN](https://cran.r-project.org/) package, a software toolkit for mapping experimental crosses [@Broman2003].  A composite map consisting of SSR and SNP markers was used for QTL mapping
+each respective population in order to facilitate inter-population and inter-study QTL position comparisions [@Schlautman2017].  To infer QTLs, previously modeled genotype BLUPs were substituted in lieu of 
 raw phenotypes in the `R/qtl` cross table.  QTL were detected using two methods: a single-QTL interval mapping method and a model selection approach.   Both methods used Haley-Knott regression to model QTL between genetic map markers.  The single-QTL method uses
 the `scanone()` function, with significant QTL determined using scanone() run against 1,000 permutations of the phenotypes in order to simulate the LOD distribution of the NULL model.
 The model selection approach uses the `stepwiseqtl()` function.  This function runs a forward/backward model search algorithm by which additive and interacting terms are successively added to the model, followed by 'backward' pruning of other model terms that 

@@ -1,363 +1,98 @@
 # Supplemental {#supplemental}
 
-```{r supplemental-setup, echo=FALSE, message=FALSE, include=FALSE}
-#Restore the workflow, as previous calls to 'load()' will clobber the workflow variable
-workflow=params$workflow
+```{r berry-shape-template, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="50%", fig.cap="Examples of categories of berry shape parameters, used to help classify cranberry shape [@Franklin1958]."}
+    knitr::include_graphics(c("../Data/publication/figures/fruit_shape_slide.jpg"))
 ```
 
-## Trait Distribution Plots
-
-### Upright Traits
-
-#### Yield Trait Distribution Plots
-
-```{r trait-uprightyield-density-cnj0x-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_yield.density.cnj0x.png")
+```{r calyx-lobe-shape, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="50%", fig.cap="Examples of categories of cranberry calyx lobe and shape parameters used to inform conventional phenotyping methods [@Franklin1958]"}
+    knitr::include_graphics(c("../Data/publication/figures/fruit_calyx_slide.jpg"))
 ```
 
-```{r trait-uprightyield-density-cnj0x-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
-    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
+```{r upright-length, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="50%", fig.cap="Picture clarifying how to traditionally measure upright length [@Eck1931-1990]."}
+    knitr::include_graphics(c("../Data/publication/figures/upright_length_bw.png"))
 ```
 
-```{r trait-uprightyield-density-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
+```{r berry-chimera-table-gen, echo=FALSE, message=FALSE, include=TRUE, eval=params$table_gen_berry_chimera}
+    shapes <- c("round","oblong","oval","pyriform","spindle","oblong","oblong","round","oval","round")
+    system2("misc/berry_diffdistance.sh", args=shapes)
+
+    tbl <- tibble(upright_no=c(1:length(shapes)), shape=shapes) %>%
+            mutate("Template"="",
+                   "Distance Transform"="",
+                   "Composite Distance Transform"="",
+                   "Composite Chimera"="",
+                   normalized=cell_spec(spec_image(paste0(normalizePath(paste0("../Data/phenotypic\ data/DerivedData/berry_templates/fruit_template_",shape,"_binary.png"))),
+                   diffDistance=paste0(normalizePath(paste0("../Data/publication/figures/fruit_template_",shape,"_diffdistance.png"))),
+                   compositeDiffDistance=paste0(normalizePath("../Data/publication/figures/fruit_chimera_diffdistance.png")),
+                   compositeBinary=paste0(normalizePath("../Data/publication/figures/fruit_chimera_binary.png"))) %>%
+            rename(`Upright Number`=upright_no, `Berry Shape`=shape)
+
+    tbl <- tibble(upright_no=c(1:length(shapes)), shape=shapes) %>%
+            mutate("Template"="",
+                   "Distance Transform"="",
+                   "Composite Distance Transform"="",
+                   "Composite Chimera"="",
+                   normalized=paste0(normalizePath(paste0("../Data/phenotypic\ data/DerivedData/berry_templates/fruit_template_",shape,"_binary.png"))),
+                   diffDistance=paste0(normalizePath(paste0("../Data/publication/figures/fruit_template_",shape,"_diffdistance.png"))),
+                   compositeDiffDistance=c(rep(paste0(normalizePath("../Data/publication/figures/blank_berry.png")),4),paste0(normalizePath("../Data/publication/figures/fruit_chimera_diffdistance.png")),rep(paste0(normalizePath("../Data/publication/figures/blank_berry.png")),5)),
+                   compositeBinary=c(rep(paste0(normalizePath("../Data/publication/figures/blank_berry.png")),4),paste0(normalizePath("../Data/publication/figures/fruit_chimera_binary.png")),rep(paste0(normalizePath("../Data/publication/figures/blank_berry.png")),5))) %>%
+            rename(`Upright Number`=upright_no, `Largest Berry Shape Class`=shape)
+    ktbl <- tbl %>%
+                select(!c(normalized,diffDistance,compositeDiffDistance,compositeBinary)) %>%
+                kable(align='cccccc', escape = FALSE) %>%
+                kable_minimal("basic", full_width=FALSE) %>%
+                column_spec(1, bold=TRUE) %>%
+                column_spec(2, bold=TRUE) %>%
+                column_spec(3, width="1cm", image=spec_image(paste0('file://',tbl$normalized),131,202)) %>%
+                column_spec(4, width="1cm", image=spec_image(paste0('file://',tbl$diffDistance),131,202)) %>%
+                column_spec(5, width="1cm", image=spec_image(paste0('file://',tbl$compositeDiffDistance),131,202)) %>%
+                column_spec(6, width="1cm", image=spec_image(paste0('file://',tbl$compositeBinary),131,202))
+
+    ktbl %>% save_kable("../Data/publication/figures/berry_chimera_table.png")
+
+    #Flextable's as_image() wasn't working for me, and I grew increasingly frustrated with it.
+    #flxtbl <- flextable(tbl, col_keys=c("upright_no", "shape", "normalized_img", "diffDistance_img")) %>%
+    #            flextable::compose(j = "diffDistance_img", value = as_paragraph(as_image(src="diffDistance",width=0.826,height=1.27,unit="cm")), use_dot=TRUE, part="body") %>%
+    #            set_header_labels(upright_no="Upright Number", shape="Shape", normalized_img="Normalized Template Image", diffDistance_img="Differential Distance Transform Image")
 ```
 
-```{r trait-uprightyield-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for upright yield traits in CNJ02 population (A) and CNJ04 population (B)."}
-    knitr::include_graphics(imageCombined)
-```
-
-#### Secondary Yield Trait Distribution Plots
-
-```{r trait-uprightyield2-density-cnj0x-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_yield2.density.cnj0x.png")
-```
-
-```{r trait-uprightyield2-density-cnj0x-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
-    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
-```
-
-```{r trait-uprightyield2-density-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
-```
-
-```{r trait-uprightyield2-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for tangentially-related yield traits in CNJ02 population (A) and CNJ04 population (B)."}
-    knitr::include_graphics(imageCombined)
-```
-
-#### Biennial-Bearing and Rebud Distribution Plots
-
-```{r trait-bbi-density-cnj0x-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.bbi.density.cnj0x.png")
-```
-
-```{r trait-bbi-density-cnj0x-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
-    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
-```
-
-```{r trait-bbi-density-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
-```
-
-```{r trait-bbi-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for plot-sampled traits in CNJ02 (A) and CNJ04 (B) populations."}
-    knitr::include_graphics(imageCombined)
-```
-
-#### Upright Pedicel Trait Distribution Plots
-
-```{r trait-uprightped-density-cnj0x-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_ped.density.cnj0x.png")
-```
-
-```{r trait-uprightped-density-cnj0x-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
-    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
-```
-
-```{r trait-uprightped-density-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
-```
-
-```{r trait-uprightped-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for upright pedicel characteristics in CNJ02 population (A) and CNJ04 population (B)."}
-    knitr::include_graphics(imageCombined)
-```
-
-#### Largest Berry Bloom and Calyx Trait Distribution Plots
-
-```{r trait-uprightother-density-cnj0x-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_other.density.cnj0x.png")
-```
-
-```{r trait-uprightother-density-cnj0x-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
-    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
-```
-
-```{r trait-uprightother-density-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
-```
-
-```{r trait-uprightother-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for upright berry bloom and calyx traits in CNJ02 population (A) and CNJ04 population (B)."}
-    knitr::include_graphics(imageCombined)
-```
-
-#### Largest Berry Shape Trait Distribution Plots
-
-```{r trait-uprightshape-density-cnj0x-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.upright_shape.density.cnj0x.png")
-```
-
-```{r trait-uprightshape-density-cnj0x-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
-    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
-```
-
-```{r trait-uprightshape-density-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
-```
-
-```{r trait-uprightshape-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for upright shape traits in CNJ02 population (A) and CNJ04 population (B)."}
-    knitr::include_graphics(imageCombined)
+```{r berry-chimera-table, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="75%", fig.cap="Example showing the methodology for generating representative genotype shape, or berry chimera.  This berry chimera is subsequently used as an image to generate digital image processing shape descriptors used in creating quantifying features for QTL mapping."}
+    #Manually edited berry_chimera_table.png to 
+    knitr::include_graphics(c("../Data/publication/figures/berry_chimera_table.edited.png"))
 ```
 
 
-### Plot-Sampled Trait Distribution Plots
-
-```{r trait-plot-density-cnj0x-defs, echo=FALSE, message=FALSE, include=TRUE}
-    imageA = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj02.png")
-    imageAA = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj02.A.png")
-    imageB = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj04.png")
-    imageBA = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj04.B.png")
-    imageCombined = paste0(workflow,"/traits/plots/phenotypes.plot_traits.density.cnj0x.png")
-```
-
-```{r trait-plot-density-cnj0x-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(imageA, "A", "75", "25"))
-    system2("misc/annotatefig.sh", args=c(imageB, "B", "75", "25"))
-```
-
-```{r trait-plot-density-cnj0x-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1600x640+20+20","-bordercolor","black","-border","2","-tile","1x2",imageAA, imageBA, imageCombined))
-```
-
-```{r trait-plot-density-cnj0x, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Density plots for plot-sampled traits in CNJ02 (A) and CNJ04 (B) populations."}
-    knitr::include_graphics(imageCombined)
-```
-
-## Correlation Plots
-
-### CNJ02 -- All Traits
-
-```{r trait-corrplots-cnj02-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj02.ts.png"),"A"))
-    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj02.ts.inv.png"),"B"))
-```
-
-```{r trait-corrplots-cnj02-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","1x2",paste0(workflow,"/traits/plots/corrplot.cnj02.ts.A.png"), paste0(workflow,"/traits/plots/corrplot.cnj02.ts.inv.B.png"), paste0(workflow,"/traits/plots/corrplot.cnj02.ts.combined.png")))
-```
-
-```{r trait-corrplots-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for population CNJ02, ordered by A) positive correlations and B) negative correlations.  The trait relationships are calculated as Pearson's correlation coefficients, averaged over all years of data."}
-    knitr::include_graphics(paste0(workflow,"/traits/plots/corrplot.cnj02.ts.combined.png"))
-```
-
-### CNJ04 -- All Traits
-```{r trait-corrplots-cnj04-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj04.ts.png"),"A"))
-    system2("misc/annotatefig.sh", args=c(paste0(workflow,"/traits/plots/corrplot.cnj04.ts.inv.png"),"B"))
-```
-
-```{r trait-corrplots-cnj04-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","2048x2048+20+20","-bordercolor","black","-border","2","-tile","1x2",paste0(workflow,"/traits/plots/corrplot.cnj04.ts.A.png"), paste0(workflow,"/traits/plots/corrplot.cnj04.ts.inv.B.png"), paste0(workflow,"/traits/plots/corrplot.cnj04.ts.combined.png")))
-```
-
-```{r trait-corrplots-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="Trait phenotype correlation heatmaps for population CNJ04, ordered by A) positive correlations and B) negative correlations.  The trait relationships are calculated as Pearson's correlation coefficients, averaged over all years of data."}
-    knitr::include_graphics(paste0(workflow,"/traits/plots/corrplot.cnj04.ts.combined.png"))
-```
-
-## Heritability Plots
-
-### CNJ02
-
-```{r trait-h2-cnj02-def, echo=FALSE, message=FALSE, include=TRUE}
-    imageCombined = paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.cnj02.png")
-```
-
-```{r trait-h2-cnj02-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_yield.cnj02.png"),"A"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_yield2.cnj02.png"),"B"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_ped.cnj02.png"),"C"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_other.cnj02.png"),"D"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_shape.cnj02.png"),"E"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.bbi.cnj02.png"),"F"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.plot_traits.cnj02.png"),"G"))
-```
-
-```{r trait-h2-cnj02-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1946x1476+20+20","-bordercolor","black","-border","2","-tile","2x4",
-                                paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_yield.cnj02.A.png"),
-                                paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_yield2.cnj02.B.png"),
-                                paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_ped.cnj02.C.png"),
-                                paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_other.cnj02.D.png"),
-                                paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.upright_shape.cnj02.E.png"),
-                                paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.bbi.cnj02.F.png"),
-                                paste0(cnj02_workflow,"/traits/plots/h2_barplot.polar.plot_traits.cnj02.G.png"),
-                                imageCombined))
-```
-
-```{r trait-h2-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="CNJ02 population heritability plots."}
-    knitr::include_graphics(imageCombined)
-```
-
-### CNJ04
-
-```{r trait-h2-cnj04-def, echo=FALSE, message=FALSE, include=TRUE}
-    imageCombined = paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.cnj04.png")
-```
-
-```{r trait-h2-cnj04-annotate, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_annotations}
-    system2("misc/annotatefig.sh", args=c(paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_yield.cnj04.png"),"A"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_yield2.cnj04.png"),"B"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_ped.cnj04.png"),"C"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_other.cnj04.png"),"D"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_shape.cnj04.png"),"E"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.bbi.cnj04.png"),"F"))
-    system2("misc/annotatefig.sh", args=c(paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.plot_traits.cnj04.png"),"G"))
-```
-
-```{r trait-h2-cnj04-montage, echo=FALSE, message=FALSE, include=TRUE, eval=params$fig_gen_montages}
-    system2("montage", args=c("-background","white","-geometry","1946x1476+20+20","-bordercolor","black","-border","2","-tile","2x4",
-                                paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_yield.cnj04.A.png"),
-                                paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_yield2.cnj04.B.png"),
-                                paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_ped.cnj04.C.png"),
-                                paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_other.cnj04.D.png"),
-                                paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.upright_shape.cnj04.E.png"),
-                                paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.bbi.cnj04.F.png"),
-                                paste0(cnj04_workflow,"/traits/plots/h2_barplot.polar.plot_traits.cnj04.G.png"),
-                                imageCombined))
-```
-
-```{r trait-h2-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="95%", fig.show="hold", fig.align="center", fig.cap="cnj04 population heritability plots."}
-    knitr::include_graphics(imageCombined)
-```
-
-
-## BLUP Tables
-
-### CNJ02 - BLUP Summary Statistics - Complete
-
-```{r blups-table-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
-load(file=paste0(cnj02_workflow,"/.RData.01_genBLUP"))
+```{r cat-trait-tab, echo=FALSE, message=FALSE, include=TRUE, results='asis', tab.cap="List of categorical traits and their mapped numeric values.  Generally, numeric values were chosen such that larger values represented more desirable breeding attributes."}
+cat_trait_tab <- readr::read_csv("../Data/publication/tables/categorical_traits.csv", na=c("NA")) %>%
+                    mutate(trait_repeat=(Trait== c("",Trait[-length(Trait)]))) %>%
+                	mutate(Trait = ifelse(trait_repeat, "", Trait))  
 clabel <- knitr::opts_current$get('label')
-caption <- "CNJ02 Population Complete Trait and BLUP Summary."
-#tbl <- generateFullTable(model.collated.summary.wide.tb, caption=caption, tfont_size=table.font_size)
-#print_table(tbl, clabel, caption)
+caption <- knitr::opts_current$get('tab.cap')
+#ftrait_tab_cat <-   flextable(cat_trait_tab %>% dplyr::select(Trait,'Categorical Value','Numeric Value')) %>%
+#				    align(j=c(1,2), align="left", part="body") %>%
+#				    align(j=c(3), align="center", part="body") %>%
+#				    bold(j=1, bold=TRUE) %>%
+#                    theme_booktabs() %>%
+#                    hline( i = (which(cat_trait_tab$Trait != "")-1)[-1], part="body") %>%
+#                    set_table_properties(layout="autofit", width=table.width) %>%
+#                    fontsize(8)
+
+if ( is_word_output() ) {
+        ktrait_tab_cat <- knitr::kable( cat_trait_tab %>% dplyr::select(Trait,'Categorical Value','Numeric Value'), 
+                                        format='pipe',
+                                        booktabs=TRUE, 
+                                        escape = FALSE,
+                                        align="llr",
+                                        caption=caption)
+} else {
+        ktrait_tab_cat <-   kable(cat_trait_tab %>% dplyr::select(Trait,'Categorical Value','Numeric Value'), 
+                                booktabs=TRUE, 
+                                escape = FALSE,
+                                align="llr",
+                                caption=caption) %>%
+                            column_spec(1, bold=TRUE) %>%
+                            row_spec(row=(which(cat_trait_tab$Trait != "")-1), hline_after = TRUE) %>%
+                            kable_paper("striped", "scale_down", font_size=table.font_size, full_width=FALSE)
+}
+print_table(ktrait_tab_cat, clabel, caption) #Render
 ```
-
-### CNJ04 - BLUP Summary Statistics - Complete
-
-```{r blups-table-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
-load(file=paste0(cnj04_workflow,"/.RData.01_genBLUP"))
-clabel <- knitr::opts_current$get('label')
-caption <- "CNJ04 Population Complete Trait and BLUP Summary."
-#tbl <- generateFullTable(model.collated.summary.wide.tb, caption=caption, tfont_size=table.font_size)
-#print_table(tbl, clabel, caption)
-```
-
-## QTL Tables
-
-### CNJ02
-
-```{r qtl-table-scanone-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
-load(file=paste0(cnj02_workflow,"/.RData.12_geneffects.2"))
-clabel <- knitr::opts_current$get('label')
-caption <- "CNJ02 Population Top 2 QTL for all Trait x Model combinations, fit using scanone() function, with effect plots."
-tbl <- generateTable(effs.complete.tb %>% arrange(model,trait,desc(marker_variance)),
-                     meths = "scanone",
-                     caption = caption,
-                     tfont_size = table.font_size)
-print_table(tbl, clabel, caption)
-```
-
-```{r qtl-table-stepwiseqtl-cnj02, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
-load(file=paste0(cnj02_workflow,"/.RData.12_geneffects.2"))
-clabel <- knitr::opts_current$get('label')
-caption <- "CNJ02 Population Top 2 QTL for all Trait x Model combinations, fit using stepwiseqtl() function, with effect plots."
-tbl <- generateTable(effs.complete.tb %>% arrange(model,trait,desc(marker_variance)),
-                     meths = "stepwiseqtl",
-                     caption = caption,
-                     tfont_size = table.font_size)
-print_table(tbl, clabel, caption)
-```
-
-### CNJ04
-
-```{r qtl-table-scanone-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
-load(file=paste0(cnj04_workflow,"/.RData.12_geneffects.2"))
-clabel <- knitr::opts_current$get('label')
-caption <- "CNJ04 Population Top 2 QTL for all Trait x Model combinations, fit using scanone() function, with effect plots."
-tbl <- generateTable(effs.complete.tb %>% arrange(model,trait,desc(marker_variance)),
-                     meths = "scanone",
-                     caption = caption,
-                     tfont_size = table.font_size)
-print_table(tbl, clabel, caption)
-```
-
-```{r qtl-table-stepwiseqtl-cnj04, echo=FALSE, message=FALSE, include=TRUE, results='asis', out.width="85%"}
-load(file=paste0(cnj04_workflow,"/.RData.12_geneffects.2"))
-clabel <- knitr::opts_current$get('label')
-caption <- "CNJ04 Population Top 2 QTL for all Trait x Model combinations, fit using stepwiseqtl() function, with effect plots."
-tbl <- generateTable(effs.complete.tb %>% arrange(model,trait,desc(marker_variance)),
-                     meths = "stepwiseqtl",
-                     caption = caption,
-                     tfont_size = table.font_size)
-print_table(tbl, clabel, caption)
-```
-
-## Supplemental Links {#supplemental-links}
-
-### CNJ02 Comprehensive QTL Summary Table With Effect Statistics {#cnj02-qtls}
-```{r qtl-table-cnj02-copy, echo=FALSE, message=FALSE, include=TRUE}
-    #Copy the appropriate data to the 'publication' folder to make it available on server
-    system2("cp", args=c(paste0(cnj02_workflow,"/traits/effects_collated.csv"),"../Data/publication/tables/effects_collated.cnj02.csv"))
-```
-[CNJ02 QTLs](https://vaccinium.vcru.wisc.edu/maule-ch1/Data/publication/tables/effects_collated.cnj02.csv)
-
-### CNJ04 Comprehensive QTL Summary Table With Effect Statistics {#cnj04-qtls}
-```{r qtl-table-cnj04-copy, echo=FALSE, message=FALSE, include=TRUE}
-    #Copy the appropriate data to the 'publication' folder to make it available on server
-    system2("cp", args=c(paste0(cnj04_workflow,"/traits/effects_collated.csv"),"../Data/publication/tables/effects_collated.cnj04.csv"))
-```
-[CNJ04 QTLs](https://vaccinium.vcru.wisc.edu/maule-ch1/Data/publication/tables/effects_collated.cnj04.csv)
-
-### Interactive QTL Browser
-
-* [CNJ02](https://vaccinium.vcru.wisc.edu/circos-cnj02)
-* [CNJ04](https://vaccinium.vcru.wisc.edu/circos-cnj04)
