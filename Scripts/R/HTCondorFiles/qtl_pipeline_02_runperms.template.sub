@@ -12,7 +12,7 @@ output = qtl_pipeline_02_runperms.out
 error = qtl_pipeline_02_runperms.err
 log = qtl_pipeline_02_runperms.log
 
-requirements = (OpSysMajorVer =?= 7)
+requirements = (OpSysMajorVer =?= 8)
 
 # Specify that HTCondor should transfer files to and from the
 #  computer where each job runs. The last of these lines *would* be
@@ -20,7 +20,7 @@ requirements = (OpSysMajorVer =?= 7)
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 #The following will be modified by a script to include the correct version of R
-transfer_input_files=http://proxy.chtc.wisc.edu/SQUID/chtc/R{R_VERSION}.tar.gz,input.seed,input.nperms,input.model,input.trait,input.qtlmethod,../cross.rds,../../qtl_pipeline_02_runperms.R,../../packages-R{R_VERSION}.tar.gz
+transfer_input_files=http://proxy.chtc.wisc.edu/SQUID/chtc/el8/R{R_VERSION}.tar.gz,input.seed,input.nperms,input.model,input.trait,input.qtlmethod,../cross.rds,../../qtl_pipeline_02_runperms.R,../../packages-R{R_VERSION}.tar.gz
 transfer_output_files = operms.$(Process).rds
 # Tell HTCondor what amount of compute resources
 #  each job will need on the computer where it runs.
