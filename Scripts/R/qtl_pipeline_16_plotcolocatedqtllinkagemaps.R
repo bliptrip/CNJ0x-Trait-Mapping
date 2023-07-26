@@ -4,13 +4,18 @@
 #
 
 # loading libraries
+library(conflicted)
 library(RColorBrewer)
 library(tidyverse)
-library(LinkageMapView)
-#devtools::load_all("~/software/bio-services/LinkageMapView")
+devtools::load_all("~/software/bliptrip/LinkageMapView")
+
+conflict_prefer("filter", "dplyr")
+conflict_prefer("select", "dplyr")
 
 cnj02_workflow="../../Workflows/9"
 cnj04_workflow="../../Workflows/10"
+
+source('./usefulFunctions.R')
 
 all_qtl = read_csv("../../Data/publication/tables/all.raw.consensus.csv")
 
@@ -47,6 +52,17 @@ qtls_cnj02 = read_csv(paste0(cnj02_workflow,"/traits/qtl_collated.consensus.csv"
                 mutate(model=as.character(model)) %>%
                 select(any_of(columns_highlighted))
 
+h2_cnj02_raw = read_csv(paste0(cnj02_workflow,"/traits/h2.csv"),show_col_types=FALSE)
+h2_cnj02 = h2_cnj02_raw %>%
+            group_by(label_short) %>%
+            summarize(h2=mean(h2))
+
+
+h2_cnj04_raw = read_csv(paste0(cnj04_workflow,"/traits/h2.csv"),show_col_types=FALSE)
+h2_cnj04 = h2_cnj04_raw %>%
+            group_by(label_short) %>%
+            summarize(h2=mean(h2))
+
 qtls_cnj04 = read_csv(paste0(cnj04_workflow,"/traits/qtl_collated.consensus.csv")) %>%
                 filter((chr2 == '') | is.na(chr2)) %>%
                 rename(qtl_lod="qtl.lod",
@@ -75,22 +91,71 @@ qtls_diazGarciaMassive = read_csv("../../Data/publication/tables/diazGarcia2018M
                             mutate(model=as.character(model)) %>%
                             select(columns_highlighted)
 
+colocated_cnj02 = read_csv("../../Data/publication/tables/cnj02_qtl_collated.consensus.csv", show_col_types=FALSE) %>%
+                   filter(model_count >= 3 &
+                          mean_marker_variance >= 10) %>%
+                   arrange(desc(mean_marker_variance))
+write_csv(colocated_cnj02, "../../Data/publication/tables/cnj02_qtl_collated.consensus.filtered.csv")
+
+colocated_cnj02_nayay = read_csv("../../Data/publication/tables/cnj02_qtl_collated.consensus.csv", show_col_types=FALSE) %>%
+                   filter(model_count >= 2 &
+                          mean_marker_variance >= 10 &
+                          grepl("all-years",model))  %>%
+                   arrange(desc(mean_marker_variance))
+write_csv(colocated_cnj02_nayay, "../../Data/publication/tables/cnj02_qtl_collated.consensus.nayay.filtered.csv")
+
+colocated_cnj02_nay = read_csv("../../Data/publication/tables/cnj02_qtl_collated.consensus.nay.csv", show_col_types=FALSE) %>%
+                   filter(model_count >= 2 &
+                          mean_marker_variance >= 10) %>%
+                   arrange(desc(mean_marker_variance))
+write_csv(colocated_cnj02_nay, "../../Data/publication/tables/cnj02_qtl_collated.consensus.nay.filtered.csv")
+    
+min_mean_marker_variance <- min(colocated_cnj02$mean_marker_variance)
+max_mean_marker_variance <- max(colocated_cnj02$mean_marker_variance)
+med_mean_marker_variance <- median(colocated_cnj02$mean_marker_variance)
+median(colocated_cnj02$mean_marker_variance)
+max_model_count <- max(colocated_cnj02$model_count)
+
+colocated_cnj04 = read_csv("../../Data/publication/tables/cnj04_qtl_collated.consensus.csv", show_col_types=FALSE) %>%
+                   filter(model_count >= 3 &
+                          mean_marker_variance >= 10) %>%
+                   arrange(desc(mean_marker_variance))
+write_csv(colocated_cnj04, "../../Data/publication/tables/cnj04_qtl_collated.consensus.filtered.csv")
+
+colocated_cnj04_nayay = read_csv("../../Data/publication/tables/cnj04_qtl_collated.consensus.csv", show_col_types=FALSE) %>%
+                   filter(model_count >= 2 &
+                          mean_marker_variance >= 10 &
+                          grepl("all-years",model))  %>%
+                   arrange(desc(mean_marker_variance))
+write_csv(colocated_cnj04_nayay, "../../Data/publication/tables/cnj04_qtl_collated.consensus.nayay.filtered.csv")
+
+colocated_cnj04_nay = read_csv("../../Data/publication/tables/cnj04_qtl_collated.consensus.nay.csv", show_col_types=FALSE) %>%
+                   filter(model_count >= 2 &
+                          mean_marker_variance > 10) %>%
+                   arrange(desc(mean_marker_variance))
+write_csv(colocated_cnj04_nay, "../../Data/publication/tables/cnj04_qtl_collated.consensus.nay.filtered.csv")
+                          
+min_mean_marker_variance <- min(c(min_mean_marker_variance,colocated_cnj04$mean_marker_variance))
+max_mean_marker_variance <- max(c(max_mean_marker_variance,colocated_cnj04$mean_marker_variance))
+max_model_count <- max(c(max_model_count,colocated_cnj04$model_count))
+                           
 colocated_cnj02_grouped = read_csv("../../Data/publication/tables/cnj02_qtl_collated.grouped.consensus.csv") %>%
                             filter((mean_marker_variance >= 10) &
-                                   (model_count >= 4) &
-                                   (trait_count >= 2)) %>%
+                                   (model_count >= 4)) %>%
                             arrange(desc(mean_marker_variance))
+write_csv(colocated_cnj02_grouped, "../../Data/publication/tables/cnj02_qtl_collated.consensus.grouped.filtered.csv")
 
 #all_traits <- unique(unlist(strsplit(colocated_cnj02_grouped$trait,"+",fixed=TRUE)))
-min_mean_marker_variance <- min(colocated_cnj02_grouped$mean_marker_variance)
-max_mean_marker_variance <- max(colocated_cnj02_grouped$mean_marker_variance)
-max_model_count <- max(colocated_cnj02_grouped$model_count)
+min_mean_marker_variance <- min(c(min_mean_marker_variance,colocated_cnj02_grouped$mean_marker_variance))
+max_mean_marker_variance <- max(c(max_mean_marker_variance,colocated_cnj02_grouped$mean_marker_variance))
+max_model_count <- max(c(max_model_count,colocated_cnj02_grouped$model_count))
 
 colocated_cnj04_grouped = read_csv("../../Data/publication/tables/cnj04_qtl_collated.grouped.consensus.csv") %>%
                             filter((mean_marker_variance >= 10) &
                                    (model_count >= 4) &
                                    (trait_count >= 1)) %>%
                             arrange(desc(mean_marker_variance))
+write_csv(colocated_cnj04_grouped, "../../Data/publication/tables/cnj04_qtl_collated.consensus.grouped.filtered.csv")
 
 #all_traits <- unique(c(all_traits,unlist(strsplit(colocated_cnj04_grouped$trait,"+",fixed=TRUE))))
 min_mean_marker_variance <- min(c(min_mean_marker_variance,colocated_cnj04_grouped$mean_marker_variance))
@@ -101,6 +166,7 @@ colocated_diazGarciaImage_grouped = read_csv("../../Data/publication/tables/diaz
                             filter((mean_marker_variance >= 8) &
                                    (model_count >= 2)) %>%
                             arrange(desc(mean_marker_variance))
+write_csv(colocated_diazGarciaImage_grouped, "../../Data/publication/tables/diazGarcia2018ImagePhenotyping_qtl_collated.filtered.consensus.csv")
 
 #all_traits <- unique(c(all_traits,unlist(strsplit(colocated_diazGarciaImage_grouped$trait,"+",fixed=TRUE))))
 min_mean_marker_variance <- min(c(min_mean_marker_variance,colocated_diazGarciaImage_grouped$mean_marker_variance))
@@ -110,6 +176,7 @@ max_model_count <- max(c(max_model_count,colocated_diazGarciaImage_grouped$model
 colocated_diazGarciaMassive_grouped = read_csv("../../Data/publication/tables/diazGarcia2018MassivePhenotyping.supplemental.grouped.consensus.qtls.csv") %>%
                             filter(mean_marker_variance >= 10) %>%
                             arrange(desc(mean_marker_variance))
+write_csv(colocated_diazGarciaMassive_grouped, "../../Data/publication/tables/diazGarcia2018MassivePhenotyping_qtl_collated.filtered.consensus.csv")
 
 #all_traits <- unique(c(all_traits,unlist(strsplit(colocated_diazGarciaMassive_grouped$trait,"+",fixed=TRUE))))
 min_mean_marker_variance <- min(c(min_mean_marker_variance,colocated_diazGarciaMassive_grouped$mean_marker_variance))
@@ -119,9 +186,9 @@ max_model_count <- max(c(max_model_count,colocated_diazGarciaMassive_grouped$mod
 colocated_cnj0x_grouped = read_csv("../../Data/publication/tables/cnj0x_qtl_collated.grouped.consensus.csv") %>%
                             filter((mean_marker_variance >= 10) &
                                    (model_count >= 4) &
-                                   (trait_count >= 4) & 
                                    (population_count >= 2)) %>%
                             arrange(desc(mean_marker_variance))
+write_csv(colocated_cnj0x_grouped, "../../Data/publication/tables/cnj0x_qtl_collated.filtered.consensus.csv")
 
 #all_traits <- unique(c(all_traits,unlist(strsplit(colocated_cnj0x_grouped$trait,"+",fixed=TRUE))))
 min_mean_marker_variance <- min(c(min_mean_marker_variance,colocated_cnj0x_grouped$mean_marker_variance))
@@ -133,6 +200,7 @@ colocated_diazGarciaImage_cnj0x_grouped = read_csv("../../Data/publication/table
                                    (study_count >= 2) &
                                    (trait_count >= 3)) %>%
                             arrange(desc(mean_marker_variance))
+write_csv(colocated_diazGarciaImage_cnj0x_grouped, "../../Data/publication/tables/diazGarciaImagePhenotyping2018_cnj0x.filtered.consensus.csv")
 
 #all_traits <- unique(c(all_traits,unlist(strsplit(colocated_diazGarciaImage_cnj0x_grouped$trait,"+",fixed=TRUE))))
 min_mean_marker_variance <- min(c(min_mean_marker_variance,colocated_diazGarciaImage_cnj0x_grouped$mean_marker_variance))
@@ -144,6 +212,7 @@ colocated_diazGarciaMassive_cnj0x_grouped = read_csv("../../Data/publication/tab
                                    (study_count >= 2) &
                                    (population_count >= 2)) %>%
                             arrange(desc(mean_marker_variance))
+write_csv(colocated_diazGarciaMassive_cnj0x_grouped, "../../Data/publication/tables/diazGarciaMassivePhenotyping2018_cnj0x.filtered.consensus.csv")
 
 #all_traits <- unique(c(all_traits,unlist(strsplit(colocated_diazGarciaMassive_cnj0x_grouped$trait,"+",fixed=TRUE))))
 min_mean_marker_variance <- min(c(min_mean_marker_variance,colocated_diazGarciaMassive_cnj0x_grouped$mean_marker_variance))
@@ -154,6 +223,7 @@ colocated_schlautman_cnj0x_grouped = read_csv("../../Data/publication/tables/sch
                             filter((mean_marker_variance >= 10) &
                                    (study_count >= 2)) %>%
                             arrange(desc(mean_marker_variance))
+write_csv(colocated_schlautman_cnj0x_grouped, "../../Data/publication/tables/schlautman2015_cnj0x.filtered.consensus.csv")
 
 #all_traits <- unique(c(all_traits,unlist(strsplit(colocated_schlautman_cnj0x_grouped$trait,"+",fixed=TRUE))))
 min_mean_marker_variance <- min(c(min_mean_marker_variance,colocated_schlautman_cnj0x_grouped$mean_marker_variance))
@@ -162,8 +232,10 @@ max_model_count <- max(c(max_model_count,colocated_schlautman_cnj0x_grouped$mode
 
 colocated_schlautman_diazGarciaImage_cnj0x_grouped = read_csv("../../Data/publication/tables/schlautman2015_diazGarciaImagePhenotyping2018_cnj0x.grouped.consensus.csv") %>%
                             filter((mean_marker_variance >= 10) &
-                                   (study_count >= 2)) %>%
+                                   (study_count >= 2) &
+                                   (trait_count >= 3)) %>%
                             arrange(desc(mean_marker_variance))
+write_csv(colocated_schlautman_diazGarciaImage_cnj0x_grouped, "../../Data/publication/tables/schlautman2015_diazGarciaImagePhenotyping2018_cnj0x.filtered.consensus.csv")
 
 #all_traits <- unique(c(all_traits,unlist(strsplit(colocated_schlautman_diazGarciaImage_cnj0x_grouped$trait,"+",fixed=TRUE))))
 min_mean_marker_variance <- min(c(min_mean_marker_variance,colocated_schlautman_diazGarciaImage_cnj0x_grouped$mean_marker_variance))
@@ -190,7 +262,9 @@ generate_saturation <- function(mean_marker_variance,mm=saturation_model) {
     predict(mm, list(mv=mean_marker_variance))
 }
 
-colocated_all <- colocated_cnj02_grouped %>%
+colocated_all <- colocated_cnj02 %>%
+                    bind_rows(colocated_cnj04) %>%
+                    bind_rows(colocated_cnj02_grouped) %>%
                     bind_rows(colocated_cnj04_grouped) %>%
                     bind_rows(colocated_cnj0x_grouped) %>%
                     bind_rows(colocated_diazGarciaImage_grouped) %>%
@@ -221,7 +295,7 @@ if( nrow(colormap) < length(trait_levels) ) {
 set.seed(0xEEF7331) #For consistent results in sample.int()
 trait_rgb = colormap[sample.int(n=nrow(colormap),size=length(trait_levels),replace=colorr),]
 
-generate_linkagemapplots <- function(qtl_collocated, all_qtl_raw, filename, lgsums, lg.col="white", alpha=0.02, jitterloci=2, lgw=0.25, render.type='png', ...) {
+generate_linkagemapplots_primitive <- function(qtl_collocated, all_qtl_raw, filename, lgsums, lg.col="white", alpha=0.4, jitterloci=2, lgw=0.25, render.type='png', sectcolindex=NULL, ...) {
     qtl_collocated <- qtl_collocated %>%
                             mutate(hue=blend_hues(trait,trait_levels,trait_rgb),
                                    brightness=generate_brightness(model_count, max_model_count),
@@ -240,25 +314,39 @@ generate_linkagemapplots <- function(qtl_collocated, all_qtl_raw, filename, lgsu
     qmap_add <- qtl_raw %>%
                     mutate(group=paste0("lg",chr),
                            locus=trait,
-                           position=as.numeric(position)) %>%
-                    select(group,position,locus,segcol) %>%
-                    arrange(group,position)
+                           position=as.numeric(position))
 
     qmap_sectcoldf <- qtl_raw %>%
                         mutate(chr=paste0("lg",chr),
                                s=as.numeric(interval_left),
                                e=as.numeric(interval_right),
-                               col=rgb(t(col2rgb(segcol))/255,alpha=alpha)) %>%
-                        select(chr,s,e,col) %>%
-                        arrange(chr,s)
+                               col=rgb(t(col2rgb(segcol))/255,alpha=alpha))
+    if(!is.null(sectcolindex)) {
+        indexlevels = as.vector(unique(arrange(qtl_raw, pick(sectcolindex))[,sectcolindex]))[[sectcolindex]]
+        qmap_add <- qmap_add %>%
+                    mutate(index=factor(qtl_raw[[sectcolindex]], levels=indexlevels, ordered=TRUE)) %>%
+                    select(group,position,locus,segcol,index) %>%
+                    arrange(group,position)
+        qmap_sectcoldf <- qmap_sectcoldf %>%
+                                mutate(index=factor(qtl_raw[[sectcolindex]], levels=indexlevels, ordered=TRUE)) %>%
+                                select(chr,s,e,col,index) %>%
+                                arrange(chr,s)
+    } else {
+        qmap_add <- qmap_add %>%
+                    select(group,position,locus,segcol) %>%
+                    arrange(group,position)
+        qmap_sectcoldf <- qmap_sectcoldf %>%
+                                select(chr,s,e,col) %>%
+                                arrange(chr,s)
+    }
 
     qmap_sectcoldf <- data.frame(qmap_sectcoldf)
 
     qtldf <- qtl_collocated %>%
                 rename(so="interval_left",
-                    si="position",
-                    eo="interval_right",
-                    col="color") %>%
+                       si="position",
+                       eo="interval_right",
+                       col="color") %>%
                 mutate(ei=si,
                     qtl=trait,
                     chr=paste0("lg",chr)) %>%
@@ -274,12 +362,15 @@ generate_linkagemapplots <- function(qtl_collocated, all_qtl_raw, filename, lgsu
                                    position=value) %>%
                             mutate(segcol=hsv(0,0,0,0)) %>%
                             select(group,position,locus,segcol)
-
+    if(!is.null(sectcolindex)) {
+        qmap_add_lgbounds$index = indexlevels[1]
+    }
     qmap_add <- data.frame(qmap_add %>% bind_rows(qmap_add_lgbounds)) #Add in first and last segments of chromosomes so that the whole LG is shown
-    attr(qmap_add,"spec") = cols(group=col_character(),position=col_double(),locus=col_character(),segcol=col_character()) 
+    if(!is.null(sectcolindex)) {
+        qmap_add <- qmap_add %>% mutate(index=factor(index,levels=indexlevels, ordered=TRUE))
+    }
 
-    # maxpos <- floor(max(qmap_add$position[qmap_add$group %in% qtldf$chr]))
-    maxpos <- ceiling(max(all_qtl_raw$position))
+    maxpos <- ceiling(max(all_qtl_raw$position))+10
     at.axis <- seq(0, maxpos)
 
     ## put labels on ruler at every 5 cM
@@ -293,9 +384,10 @@ generate_linkagemapplots <- function(qtl_collocated, all_qtl_raw, filename, lgsu
         }
     }
     lmv.linkage.plot(qmap_add,
-                    paste0('../../Data/publication/figures/',filename,'.grouped.consensus.',render.type),
+                    filename,
                     mapthese=lgs[sort(sapply(lgs,function(x) { as.numeric(regmatches(x,regexpr("[0-9]+$",x))) }),index.return=T)$ix],
                     ruler=TRUE,
+                    lims=c(floor(min(lgsums$min))-10,ceiling(max(lgsums$max))+10),
                     lg.col=lg.col,
                     rsegcol=FALSE,
                     segcol="segcol",
@@ -312,14 +404,19 @@ generate_linkagemapplots <- function(qtl_collocated, all_qtl_raw, filename, lgsu
                     )
 }
 
-oldpar <- generate_linkagemapplots(colocated_cnj02_grouped, all_qtl, "cnj02_qtl_collated", genetic_map_lg_summary, lg.col="aliceblue", lg.minheight=4.5, noloci=T)
-oldpar <- generate_linkagemapplots(colocated_cnj04_grouped, all_qtl, "cnj04_qtl_collated", genetic_map_lg_summary, lg.col="aliceblue", lg.minheight=4.5, noloci=T)
-oldpar <- generate_linkagemapplots(colocated_cnj0x_grouped, all_qtl, "cnj0x_qtl_collated", genetic_map_lg_summary, lg.col="aliceblue", alpha=0.1, lg.minheight=4.5, noloci=T)
-oldpar <- generate_linkagemapplots(colocated_diazGarciaImage_grouped, all_qtl, "diazGarcia2018ImagePhenotyping", genetic_map_lg_summary, lg.col="aliceblue", alpha=0.06, lg.minheight=4.5, noloci=T)
-oldpar <- generate_linkagemapplots(colocated_diazGarciaMassive_grouped, all_qtl, "diazGarcia2018MassivePhenotyping", genetic_map_lg_summary, jitterloci=1, lg.col="aliceblue", alpha=0.15, lg.minheight=4.5, noloci=T)
-oldpar <- generate_linkagemapplots(colocated_diazGarciaImage_cnj0x_grouped, all_qtl, "diazGarcia2018ImagePhenotyping_cnj0x", genetic_map_lg_summary, lg.col="aliceblue", lg.minheight=4.5, noloci=T)
-oldpar <- generate_linkagemapplots(colocated_diazGarciaMassive_cnj0x_grouped, all_qtl, "diazGarcia2018MassivePhenotyping_cnj0x", genetic_map_lg_summary, lg.col="aliceblue", alpha=0.02, lg.minheight=4.5, noloci=T)
-oldpar <- generate_linkagemapplots(colocated_schlautman_cnj0x_grouped, all_qtl, "schlautman_cnj0x", genetic_map_lg_summary, lg.col="aliceblue", alpha=0.01, lg.minheight=4.5, noloci=T)
-oldpar <- generate_linkagemapplots(colocated_schlautman_diazGarciaImage_cnj0x_grouped, all_qtl, "schlautman_diazGarciaImagePhenotyping_cnj0x", genetic_map_lg_summary, lg.minheight=4.5, pdf.width=10.5, noloci=T)
+generate_linkagemapplots <- function(qtl_collocated, all_qtl_raw, filename, lgsums, lg.col="white", alpha=0.3, jitterloci=2, lgw=0.25, render.type='png', ...) {
+    filename = paste0('../../Data/publication/figures/',filename,'.grouped.consensus.',render.type)
+    generate_linkagemapplots_primitive(qtl_collocated, all_qtl_raw, filename, lgsums, lg.col, alpha, jitterloci, lgw, render.type, ...)
+}
 
-save.image(paste0(".RData.16_plotcolocatedqtllinkagemaps.R"))
+oldpar <- generate_linkagemapplots(colocated_cnj02_grouped, all_qtl, "cnj02_qtl_collated", genetic_map_lg_summary, lg.col="aliceblue", alpha=0.2, lg.minheight=5.3, lgperrow=3, noloci=T)
+oldpar <- generate_linkagemapplots(colocated_cnj04_grouped, all_qtl, "cnj04_qtl_collated", genetic_map_lg_summary, lg.col="aliceblue", alpha=0.2, lg.minheight=5.3, noloci=T)
+oldpar <- generate_linkagemapplots(colocated_cnj0x_grouped, all_qtl, "cnj0x_qtl_collated", genetic_map_lg_summary, lg.col="aliceblue", alpha=0.25, lg.minheight=5.3, noloci=T)
+oldpar <- generate_linkagemapplots(colocated_diazGarciaImage_grouped, all_qtl, "diazGarcia2018ImagePhenotyping", genetic_map_lg_summary, lg.col="aliceblue", lg.minheight=5.3, pdf.width=5.5, lgperrow=3, noloci=T)
+oldpar <- generate_linkagemapplots(colocated_diazGarciaMassive_grouped, all_qtl, "diazGarcia2018MassivePhenotyping", genetic_map_lg_summary, jitterloci=1, lg.col="aliceblue", alpha=0.4, lg.minheight=5.3, pdf.width=5, lgperrow=4, noloci=T)
+oldpar <- generate_linkagemapplots(colocated_diazGarciaImage_cnj0x_grouped, all_qtl, "diazGarcia2018ImagePhenotyping_cnj0x", genetic_map_lg_summary, lg.col="aliceblue", alpha=0.2, lg.minheight=5.3, lgperrow=3, noloci=T)
+oldpar <- generate_linkagemapplots(colocated_diazGarciaMassive_cnj0x_grouped, all_qtl, "diazGarcia2018MassivePhenotyping_cnj0x", genetic_map_lg_summary, lg.col="aliceblue", alpha=0.2, lg.minheight=5.3, noloci=T)
+oldpar <- generate_linkagemapplots(colocated_schlautman_cnj0x_grouped, all_qtl, "schlautman_cnj0x", genetic_map_lg_summary, lg.col="aliceblue", alpha=0.1, lg.minheight=5.3, lgperrow=2, noloci=T)
+oldpar <- generate_linkagemapplots(colocated_schlautman_diazGarciaImage_cnj0x_grouped, all_qtl, "schlautman_diazGarciaImagePhenotyping_cnj0x", lg.col="aliceblue", alpha=0.1, genetic_map_lg_summary, lg.minheight=5.3, lgperrow=4, noloci=T)
+
+save.image(".RData.16_plotcolocatedqtllinkagemaps.R")
