@@ -15,8 +15,9 @@ install.packages(c("qtl"), repos = "http://mirror.las.iastate.edu/CRAN/", depend
 install.packages(c("devtools"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 #require(devtools)
 #install_version("sommer", version = "4.1.2", repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) #Install specific version of sommer since every release breaks shit
-install.packages("https://cran.r-project.org/src/contrib/Archive/sommer/sommer_4.1.2.tar.gz", repos=NULL, type='source')
+#install.packages("https://cran.r-project.org/src/contrib/Archive/sommer/sommer_4.1.2.tar.gz", repos=NULL, type='source')
 #install.packages(c("sommer"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE) #Don't install latest sommer or you're guaranteed to break your code
+devtools::install_github('bliptrip/sommer@arma_inv_fix')
 install.packages(c("lattice"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 #IRanges is a part of bioconductor package: ## try http:// if https:// URLs are not supported
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -45,6 +46,8 @@ install.packages(c("formattable"), repos = "http://mirror.las.iastate.edu/CRAN/"
 install.packages(c("ggfittext"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("cowplot"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 install.packages(c("rlist"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+install.packages(c("ftExtra"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
+install.packages(c("conflicted"), repos = "http://mirror.las.iastate.edu/CRAN/", dependencies = TRUE)
 
 remotes::install_github("noamross/redoc")
 remotes::install_github("bliptrip/LinkageMapView@untangle_plot")
