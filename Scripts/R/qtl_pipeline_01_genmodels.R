@@ -106,10 +106,11 @@ geno.amat <- as.matrix(geno)
 geno.num <- atcg1234(t(geno.amat))$M
 
 #Read in the phenotype file
-pheno.means.df <-read.csv(file=pheno_dpath2fpath(pheno_file))
+pheno.means.df <- read.csv(file=pheno_dpath2fpath(pheno_file))
 pheno.means.df$rowf <- as.factor(pheno.means.df$row) #Needed for modeling row effects
 pheno.means.df$columnf <- as.factor(pheno.means.df$column) #Needed for modeling column effects
-pheno.means.df$year <- as.factor(pheno.means.df$year) #Needed for modeling column effects
+pheno.means.df$year <- as.factor(paste0("20",as.character(pheno.means.df$year)))
+#pheno.means.df$year <- as.factor(pheno.means.df$year) #Needed for modeling column effects
 
 superMap.df       <- read.csv(geno_rpath2fpath(geno_consensus_file),header=T)[,c("marker","LG","consensus")] %>%
                         mutate(binID = generate_bin_id(LG,consensus))
@@ -193,18 +194,20 @@ mixed_model_analyze <- function(trait.cfg, pheno, geno) {
         randomtermss_current = randomtermss[randomtermss_include]
         randomf              = paste("~",paste(randomtermss_current,collapse = " + ")) #Convert back to formula string
         randomfs[i]          = randomf
-        mmer.expr <- paste0(c("mmer(fixed=", trait.cfg$fixed, ", random=", randomf, ", rcov=", trait.cfg$rcov, ", data=pheno"), collapse="")
-        if( !is.empty(trait.cfg["mmer_args"]) ) {
-            mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
+        if( !all(is.na(pheno[,trait.cfg$label_short])) ) {
+            mmer.expr <- paste0(c("mmer(fixed=", trait.cfg$fixed, ", random=", randomf, ", rcov=", trait.cfg$rcov, ", data=pheno"), collapse="")
+            if( !is.empty(trait.cfg["mmer_args"]) ) {
+                mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
+            }
+            mmer.expr <- paste0(mmer.expr,", date.warning=FALSE)")
+            print(mmer.expr)
+            model <- eval(parse(text=mmer.expr))
+            if( !is.null(model) && !is.null(model$AIC) && !is.null(model$monitor) ) {
+                AICs[i]             = model$AIC
+                LogLikelihoods[i]   = model$monitor[1,ncol(model$monitor)]
+            }
+            models = list.append(models,model)
         }
-        mmer.expr <- paste0(mmer.expr,")")
-        print(mmer.expr)
-        model <- eval(parse(text=mmer.expr))
-        if( !is.null(model) && !is.null(model$AIC) && !is.null(model$monitor) ) {
-            AICs[i]             = model$AIC
-            LogLikelihoods[i]   = model$monitor[1,ncol(model$monitor)]
-        }
-        models = list.append(models,model)
     }
     
     min_index = which.min(AICs)
@@ -250,6 +253,5 @@ for( i in 1:length(traits.df[,1]) ) {
         }
     }
 }
-
 
 save.image(paste0(workflow,"/.RData.01_genmodeleeffects"))
