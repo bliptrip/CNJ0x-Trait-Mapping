@@ -44,7 +44,7 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
     model.map.l         <- models.l$model_map 
     model.collated.df   <- models.l$model_collated_table
     model               <- readRDS(file=paste0(trait.path,"/mmer.rds"))
-    print(paste0("Calculating pvalues for Trait: ",trait.cfg$trait,"Model: ",trait.cfg$model))
+    cat(paste0("\nCalculating pvalues for Trait: ",trait.cfg$trait," Model: ",trait.cfg$model,"\n"), fill=FALSE)
     append.pointer(model.map.l, model)
     model_idx           <- length(model.map.l$value)
     var.comp <- summary(model)$varcomp
@@ -100,31 +100,6 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
     #rownames(anova.combined) <- as.character(allterms)
     #Now for each fixed term, drop it from model and calculate prob under assumption of chisqr distro for likelihood ratio
     i = 1
-    for (j in seq_along(fixedtermss)) {
-        usef <- setdiff(fixedtermss,fixedtermss[i])
-        if( length(usef) > 0 ) {
-            fixedf <- paste(response,"~ ",paste(usef,collapse = " + "))
-        } else {
-            fixedf <- paste(response,"~ 1")
-        }
-        mmer.expr <- paste0(c("mmer(fixed=", fixedf, ", random=", random, ", rcov=", rcov, ", data=model$dataOriginal"), collapse="")
-        if( !is.empty(trait.cfg["mmer_args"]) ) {
-                mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
-        }
-        mmer.expr <- paste0(mmer.expr,")")
-        print(mmer.expr)
-        model.drop1 <- try(eval(parse(text=mmer.expr)))
-        if( !is.null(model.drop1) && !is_bare_list(model.drop1) ) { #Indicates that the model was singular, and failed to find a solution
-            anova.cols    <- c("Chisq", "ChiDf", "PrChisq", "PrChisqInfo")
-            anova.drop1 <- anova(model, model.drop1)[2,]
-            prchisq <- strsplit(anova.drop1$PrChisq, split = " ")[[1]]
-            anova.drop1$PrChisq <- as.numeric(prchisq[1])
-            anova.drop1$PrChisqInfo <- prchisq[2]
-            anova.combined[i,anova.cols] = anova.drop1[,anova.cols]
-                  anova.combined[i,"dropterm"] = fixedtermss[i]
-            i = i + 1
-        }
-    }    
     #Now for each random term, drop it from model and calculate prob under assumption of chisqr distro for likelihood ratio
     k = 1
     for (j in seq_along(randomtermss)) {
@@ -138,8 +113,8 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
         if( !is.empty(trait.cfg["mmer_args"]) ) {
                 mmer.expr <- paste0(mmer.expr,",",trait.cfg["mmer_args"])
         }
-        mmer.expr <- paste0(mmer.expr,")")
-        print(mmer.expr)
+        mmer.expr <- paste0(mmer.expr,", date.warning=FALSE)")
+        cat(mmer.expr)
         model.drop1 <- try(eval(parse(text=mmer.expr)))
         if( !is.null(model.drop1) && !is_bare_list(model.drop1) ) { #Indicates that the model was singular, and failed to find a solution
             anova.cols    <- c("Chisq", "ChiDf", "PrChisq", "PrChisqInfo")
@@ -152,7 +127,7 @@ readModelsCB  <- function(trait.cfg, trait.path, models.l) {
             k = k + 1
         }
     }    
-    vcov <- read.csv(file=paste0(trait.path,'/vcov.csv'), row.names=1)
+    vcov <- read_csv(file=paste0(trait.path,'/vcov.csv'),show_col_types=FALSE)
     vcov$PrNorm <- pnorm(abs(vcov$Zratio),lower.tail=FALSE)
     vcov$PrNormInfo <- unlist(map(vcov$PrNorm,siginfo))
     vcov$dropterm <- rownames(vcov)
@@ -179,12 +154,13 @@ loopThruTraits(workflow, readModelsCB, list(model_map=model.map.l.p, model_colla
 selectModelCB <- function(trait.cfg, trait.path, selectedModels) {
     trait          <- trait.cfg$trait
     model_label      <- trait.cfg$model
+    cat(paste0("\nChecking significance of g:y interaction effects: ",trait.cfg$trait," Model: ",trait.cfg$model,"\n"), fill=FALSE)
     anova.drop1.selectedmodel.label <- NA
     anova.drop1.selectedmodel.label <- "full" #Default to using full model
     if( model_label == 'all-years' ) { #Interaction effects only apply for 'all-years' model - year-by-year model doesn't have an interaction effect
         anova.file <- paste0(trait.path,"/anova.csv")
         if( file.exists(anova.file) ) {
-            anova.int    <- read_csv(anova.file) %>% filter(dropterm == "id:year") #Filter out row with g:y interaction effects
+            anova.int    <- read_csv(anova.file, show_col_types=FALSE) %>% filter(dropterm == "id:year") #Filter out row with g:y interaction effects
             if( (nrow(anova.int) > 0) && (anova.int$PrChisq > int_effects_alpha) ) { #g:y interaction effect is not significant -- choose model that drops this term
                 anova.drop1.selectedmodel.label <- "id:year"
             }
@@ -201,129 +177,18 @@ write.csv(models.selected.df, file=paste0(workflow,"/traits/selectedModels.csv")
 generateCrossFilesCB <- function(trait.cfg,trait.path,args.l) {
     gData             <- args.l[[1]]
     map.df             <- args.l[[2]]
-    #selectedModels     <- args.l[[3]]
-    trait_name         <- trait.cfg$trait
+    trait_name         <- trait.cfg$label_short
     model_label         <- trait.cfg$model
-    #anova.drop1.selectedmodel.file <- paste0(trait.path,"/anova.models.drop1.rds")
-    #selectedmodel.label <- (selectedModels$value %>% filter((trait == trait_name) & (model == model_label)) %>% dplyr::select(selected_model))[[1]]
-    #if( file.exists(anova.drop1.selectedmodel.file) ) {
-        #anova.drop1.selectedmodel.l <- readRDS(anova.drop1.selectedmodel.file)
-        #model                        <- anova.drop1.selectedmodel.l[[selectedmodel.label[[1]]]]
-        model   <- readRDS(file=paste0(trait.path,"/mmer.rds"))
-        blups   <- model$U[["u:id"]][[trait_name]]
-        generate_cross_file(trait.cfg, blups, gData, map.df, trait.path)
-    #}
+    model   <- readRDS(file=paste0(trait.path,"/mmer.rds"))
+    blups   <- model$U[["u:id"]][[trait_name]]
+    cat(paste0("\nGenerating cross file for: ", trait.cfg$trait, " Model: ", trait.cfg$model, "\n"), fill=FALSE)
+    generate_cross_file(trait.cfg, blups, gData, map.df, trait.path)
 }
 
 gData.rqtl        <- readRDS(file=paste0(workflow,"/traits/rqtl.gdata.rds"))
-superMap.df       <- read.csv(geno_rpath2fpath(geno_consensus_file),header=T)[,c("marker","LG","consensus")] %>%
+superMap.df       <- read_csv(geno_rpath2fpath(geno_consensus_file), show_col_types=FALSE)[,c("marker","LG","consensus")] %>%
                         mutate(binID = generate_bin_id(LG,consensus))
 rownames(superMap.df) <- superMap.df$marker
 loopThruTraits(workflow,generateCrossFilesCB,list(gData.rqtl,superMap.df,models.selected.df.p))
-
-#Put the collated model data into a long-format for use by ggplot2
-#model.spread.df <- (model.collated.df.p$value) %>%
-#                        gather(type, var, -c(model, traits, model_idx))
-#model.abbrev.df <- data.frame(rows=c("2011","2012","2013","all-years"), abbrevs=c("11","12","13","AY"), stringsAsFactors=F, row.names="rows")
-#model.spread.df$model <- rename_traits(model.spread.df$model, model.abbrev.df)
-#model.spread.df$traits <- rename_traits(model.spread.df$traits, trait.abbrev.map.df)
-#                    
-#model.spread.df <- model.spread.df %>%
-#                    mutate(traits_model=paste0(traits,"-",model)) %>%
-#                    group_by(traits_model) %>%
-#                    arrange(type, .by_group=TRUE)
-
-#generate_h2 <- function(type, var) {
-#    i <- which(type == "bv_var")
-#    var = as.numeric(var)
-#    return((var[i])/sum(var, na.rm=TRUE))
-#}
-
-#model.h2.df <- model.spread.df %>% summarize(h2=generate_h2(type, var))
-
-#               
-
-#g <- ggplot(na.omit(model.spread.df), aes(x=as.factor(traits_model), y=as.numeric(var), fill=type)) +
-#        geom_bar(stat="identity")
-
-#
-
-##sort/group by trait and compare genotype variance, covariate variance, and total variance.  Consider doing a stacked bar plot of the different covariance components
-
-##Derived from https://www.r-graph-gallery.com/297-circular-barplot-with-groups/
-##Generate the data frame
-#model.spread.nona.df <- na.omit(model.spread.df)
-#data=data.frame(
-#        individual=model.spread.nona.df$traits_model,
-#        group=model.spread.nona.df$traits,
-#        value=as.numeric(model.spread.nona.df$var),
-#        type=model.spread.nona.df$type
-#        )
-
-## Set a number of 'empty bar' to add at the end of each group
-#empty_bar=3
-#to_add = data.frame( matrix(NA, empty_bar*nlevels(data$group), ncol(data)) )
-#colnames(to_add) = colnames(data)
-#to_add$group=rep(levels(data$group), each=empty_bar)
-#to_add$individual=paste0(rep(paste0(levels(data$group),"-NA"), each=empty_bar),as.character(seq(1,empty_bar)))
-#data=rbind(data, to_add)
-#data=data %>% arrange(group)
-#data$id=seq(1, nrow(data))
-
-#data$individual <- as.factor(as.character(data$individual))
-#idx <- 0
-#collapse_ids <- function(x) {
-#    .GlobalEnv$idx <- .GlobalEnv$idx + 1;
-#    return(rep(.GlobalEnv$idx, length(x)));
-#}
-#data <- data %>% group_by(individual) %>%
-#         mutate(id = collapse_ids(individual)) 
-
-## Get the name and the y position of each label
-#label_data=data
-#number_of_bar=nrow(label_data)
-#angle= 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
-#label_data$hjust<-ifelse( angle < -90, 1, 0)
-#label_data$angle<-ifelse(angle < -90, angle+180, angle)
-
-## prepare a data frame for base lines
-#base_data=data %>% 
-#    group_by(group) %>% 
-#    summarize(start=min(id), end=max(id) - empty_bar) %>% 
-#    rowwise() %>% 
-#    mutate(title=mean(c(start, end)))
-
-## prepare a data frame for grid (scales)
-#grid_data = base_data
-#grid_data$end = grid_data$end[ c( nrow(grid_data), 1:nrow(grid_data)-1)] + 1
-#grid_data$start = grid_data$start - 1
-#grid_data=grid_data[-1,]
-
-## Make the plot
-#p = ggplot(data, aes(x=as.factor(id), y=value, fill=type)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
-#        geom_bar(aes(x=as.factor(id), y=value, fill=type), stat="identity", alpha=0.5) +
-#        # Add a val=100/75/50/25 lines. I do it at the beginning to make sur barplots are OVER it.
-#        geom_segment(data=grid_data, aes(x = end, y = 30.0, xend = start, yend = 30.0), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-#        geom_segment(data=grid_data, aes(x = end, y = 22.5, xend = start, yend = 22.5), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-#        geom_segment(data=grid_data, aes(x = end, y = 15.0, xend = start, yend = 15.0), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-#        geom_segment(data=grid_data, aes(x = end, y = 7.5, xend = start, yend = 7.5), colour = "grey", alpha=1, size=0.3 , inherit.aes = FALSE ) +
-#        # Add text showing the value of each 100/75/50/25 lines
-#        annotate("text", x = rep(max(data$id),4), y = c(7.5,15.0,22.5,30.0), label = c("7.50","15.0","22.5","30.0") , color="grey", size=3 , angle=0, fontface="bold", hjust=1) +
-#        ylim(-5,27.0) +
-#        theme_minimal() +
-#        theme(
-#                legend.position = "none",
-#                axis.text = element_blank(),
-#                axis.title = element_blank(),
-#                panel.grid = element_blank(),
-#                plot.margin = unit(rep(-1,4), "cm") 
-#            ) +
-#        coord_polar() + 
-#        #geom_text(data=label_data, aes(x=id, y=value+0.1, label=individual, hjust=hjust), color="black", fontface="bold",alpha=0.8, size=4, angle= label_data$angle, inherit.aes = FALSE ) +
-#        # Add base line information
-#        geom_segment(data=base_data, aes(x = start, y = -0.1, xend = end, yend = -0.1), colour = "black", alpha=0.9, size=0.6 , inherit.aes = FALSE )  +
-#        geom_text(data=base_data, aes(x = title, y = -.2, label=group), hjust=c(0.5,0.5,0.5,0.35,0.35,0.35), colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE)
-
-#ggsave(filename=paste0(workflow,"/traits/plots/h2_polar_barplot.png"), plot=p, device="png", bg="white", width=33, height=25, units="cm", dpi=300)
 
 save.image(paste0(workflow,"/.RData.01_analyzemodels"))
