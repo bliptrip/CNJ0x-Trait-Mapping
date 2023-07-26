@@ -11,7 +11,6 @@ library(knitr)
 library(RColorBrewer)
 library(tidyverse)
 
-
 #Defaults (can be overridden with command-line invocation)
 workflow        <- get0("workflow", ifnotfound="../../Workflows/1")
 num_top_qtls    <- get0("num_top_qtls", ifnotfound=2) #Number of top interaction QTLs to show per trait
@@ -55,11 +54,11 @@ if( !reload_table_functions ) {
                         mutate(blup=cross$pheno[,trait]) %>% 
                         pivot_longer(!c(id_i,blup),names_to='genotype_q1', values_to='probability') %>% 
                         filter(probability > 0.95) %>%
-                        select(!probability)
+                        dplyr::select(!probability)
         qtl2.p.genos <- qtl2.p %>%
                         pivot_longer(!c(id_i),names_to='genotype_q2', values_to='probability') %>% 
                         filter(probability > 0.95) %>%
-                        select(!probability)
+                        dplyr::select(!probability)
         qtl.both.p.genos <- qtl.p.genos %>%
                                 inner_join(qtl2.p.genos, by="id_i") %>%
                                 nest_by(genotype_q1,genotype_q2,.key="blups")
@@ -87,7 +86,7 @@ if( !reload_table_functions ) {
     qtl.nints.tb <- read_csv(file=paste0(workflow,'/traits/qtl_collated.consensus.csv'), col_names=TRUE) %>%
                     filter(method == "stepwiseqtl") %>%
                     filter(is.na(chr2) & is.na(position2)) %>%
-                    select(method,model,trait,chr,position,marker.variance)
+                    dplyr::select(method,model,trait,chr,position,marker.variance)
     colnames(qtl.nints.tb) <- gsub('.','_',colnames(qtl.nints.tb),fixed=TRUE)
     qtl.nints.tb <- unique(qtl.nints.tb) #Needed in case of duplicates
 
@@ -123,7 +122,7 @@ if( !reload_table_functions ) {
                     arrange(method,trait,model,desc(marker_variance)) %>%
                     mutate(top_qtls = c(rep(TRUE,min(num_top_qtls,length(marker_variance))),rep(FALSE,length(marker_variance)-min(num_top_qtls,length(marker_variance))))) %>%
                     filter(top_qtls == TRUE) %>%
-                    select(-top_qtls) %>%
+                    dplyr::select(-top_qtls) %>%
                     ungroup() %>%
                     unnest(data) %>%
                     unnest(blups) %>%
@@ -230,7 +229,7 @@ if( !reload_table_functions ) {
                                 trait_name = trait_to_name(trait.cfg.tb,model,trait),
                                 position = round.digits(position,2),
                                 position2 = round.digits(position2,2),
-                                qtl_lod = paste0(round.digits(qtl_lod,2),"$^{",unlist(map(qtl_pvalue,siginfo)),"}$"))
+                                qtl_lod = paste0(round.digits(qtl_lod,1),"$^{",unlist(map(qtl_pvalue,siginfo)),"}$"))
 } else {
     #Only reloading functions.  Load previous state.
     load(paste0(workflow,"/.RData.13_geninteffects.",num_top_qtls))
@@ -253,7 +252,7 @@ generateTableRemoveRepeats <- function(tbl) {
 generateReducedTable <- function(tbl, caption=NULL, tfont_size=10) {
     etbl1 <- tbl %>%
         generateTableRemoveRepeats() %>%
-        select(trait_name,chr,position,chr2,position2,qtl_lod,mad,nmad,marker_variance,marker_variance1,marker_variance2,plot_filename) %>%
+        dplyr::select(trait_name,chr,position,chr2,position2,qtl_lod,mad,nmad,marker_variance,marker_variance1,marker_variance2,plot_filename) %>%
         mutate(mad=round.digits(mad,3),
                nmad=percent(round.digits(nmad,4)),
                marker_variance=percent(marker_variance/100),
@@ -273,7 +272,7 @@ generateReducedTable <- function(tbl, caption=NULL, tfont_size=10) {
                    marker_variance2 = knitr:::escape_latex(marker_variance2))
     }
     etbl2 <- etbl1 %>%
-        select(!plot_filename) %>%
+        dplyr::select(!plot_filename) %>%
         rename("Trait"=trait_name,
                "LG1"=chr,
                "Position1 (cM)"=position,
@@ -328,12 +327,17 @@ generateReducedTable <- function(tbl, caption=NULL, tfont_size=10) {
 generateReducedTableNoPlots <- function(tbl, caption=NULL, tfont_size=10) {
     etbl1 <- tbl %>%
         generateTableRemoveRepeats() %>%
-        select(trait_name,chr,position,chr2,position2,qtl_lod,mad,nmad,marker_variance,marker_variance1,marker_variance2,plot_filename) %>%
-        mutate(mad=round.digits(mad,3),
-               nmad=percent(round.digits(nmad,4)),
-               marker_variance=percent(marker_variance/100),
-               marker_variance1=percent(marker_variance1/100),
-               marker_variance2=percent(marker_variance2/100))
+        dplyr::select(trait_name,chr,position,chr2,position2,qtl_lod,mad,nmad,marker_variance,marker_variance1,marker_variance2,plot_filename) %>%
+        mutate(mad=round.digits(mad,2),
+               position=round.digits(position,1),
+               position2=round.digits(position2,1),
+               nmad=percent(round.digits(nmad,3)),
+               marker_variance=percent(signif.digits(marker_variance/100,2)),
+               marker_variance1=percent(signif(marker_variance1/100,2)),
+               marker_variance2=percent(signif(marker_variance2/100,2)))
+               #marker_variance=signif.digits.char(percent(marker_variance/100),2),
+               #marker_variance1=signif.digits.char(percent(marker_variance1/100),2),
+               #marker_variance2=signif.digits.char(percent(marker_variance2/100),2))
     if( is_html_output() ) {
         etbl1 <- etbl1 %>%
             mutate(nmad=color_bar(spec_color(nmad,option="E",alpha=0.3,scale_from=c(0,20)))(nmad),
@@ -349,56 +353,74 @@ generateReducedTableNoPlots <- function(tbl, caption=NULL, tfont_size=10) {
     }
 
 	if( is_word_output() ) {
-		etbl3 <- etbl1 %>%
-				select(!plot_filename) %>%
+		etbl2 <- etbl1 %>%
+			 dplyr::select(!plot_filename) %>%
+			 dplyr::select(!qtl_lod) %>%
 				rename("Trait"=trait_name,
 				"LG1"=chr,
-				"Position1 (cM)"=position,
+				"Position1"=position,
 				"LG2"=chr2,
-				"Position2 (cM)"=position2,
-				"pLOD"=qtl_lod,
+				"Position2"=position2,
 				"MAD"=mad,
 				"NMAD"=nmad,
-				"Int Variance"=marker_variance,
-				"QTL1 Variance"=marker_variance1,
-				"QTL2 Variance"=marker_variance2) %>%
-				kable(align='lrrrrrrrrrr', caption=caption, format = 'pipe', escape = FALSE, booktabs=TRUE)
+				"R~i~^2^"=marker_variance,
+				"R~q1~^2^"=marker_variance1,
+				"R~q2~^2^"=marker_variance2)
+		etbl3 <- flextable(etbl2) %>%
+            ftExtra::colformat_md(part="header") %>%
+            align(align="center", part="header") %>%
+            align(align="right", part="body") %>%
+            set_caption(caption) %>%
+            flextable::footnote(i = 1, 
+                    j = c("Position1","Position2","MAD","NMAD","R~i~^2^","R~q1~^2^","R~q2~^2^"),
+                    value=as_paragraph(c("Pairwise interaction QTL position 1 (cM).",
+						 "Pairwise interaction QTL position 2 (cM).",
+                          "Maximum average distance.",
+                          "Normalized maximum average distance.",
+                          "Percent of genetic variance explained by interacting QTL pair.",
+						  "Percent of additive genetic variance explained by QTL 1.",
+						  "Percent of additive genetic variance explained by QTL 2.")),
+                    ref_symbols = c("a","b","c","d","e","f","g"),
+                    part = "header") %>%
+            theme_booktabs(bold_header=TRUE) %>%
+            set_table_properties(layout="autofit")
+
 	} else {
-    etbl2 <- etbl1 %>%
-        select(!plot_filename) %>%
-        rename("Trait"=trait_name,
-               "LG1"=chr,
-               "Position1 (cM)"=position,
-               "LG2"=chr2,
-               "Position2 (cM)"=position2,
-               "pLOD[note]"=qtl_lod,
-               "MAD[note]"=mad,
-               "NMAD[note]"=nmad,
-               "Int[note] Variance"=marker_variance,
-               "QTL1 Variance"=marker_variance1,
-               "QTL2 Variance"=marker_variance2) %>%
-        kable(align='lrrrrrrrrrr', caption=caption, escape = FALSE, longtable=TRUE, booktabs=TRUE)
-    etbl3  <- etbl2 %>%
-        kable_paper("striped", full_width=FALSE) %>%
-        column_spec(1, width = "1cm", bold=TRUE) %>%
-        column_spec(2, width = "0.5cm") %>%
-        column_spec(3, width = "0.75cm") %>%
-        column_spec(4, width = "0.5cm") %>%
-        column_spec(5, width = "0.75cm") %>%
-        column_spec(6, width = "0.75cm") %>%
-        column_spec(7, width = ".5cm") %>%
-        column_spec(8, width = ".5cm") %>%
-        column_spec(9, width = ".75cm") %>%
-        column_spec(10, width = ".75cm") %>%
-        column_spec(11, width = ".75cm") %>%
-        add_footnote(c("QTL Penalized LOD Score w/ significance codes:\n*** pvalue $≥$ 0 and pvalue<0.001\n**  pvalue $≥$ 0.001 and pvalue<0.01\n*   pvalue $≥$ 0.01 and pvalue<0.05\n.  pvalue $≥$ 0.05 and pvalue<0.01\nNS  Not Significant\n",
-                       "Max Average Difference - Maximum of all differences between mean interaction effects and and expected mean effect under additive models only.",
-                       "Normalized Max Average Difference - Normalized value of Max Average Difference, using BLUP range as a normalization factor.",
-                       "Percent of model variance explained by interaction effect.",
-                       "Interaction effects are shown in subplot *a*, with boxplots showing the distribution of trait BLUPs organized by QTL 1 genotype (x-axis) and 
-                       QTL 2 genotype (y-axis).  Subplot *c* is the marginal BLUP distributions factored by QTL genotype 1 (x-axis).
-                       Subplot *b* is the marginal BLUP distributions factored by QTL genotype 2 (y-axis)."),
-						escape=FALSE)
+        etbl2 <- etbl1 %>%
+            dplyr::select(!plot_filename) %>%
+            rename("Trait"=trait_name,
+                   "LG1"=chr,
+                   "Position1 (cM)"=position,
+                   "LG2"=chr2,
+                   "Position2 (cM)"=position2,
+                   "pLOD[note]"=qtl_lod,
+                   "MAD[note]"=mad,
+                   "NMAD[note]"=nmad,
+                   "Int[note] Variance"=marker_variance,
+                   "QTL1 Variance"=marker_variance1,
+                   "QTL2 Variance"=marker_variance2) %>%
+            kable(align='lrrrrrrrrrr', caption=caption, escape = FALSE, longtable=TRUE, booktabs=TRUE)
+        etbl3  <- etbl2 %>%
+            kable_paper("striped", full_width=FALSE) %>%
+            column_spec(1, width = "1cm", bold=TRUE) %>%
+            column_spec(2, width = "0.5cm") %>%
+            column_spec(3, width = "0.75cm") %>%
+            column_spec(4, width = "0.5cm") %>%
+            column_spec(5, width = "0.75cm") %>%
+            column_spec(6, width = "0.75cm") %>%
+            column_spec(7, width = ".5cm") %>%
+            column_spec(8, width = ".5cm") %>%
+            column_spec(9, width = ".75cm") %>%
+            column_spec(10, width = ".75cm") %>%
+            column_spec(11, width = ".75cm") %>%
+            add_footnote(c("QTL Penalized LOD Score w/ significance codes:\n*** pvalue $≥$ 0 and pvalue<0.001\n**  pvalue $≥$ 0.001 and pvalue<0.01\n*   pvalue $≥$ 0.01 and pvalue<0.05\n.  pvalue $≥$ 0.05 and pvalue<0.01\nNS  Not Significant\n",
+                           "Max Average Difference - Maximum of all differences between mean interaction effects and and expected mean effect under additive models only.",
+                           "Normalized Max Average Difference - Normalized value of Max Average Difference, using BLUP range as a normalization factor.",
+                           "Percent of model variance explained by interaction effect.",
+                           "Interaction effects are shown in subplot *a*, with boxplots showing the distribution of trait BLUPs organized by QTL 1 genotype (x-axis) and 
+                           QTL 2 genotype (y-axis).  Subplot *c* is the marginal BLUP distributions factored by QTL genotype 1 (x-axis).
+                           Subplot *b* is the marginal BLUP distributions factored by QTL genotype 2 (y-axis)."),
+    						escape=FALSE)
 	}
     if( is_html_output() ) {
         #This is necessary b/c some component of knitr kable is escaping some html that I don't want escaped, despite using the flag 'escape=FALSE'
