@@ -42,3 +42,14 @@ scpvh:
 	scp -r -P 7262 _main.html maule@vaccinium.vcru.wisc.edu:/var/www/html/maule-ch1/index.html
 	scp -r -P 7262 ../Data/publication maule@vaccinium.vcru.wisc.edu:/var/www/html/maule-ch1/Data/
 
+#Manual word package
+package_mword:
+	rm -rf Maule_QTL_Paper*
+	mkdir -p Maule_QTL_Paper/Data
+	cp _book/Maule_QTL_paper.docx Maule_QTL_Paper/
+	cp -r ../Data/publication/tables/qtl.cnj0[24].csv Maule_QTL_Paper/Data/
+	cp -r ../Data/publication/tables/effects.cnj0[24].csv Maule_QTL_Paper/Data/
+	cp -r ../Data/publication/tables/corrplot.cnj0[24].csv Maule_QTL_Paper/Data/
+	zip -r Maule_QTL_Paper.zip Maule_QTL_Paper
+
+pmw: package_mword
