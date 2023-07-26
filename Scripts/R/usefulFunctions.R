@@ -67,7 +67,7 @@ pheno_dpath2fpath <- function(rpath) {
 }
 
 is.empty <- function(mstr) {
-    return(is.na(mstr) || (trimws(mstr,which="both") == ""))
+    return(is.na(mstr) | (trimws(mstr,which="both") == ""))
 }
 
 trait_is_unmasked <- function(trait.cfg) {
@@ -103,7 +103,6 @@ condense_map_bins <- function(map.df, filter_scaffolds=FALSE) {
 }
 
 generate_cross_file <- function(trait.cfg, blups, gData, superMap.df, file.path) {
-    print(paste0("Population Analysis Set: ", trait.cfg["model"]))
     #First make sure to use individuals only in common in the blups data and in the marker data
     geno.intersect<-intersect(names(blups),rownames(gData))
     y<-as.data.frame(blups[geno.intersect]) #Convert to data.frame to deal with issues in setting colnames in univariate analysis (blups aren't a data.frame in this case)
@@ -202,7 +201,10 @@ signif.digits <- function(values,digits) {
     rvalue <- as.numeric(signif(values,digits=digits))
 }
 
-
+signif.digits.char <- function(values,digits) {
+    rvalues <- signif.digits(values,digits=digits)
+    as.character(rvalues)
+}
                                     
 #Function for looping through all unmasked traits in the configs/model-traits.cfg.csv file.
 
@@ -308,4 +310,24 @@ flattenCorrMatrix <- function(cormat, pmat) {
         cor  =(cormat)[ut],
         p = pmat[ut]
     )
+}
+
+#Extract Effects Primitives
+
+extract_effects_primitive <- function(workflow, method, model, trait, chr, position) {
+    #print(paste0("method = ",method, ", model = ", model, "trait = ", trait))
+    qtl.mname <- paste0(chr,'@',round.digits(position,1))
+    cross <- readRDS(file=paste0(workflow,'/traits/',model,'--',trait,'/cross.rds'))
+    effects <- effectplot(cross, pheno.col=trait, mname1=qtl.mname, draw=FALSE)
+    re <- "(.+)\\.((AC)|(BC)|(AD)|(BD))$"
+    marker <- unique(gsub(re, "\\1", names(effects$Means), fixed=FALSE))
+    cm <- gsub(re, "\\2", names(effects$Means), fixed=FALSE)
+    names(effects$Means) <- cm
+    names(effects$SEs) <- cm
+    AvB <- as.numeric((effects$Means["AC"] + effects$Means["AD"]) - (effects$Means["BC"] + effects$Means["BD"]))
+    CvD <- as.numeric((effects$Means["AC"] + effects$Means["BC"]) - (effects$Means["AD"] + effects$Means["BD"]))
+    Int <- as.numeric((effects$Means["AC"] + effects$Means["BD"]) - (effects$Means["AD"] + effects$Means["BC"]))
+    effects.means.tb <- tibble(genotype=names(effects$Means), effect_mean=as.numeric(effects$Means))
+    effects.ses.tb <- tibble(genotype=names(effects$SEs), effect_se=as.numeric(effects$SEs))
+    return(list(cross=cross, qtl.mname=qtl.mname, means=effects.means.tb,ses=effects.ses.tb, AvB=AvB, CvD=CvD, Int=Int))
 }
