@@ -30,25 +30,19 @@ if( !reload_table_functions ) {
     trait.cfg.tb    <- read_csv(file=paste0(workflow,'/configs/model-traits.cfg.csv'), col_names=TRUE)
 
     extract_effects <- function(method, model, trait, chr, position) {
-        #print(paste0("method = ",method, ", model = ", model, "trait = ", trait))
-        qtl.mname <- paste0(chr,'@',round.digits(position,1))
-        cross <- readRDS(file=paste0(workflow,'/traits/',model,'--',trait,'/cross.rds'))
-        qtl   <- readRDS(file=paste0(workflow,'/traits/',model,'--',trait,'/',trait,'/', ifelse(method == 'scanone', 'scanone.qtl', 'scansw'), '.rds'))
-        effects <- effectplot(cross, pheno.col=trait, mname1=qtl.mname, draw=FALSE)
-        re <- "(.+)\\.((AC)|(BC)|(AD)|(BD))$"
-        marker <- unique(gsub(re, "\\1", names(effects$Means), fixed=FALSE))
-        cm <- gsub(re, "\\2", names(effects$Means), fixed=FALSE)
-        names(effects$Means) <- cm
-        names(effects$SEs) <- cm
-        AvB <- as.numeric((effects$Means["AC"] + effects$Means["AD"]) - (effects$Means["BC"] + effects$Means["BD"]))
-        CvD <- as.numeric((effects$Means["AC"] + effects$Means["BC"]) - (effects$Means["AD"] + effects$Means["BD"]))
-        Int <- as.numeric((effects$Means["AC"] + effects$Means["BD"]) - (effects$Means["AD"] + effects$Means["BC"]))
-        effects.means.tb <- tibble(genotype=names(effects$Means), effect_mean=as.numeric(effects$Means))
-        effects.ses.tb <- tibble(genotype=names(effects$SEs), effect_se=as.numeric(effects$SEs))
+        elist <- extract_effects_primitive(workflow, method, model, trait, chr, position) 
+        effects.means.tb <- elist$means
+        effects.ses.tb <- elist$ses
+        qtl.mname <- elist$qtl.mname
+        cross <- elist$cross
+        AvB <- elist$AvB #Maternal Effect
+        CvD <- elist$CvD #Paternal Effect
+        Int <- elist$Int #Interaction Effect
         #The qtl$prob contains the list of significant QTLs and the probability of a given genotype at the QTL.  I would like to show a boxplot of
         #blup values at the different genotypes for each QTL, but since the genotype is a mixed distribution at each QTL, I will only include genotypes with a higher
         #than, say, 95% probability of being a given genotype, and choose that as the representative genotype (assigning the entire BLUP and/or trait to that genotype for organization)
         #Determine which index corresponds to QTL
+        qtl   <- readRDS(file=paste0(workflow,'/traits/',model,'--',trait,'/',trait,'/', ifelse(method == 'scanone', 'scanone.qtl', 'scansw'), '.rds'))
         qtl.i <- which(qtl$name == qtl.mname)
         print(paste0("qtl.mname = ", qtl.mname, ", qtl.i = ",qtl.i))
         print(paste0("qtl$name = ", qtl$name))
@@ -63,7 +57,7 @@ if( !reload_table_functions ) {
                         left_join(effects.means.tb, by="genotype") %>%
                         left_join(effects.ses.tb, by="genotype") %>%
                         mutate(method=method, model=model, trait=trait, chr=chr, position=position, AvB=AvB, CvD=CvD, Int=Int, blups=data) %>%
-                        select(-data) %>%
+                        dplyr::select(-data) %>%
                         group_by(method,model,trait,chr,position) %>%
                         nest()
         return(qtl.p.nest)
@@ -113,14 +107,14 @@ if( !reload_table_functions ) {
     effs.both.tb <- bind_rows(effs.tb, effs.epistatics.tb)
     write_json(effs.both.tb, paste0(workflow, "/traits/effects_collated.json"), auto_unbox=T, pretty=T)
     #Write a csv file without the grouped blups
-    write.csv(effs.tb %>% unnest(data) %>% select(!blups), file=paste0(workflow,'/traits/effects_collated.csv'), row.names=FALSE)
+    write.csv(effs.tb %>% unnest(data) %>% dplyr::select(!blups), file=paste0(workflow,'/traits/effects_collated.csv'), row.names=FALSE)
 
     #Plot generation
     effs.1.tb <- effs.tb %>% 
                     group_by(method,trait,model) %>%
                     mutate(top_qtls = c(rep(TRUE,min(num_top_qtls,length(marker_variance))),rep(FALSE,length(marker_variance)-min(num_top_qtls,length(marker_variance))))) %>%
                     filter(top_qtls == TRUE) %>%
-                    select(-top_qtls) %>%
+                    dplyr::select(-top_qtls) %>%
                     unnest(data) %>%
                     unnest(blups)
 
@@ -159,7 +153,7 @@ if( !reload_table_functions ) {
                     group_by(method,trait,model) %>%
                     mutate(top_qtls = c(rep(TRUE,min(num_top_qtls,length(marker_variance))),rep(FALSE,length(marker_variance)-min(num_top_qtls,length(marker_variance))))) %>%
                     filter(top_qtls == TRUE) %>%
-                    select(-top_qtls) %>%
+                    dplyr::select(-top_qtls) %>%
                     unnest(data) %>%
                     pivot_wider(names_from=genotype,values_from=c(effect_mean,effect_se,blups)) %>%
                     pivot_longer(c(AvB,CvD,Int), names_to="effect_type",values_to="effect_value")
@@ -170,7 +164,7 @@ if( !reload_table_functions ) {
     #Filter out only columns desired for final effs.complete.tb
     effs.2a.tb <- effs.2.tb %>% 
                     pivot_wider(names_from=effect_type, values_from=effect_value) %>%
-                    select(method,trait,model,chr,position,effect_mean_AC,effect_mean_AD,effect_mean_BC,effect_mean_BD,effect_se_AC,effect_se_AD,effect_se_BC,effect_se_BD, AvB, CvD, Int)
+                    dplyr::select(method,trait,model,chr,position,effect_mean_AC,effect_mean_AD,effect_mean_BC,effect_mean_BD,effect_se_AC,effect_se_AD,effect_se_BC,effect_se_BD, AvB, CvD, Int)
 
 
     effs.2b.tb <- effs.2.tb %>%
@@ -201,7 +195,7 @@ if( !reload_table_functions ) {
                                                         panel.grid = element_line(color="darkgray",size=0.25,linetype=3),
                                                         panel.background = element_rect(fill="transparent"),
                                                         plot.background = element_rect(fill="transparent"))) %>%
-                                mutate(plot_mpieffects_filename = paste0(normalizePath(paste0(workflow,'/traits/',model,'--',trait,'/',trait), mustWork=TRUE),'/effects_plot.mpieffects.chr',chr,'_',round.digits(position,2),'cm.',method,'.png')) %>%
+                                mutate(plot_mpieffects_filename = paste0(normalizePath(paste0(workflow,'/traits/',model,'--',trait,'/',trait), mustWork=TRUE),'/effects_plot.mpieffects.chr',chr,'_',round.digits(position,2),'cm.',method,'.apng')) %>%
                                 group_walk(~ {
                                                 print(paste0("Saving ",.x$plot_mpieffects_filename))
                                                 ggsave(filename=.x$plot_mpieffects_filename, plot = .x$plot[[1]], device="png", bg="transparent", dpi=300, width=10, height=5, units="cm")
@@ -209,7 +203,7 @@ if( !reload_table_functions ) {
 
     #Replace GxY interaction significance values with those for a trait's 'all-year' model.
     qtl.tb  <- qtl.tb %>%
-                            select(-chr2,-position2) %>%
+                            dplyr::select(-chr2,-position2) %>%
                             group_by(trait) %>%
                             mutate(GxYLRpvalue = rep(min(GxYLRpvalue,na.rm=TRUE),length(GxYLRpvalue))) %>%
                             mutate(GxYZRpvalue = rep(min(GxYZRpvalue,na.rm=TRUE),length(GxYZRpvalue))) %>%
@@ -238,7 +232,7 @@ generateTableSignifSymbols <- function(tbl) {
                     model_name=paste0(model_name,"$^{",unlist(map(GLRpvalue,siginfo)),"}$")) )
 }
 
-#arrange(trait_name,model_name,desc(marker.variance)) %>%
+#arrange(trait_name,model_name,desc(marker.vaariance)) %>%
 generateTableRemoveRepeats <- function(tbl) {
     return( tbl %>%
         mutate(trait_repeat=(trait_name == c("",trait_name[-length(trait_name)]))) %>%
@@ -268,7 +262,7 @@ generateReducedTable <- function(tbl, caption=NULL, tfont_size=10) {
                    marker_variance = knitr:::escape_latex(marker_variance))
     }
     etbl2 <- etbl1 %>%
-            select(trait_name,chr,position,position_left,position_right,qtl_lod,marker_variance,model_variance) %>%
+            dplyr::select(trait_name,chr,position,position_left,position_right,qtl_lod,marker_variance,model_variance) %>%
             rename("Trait"=trait_name, 
                     "LG"=chr, 
                     "Position (cM)"=position, 
@@ -317,7 +311,7 @@ effs.table.tbl <- effs.complete.tb %>%
                     group_by(trait,model) %>%
                     mutate(top_qtls = c(rep(TRUE,min(1,length(marker_variance))),rep(FALSE,length(marker_variance)-min(1,length(marker_variance))))) %>%
                     filter(top_qtls == TRUE) %>%
-                    select(-top_qtls) %>%
+                    dplyr::select(-top_qtls) %>%
                     ungroup() %>%
                     arrange(trait,desc(marker_variance))
 
@@ -328,20 +322,20 @@ generateReducedTableNoPlots <- function(tbl, caption=NULL, tfont_size=10) {
     #etbl1 <- effs.table.tbl %>%
     etbl1 <- tbl %>%
             generateTableRemoveRepeats() %>%
-            mutate(model_variance = percent(model_variance),
+            mutate(model_variance = percent(round.digits(model_variance,3)),
                 marker = ifelse(is.na(marker)," ",marker),
-                position = round.digits(position,2),
-                position_left = round.digits(interval_left,2),
-                position_right = round.digits(interval_right,2),
-                qtl_lod=round.digits(qtl_lod,2),
-                marker_variance = percent(marker_variance)) %>%
-            mutate(AC_stat = paste0(signif.digits(effect_mean_AC,2), "±", signif.digits(effect_se_AC,2)),
-                   AD_stat = paste0(signif.digits(effect_mean_AD,2), "±", signif.digits(effect_se_AD,2)),
-                   BC_stat = paste0(signif.digits(effect_mean_BC,2), "±", signif.digits(effect_se_BC,2)),
-                   BD_stat = paste0(signif.digits(effect_mean_BD,2), "±", signif.digits(effect_se_BD,2))) %>%
-            mutate(AvB = signif.digits(AvB, 2),
-                   CvD = signif.digits(CvD, 2),
-                   Int = signif.digits(Int, 2))
+                position = round.digits(position,1),
+                position_left = round.digits(interval_left,1),
+                position_right = round.digits(interval_right,1),
+                qtl_lod=round.digits(qtl_lod,1),
+                marker_variance = percent(round.digits(marker_variance,3))) %>%
+            mutate(AC_stat = paste0(signif.digits.char(effect_mean_AC,2), "±", signif.digits.char(effect_se_AC,2)),
+                   AD_stat = paste0(signif.digits.char(effect_mean_AD,2), "±", signif.digits.char(effect_se_AD,2)),
+                   BC_stat = paste0(signif.digits.char(effect_mean_BC,2), "±", signif.digits.char(effect_se_BC,2)),
+                   BD_stat = paste0(signif.digits.char(effect_mean_BD,2), "±", signif.digits.char(effect_se_BD,2))) %>%
+            mutate(AvB = signif.digits.char(AvB, 2),
+                   CvD = signif.digits.char(CvD, 2),
+                   Int = signif.digits.char(Int, 2))
     options(scipen=scipen_save)
     if( is_html_output() ) {
         #colorbars only render correctly under html format
@@ -354,28 +348,15 @@ generateReducedTableNoPlots <- function(tbl, caption=NULL, tfont_size=10) {
                    marker_variance = knitr:::escape_latex(marker_variance))
     }
     if( is_word_output() ) {
-        caption = paste0( caption,
-                          "**Variance Explained by QTL**: Genetic variance of model with all significant QTLs fitted.",
-                          "**pLOD**: QTL Penalized LOD Score w/ significance codes:\n*** pvalue $≥$ 0 and pvalue<0.001\n**  pvalue $≥$ 0.001 and pvalue<0.01\n*   pvalue $≥$ 0.01 and pvalue<0.05\n.  pvalue $≥$ 0.05 and pvalue<0.01\nNS  Not Significant\n",
-                          "**A.-B.**: Maternal effect size - (AC+AD)-(BC+BD)",
-                          "**.C-.D**: Paternal effect size - (AC+BC)–(AD+BD)",
-                          "**Int**: Interaction effect size - (AC+BD)-(AD+BC)",
-                          "**eff~AC~**: AC effect size",
-                          "**eff~AD~**: AD effect size",
-                          "**eff~BC~**: BC effect size",
-                          "**eff~BD~**: BD effect size",
-                          sep='  ',
-                          collapse='  ')
         etbl2 <- etbl1 %>%
-                select(trait_name,chr,position,position_left,position_right,qtl_lod,marker_variance,model_variance,AvB,CvD,Int,AC_stat,AD_stat,BC_stat,BD_stat) %>%
+                dplyr::select(trait_name,chr,position_left,position,position_right,model_variance,marker_variance,AvB,CvD,Int,AC_stat,AD_stat,BC_stat,BD_stat) %>%
                 rename("Trait"=trait_name, 
                        "LG"=chr, 
-                       "Position (cM)"=position, 
-                       "1.5-LOD Min (cM)"=position_left,
-                       "1.5-LOD Max (cM)"=position_right,
-                       "Variance Explained by QTL"=marker_variance,
-                       "Model Variance"=model_variance,
-                       "pLOD"=qtl_lod,
+                       "1.5-LOD min"=position_left,
+                       "Position"=position, 
+                       "1.5-LOD max"=position_right,
+                       "R~m~^2^"=model_variance,
+                       "R~q~^2^"=marker_variance,
                        "A.-B."=AvB,
                        ".C-.D"=CvD,
                        "Int"=Int,
@@ -383,10 +364,32 @@ generateReducedTableNoPlots <- function(tbl, caption=NULL, tfont_size=10) {
                        "eff~AD~"=AD_stat,
                        "eff~BC~"=BC_stat,
                        "eff~BD~"=BD_stat)
-        etbl4 <- etbl2 %>% knitr::kable(caption = caption, format = 'pipe', align = 'llrrrrrrrcc', escape = FALSE, booktabs = TRUE)
+        etbl4 <- flextable(etbl2) %>%
+            ftExtra::colformat_md(part="header") %>%
+            align(align="center", part="header") %>%
+            align(align="right", part="body") %>%
+            set_caption(caption) %>%
+            flextable::footnote(i = 1, 
+                    j = c("1.5-LOD min","Position","1.5-LOD max","R~m~^2^","R~q~^2^","A.-B.",".C-.D","Int","eff~AC~","eff~AD~","eff~BC~","eff~BD~"),
+                    value=as_paragraph(c("1.5 below peak LOD left position (cM).",
+                          "QTL position of peak LOD (cM).",
+                          "1.5 below peak LOD right position (cM).",
+                          "Percent of phenotypic variance explained by all signficant additive effect QTL fit by model.",
+                          "Percent of additive genetic variance explained by QTL.",
+                          "Maternal effect size: (AC+AD)-(BC+BD)",
+                          "Paternal effect size: (AC+BC)–(AD+BD)",
+                          "Interaction effect size: (AC+BD)-(AD+BC)",
+                          "Effect size of AC genotype.",
+                          "Effect size of AD genotype.",
+                          "Effect size of BC genotype.",
+                          "Effect size of BD genotype.")),
+                    ref_symbols = c("a","b","c","d","e","f","g","h","i","j","k","l"),
+                    part = "header") %>%
+            theme_booktabs(bold_header=TRUE) %>%
+            set_table_properties(layout="autofit")
     } else {
         etbl2 <- etbl1 %>%
-                select(trait_name,chr,position,position_left,position_right,qtl_lod,marker_variance,model_variance,AvB,CvD,Int,AC_stat,AD_stat,BC_stat,BD_stat) %>%
+                dplyr::select(trait_name,chr,position,position_left,position_right,qtl_lod,marker_variance,model_variance,AvB,CvD,Int,AC_stat,AD_stat,BC_stat,BD_stat) %>%
                 rename("Trait"=trait_name, 
                         "LG"=chr, 
                         "Position (cM)"=position, 
@@ -464,7 +467,7 @@ generateTable <- function(tbl, meths=c("scanone","stepwiseqtl"), caption=NULL, t
     }
 
     etbl2 <- etbl1 %>%
-            select(trait_name,model_name,chr,position,position_left,position_right,qtl_lod,marker_variance,model_variance) %>%
+            dplyr::select(trait_name,model_name,chr,position,position_left,position_right,qtl_lod,marker_variance,model_variance) %>%
             rename("Trait[note]"=trait_name, 
                     "Model[note]"=model_name, 
                     "LG"=chr, 
