@@ -14,6 +14,8 @@ export POP_Circos = #Force user to define
 export RDS_DIR ?= "../../Data/phenotypic\ data/DerivedData/cleanup_data.R.output/Robjs"
 export COLLATE_EFFECTS ?= TRUE
 export RELOAD_TABLE_FUNCTIONS ?= FALSE
+export SHOW_GROUPS ?= TRUE
+export SHOW_LEGEND ?= TRUE
 
 #Set the following for configuring the BLUPs summary table in target GenQTLTable: NUM_TOP configures how many of the top-ranked QTLs to display per trait:model combination
 QTL_METHOD ?= stepwiseqtl
@@ -43,7 +45,7 @@ genblupplots: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)" reload_table_functions="$(RELOAD_TABLE_FUNCTIONS)" P1_Name="$(P1_Name)" P2_Name="$(P2_Name)" POP_Name="$(POP_Name)"' qtl_pipeline_01_03_genBLUPplots.R
 
 genh2plot: cleanR
-		R CMD BATCH '--args workflow="$(WORKFLOW)" POP_Name="$(POP_Name)"' qtl_pipeline_01_04_genh2plots.R
+		R CMD BATCH '--args workflow="$(WORKFLOW)" POP_Name="$(POP_Name)" show_groups="$(SHOW_GROUPS)" show_legend="$(SHOW_LEGEND)"' qtl_pipeline_01_04_genh2plots.R
 
 genbrcorrs: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_01_05_genBLUPCorrPlots.R
@@ -126,6 +128,9 @@ GenCircos: cleanR
 GenEffects: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)" reload_table_functions="$(RELOAD_TABLE_FUNCTIONS)" collate_effects="$(COLLATE_EFFECTS)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_12_geneffects.R
 
+GenWideEffects: cleanR
+		R CMD BATCH '--args workflow="$(WORKFLOW)"' qtl_pipeline_12_01_wideneffects.R
+
 GenIntEffects: cleanR
 		R CMD BATCH '--args workflow="$(WORKFLOW)" reload_table_functions="$(RELOAD_TABLE_FUNCTIONS)" collate_effects="$(COLLATE_EFFECTS)" num_top_qtls="$(NUM_TOP)"' qtl_pipeline_13_geninteffects.R
 
@@ -178,12 +183,19 @@ CopyReactSandbox:
 		ssh -X -Y -p 7262 maule@vaccinium.vcru.wisc.edu rm -fr /var/www/html/$(CIRCOS_FOLDER)
 		scp -r -P 7262 $(SANDBOX)/build maule@vaccinium.vcru.wisc.edu:/var/www/html/$(CIRCOS_FOLDER)
 
-GenColocatedQTL:
-	R CMD BATCH qtl_pipeline_16_plotcolocatedqtllinkagemaps.R
+GenColocatedQTLImageAnnotations:
 	cd ../../Data/publication/figures && ../../../Scripts/misc/annotatefig.sh cnj02_qtl_collated.grouped.consensus.png A && ../../../Scripts/misc/annotatefig.sh cnj04_qtl_collated.grouped.consensus.png B && ../../../Scripts/misc/annotatefig.sh cnj0x_qtl_collated.grouped.consensus.png C
 	cd ../../Data/publication/figures && montage -background white -mode concatenate -tile 3x1 cnj02_qtl_collated.grouped.consensus.A.png cnj04_qtl_collated.grouped.consensus.B.png cnj0x_qtl_collated.grouped.consensus.C.png cnj0x_qtl_collated.grouped.consensus.ABC.png
+	cd ../../Data/publication/figures && ../../../Scripts/misc/annotatefig.sh diazGarcia2018MassivePhenotyping.grouped.consensus.png A && ../../../Scripts/misc/annotatefig.sh diazGarcia2018MassivePhenotyping_cnj0x.grouped.consensus.png B
+	cd ../../Data/publication/figures && montage -background white -mode concatenate -tile 2x1 diazGarcia2018MassivePhenotyping.grouped.consensus.A.png diazGarcia2018MassivePhenotyping_cnj0x.grouped.consensus.B.png diazGarcia2018MassivePhenotyping_cnj0x.grouped.consensus.AB.png
+	cd ../../Data/publication/figures && ../../../Scripts/misc/annotatefig.sh diazGarcia2018ImagePhenotyping.grouped.consensus.png A && ../../../Scripts/misc/annotatefig.sh diazGarcia2018ImagePhenotyping_cnj0x.grouped.consensus.png B
+	cd ../../Data/publication/figures && montage -background white -mode concatenate -tile 2x1 diazGarcia2018ImagePhenotyping.grouped.consensus.A.png diazGarcia2018ImagePhenotyping_cnj0x.grouped.consensus.B.png diazGarcia2018ImagePhenotyping_cnj0x.grouped.consensus.AB.png
+	cd ../../Data/publication/figures && ../../../Scripts/misc/annotatefig.sh schlautman_cnj0x.grouped.consensus.png A && ../../../Scripts/misc/annotatefig.sh schlautman_diazGarciaImagePhenotyping_cnj0x.grouped.consensus.png B
+	cd ../../Data/publication/figures && montage -background white -mode concatenate -tile 2x1 schlautman_cnj0x.grouped.consensus.A.png schlautman_diazGarciaImagePhenotyping_cnj0x.grouped.consensus.B.png schlautman_diazGarciaImagePhenotyping_cnj0x.grouped.consensus.AB.png
 
-	#cd ../../Data/publication/figures && for qtlpdf in *.grouped.consensus.pdf; do qtlbasename=$${qtlpdf%%.pdf}; cmd="pdf2svg $${qtlpdf} $${qtlbasename}.svg"; echo "$$cmd"; eval "$$cmd"; done
+
+GenColocatedQTL:
+	R CMD BATCH qtl_pipeline_16_plotcolocatedqtllinkagemaps.R
 
 clean:
 		rm *.Rout
