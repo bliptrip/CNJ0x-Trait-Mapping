@@ -1,0 +1,20 @@
+Study,Trait,Abbreviation,Description,Units
+Schlautman et al. (2015),Mean Fruit Mass,MFM,Mean fruit mass on 100 randomly sampled berries.,$\\frac{g}{berry}$
+Schlautman et al. (2015),Total Yield,TY,Total yield.,$\\frac{g}{ft^2}$
+Schlautman et al. (2015),Biennial Bearing Index,BBITY,Biennial Bearing Index of total yield.,$100\\% \\times \\Bigg| \\frac{TY\\ difference\\ between\\ successive\\ harvests}{TY\\ sum\\ between\\ successive\\ harvests} \\Bigg|$
+Diaz-Garcia et al. (2018a),Berry Area,BA,Berry Area,
+Diaz-Garcia et al. (2018a),Berry Length,BL,Berry length digital measure (major axis diameter of berry contour),
+Diaz-Garcia et al. (2018a),Berry Width,BW,Berry width digital measure (minor axis diameter of berry contour),
+Diaz-Garcia et al. (2018a),Eccentricity,EC,A value of 0 represents a perfect circle and a value of 1 represents an ellipse stretched infinitely long (straight line).,
+Diaz-Garcia et al. (2018a),Berry Length vs. Width,LvW,Ratio of berry length to width (major/minor axis lengths).,
+Diaz-Garcia et al. (2018a),Persistent Homology - Principal Component 1,PH_PC1,Moderate-to-high correlation with LvW and EC.,
+Diaz-Garcia et al. (2018a),Persistent Homology - Principal Component 2,PH_PC2,Moderate-to-low correlation with LvW and EC.,
+Diaz-Garcia et al. (2018b),Berry Color,BCOLOR,Digital mean of berry color.,
+Diaz-Garcia et al. (2018b),Berry Color Variance,BCOLORVAR,Digital variance of berry color.,
+Diaz-Garcia et al. (2018b),September BRIX,BRIX_SEP,Percent soluble solids for September.,
+Diaz-Garcia et al. (2018b),October BRIX,BRIX_OCT,Percent soluble solids for October.,
+Diaz-Garcia et al. (2018b),September Mean Fruit Mass,MFM_SEP,Mean fruit mass for September.,
+Diaz-Garcia et al. (2018b),October Mean Fruit Mass,MFM_OCT,Mean fruit mass for October.,
+Diaz-Garcia et al. (2018b),October Titratable Acidity,TA_OCT,Titratable acidity for October.,
+Diaz-Garcia et al. (2018b),September Total Anthocyanins,TACY_SEP,Total Anthocyanins for September.,
+Diaz-Garcia et al. (2018b),October Total Anthocyanins,TACY_OCT,Total Anthocyanins for October.,

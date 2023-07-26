@@ -1,0 +1,29 @@
+Set,Trait_Groups,Studies,Populations,Filter
+CNJ02,"MFM, UMFM, UTBM, UBW, UBM",Current,CNJ02,$(R^2 \\geq 10)\\ \\wedge$
+CNJ02,"TY, SFY, PAC",Current,CNJ02,$(Year\\ Count \\geq 4)$
+CNJ02,"UBL, UKLvW, UKEC, ULvW",Current,CNJ02,
+CNJ02,"UL, UDM",Current,CNJ02,
+CNJ02,"UNP, UNAF",Current,CNJ02,
+CNJ04,"UNP, UNAF",Current,CNJ04,$(R^2 \\geq 10)\\ \\wedge$
+CNJ04,"USL, UDM",Current,CNJ04,$(Year\\ Count \\geq 4)$
+CNJ04,"UNS, UBW, MFM, UBM, UMFM",Current,CNJ04,
+CNJ04,"TY, SFY, UNB, UTBM",Current,CNJ04,
+CNJ04,"UBL, UKLvW, UKEC, ULvW",Current,CNJ04,
+CNJ0x,"UNP, UNAF",Current,CNJ02 & CNJ04,$(R^2 \\geq 10)\\ \\wedge$
+CNJ0x,"MFM, UMFM, UBW, UBM",Current,CNJ02 & CNJ04,$(Year\\ Count \\geq 4)\\ \\wedge$
+CNJ0x,"TY, SFY",Current,CNJ02 & CNJ04,$(Population\\ Count \\geq 2)$
+CNJ0x,"UBL, UKLvW, UKEC, ULvW",Current,CNJ02 & CNJ04,
+Diaz-Garcia 2018a,"EC, LvW",Diaz-Garcia 2018a,GRYG,$(R^2 \\geq 8)\\ \\wedge$
+Diaz-Garcia 2018a,,Diaz-Garcia 2018a,GRYG,$(Year\\ Count \\geq 2)$
+CNJ0x & Diaz-Garcia 2018a,"MFM, UMFM, UTBM, UBW, UBM, UBL, BL, BW, BA",Current & Diaz-Garcia 2018a,"CNJ02, CNJ04, & GRYG",$(R^2 \\geq 10)\\ \\wedge$
+CNJ0x & Diaz-Garcia 2018a,"TY, SFY, PAC",Current & Diaz-Garcia 2018a,"CNJ02, CNJ04, & GRYG",$(Trait\\ Count \\geq 3)\\ \\wedge$
+CNJ0x & Diaz-Garcia 2018a,"UKEC, ULvW, LvW, EC",Current & Diaz-Garcia 2018a,"CNJ02, CNJ04, & GRYG",$(Study\\ Count \\geq 2)$
+Diaz-Garcia 2018b,"BCOLOR, BCOLORVAR, TACY_DIFF, TACY_OCT, TACY_SEP",Diaz-Garcia 2018b,"CNJ02, CNJ04, & GRYG",$(R^2 \\geq 10)$
+CNJ0x & Diaz-Garcia 2018b,"MFM, UMFM, UTBM, UBW, UBM, UBL",Diaz-Garcia 2018b,"CNJ02, CNJ04, & GRYG",$(R^2 \\geq 10)\\ \\wedge$
+CNJ0x & Diaz-Garcia 2018b,"TY, SFY, PAC",Diaz-Garcia 2018b,"CNJ02, CNJ04, & GRYG",$(Population\\ Count \\geq 2)\\ \\wedge$
+CNJ0x & Diaz-Garcia 2018b,"Tacy, BCOLOR, BCOLORVAR, TACY_DIFF, TACY_OCT, TACY_SEP",Diaz-Garcia 2018b,"CNJ02, CNJ04, & GRYG",$(Study\\ Count \\geq 2)$
+CNJ0x & Schlautman 2015,"MFM, UMFM, UTBM, UBW, UBM, UBL",Current & Schlautman 2015,CNJ02 & CNJ04,$(R^2 \\geq 10)\\ \\wedge$
+CNJ0x & Schlautman 2015,"TY, SFY, PAC",Current & Schlautman 2015,CNJ02 & CNJ04,$(Study\\ Count \\geq 2)$
+CNJ0x & Schlautman 2015 & Diaz-Garcia 2018a,"MFM, UMFM, UTBM, UBW, UBM, UBL, BL, BW, BA","Current, Schlautmann 2015, & Diaz-Garcia 2018a","CNJ02, CNJ04, & GRYG",$(R^2 \\geq 10)\\ \\wedge$
+CNJ0x & Schlautman 2015 & Diaz-Garcia 2018a,"TY, SFY, PAC","Current, Schlautmann 2015, & Diaz-Garcia 2018a","CNJ02, CNJ04, & GRYG",$(Trait\\ Count \\geq 3)\\ \\wedge$
+CNJ0x & Schlautman 2015 & Diaz-Garcia 2018a,"UKEC, ULvW, LvW, EC","Current, Schlautmann 2015, & Diaz-Garcia 2018a","CNJ02, CNJ04, & GRYG",$(Study\\ Count \\geq 2)$
